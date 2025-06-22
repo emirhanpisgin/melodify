@@ -1,0 +1,22 @@
+import { cn } from "../../lib/utils";
+
+interface ExternalLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+    children?: React.ReactNode;
+}
+
+export default function ExternalLink({ className, href, children, ...props }: ExternalLinkProps) {
+    return (
+        <a
+            onClick={(e) => {
+                e.preventDefault();
+                if (href) {
+                    console.log("first")
+                    window.electronAPI.openExternal(href);
+                }
+            }}
+            className={cn("cursor-pointer", className)}
+            {...props}>
+            {children}
+        </a>
+    );
+}
