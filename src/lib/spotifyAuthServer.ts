@@ -45,10 +45,14 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
             window.webContents.send("spotify:authenticated", {
                 username: user.body.display_name,
             });
-            authServer.close();
         } catch (err) {
             console.error("Spotify auth error", err);
             res.status(500).send("Spotify authentication failed.");
+        } finally {
+            // Ensure the server is closed even if there's an error
+            if (authServer) {
+                authServer.close();
+            }
         }
     });
 
