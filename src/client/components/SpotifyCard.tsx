@@ -106,6 +106,20 @@ export default function SpotifyCard() {
                         Click "Setup Spotify" to setup.
                     </div>
                 )}
+                <StatusMessage
+                    loading={spotifyRunning === null}
+                    completed={spotifyRunning}
+                    completedMessage={spotifyRunning ? "Spotify is running." : "Spotify is not running."}
+                    notCompletedMessage="Spotify is not running."
+                    loadingMessage="Checking if Spotify is running..."
+                />
+                <StatusMessage
+                    loading={authenticated === null}
+                    completed={authenticated}
+                    completedMessage={`You are logged in, Welcome ${spotifyUsername}.`}
+                    notCompletedMessage="You are not logged in."
+                    loadingMessage="Checking if you are logged in..."
+                />
                 {openConfigure && (
                     <div className="fixed z-50 top-0 left-0 grid place-items-center h-screen w-screen bg-black/20 text-white">
                         <div className="relative bg-black w-full h-full p-2 px-4">
@@ -198,20 +212,6 @@ export default function SpotifyCard() {
                         </div>
                     </div>
                 )}
-                <StatusMessage
-                    loading={spotifyRunning === null}
-                    completed={spotifyRunning}
-                    completedMessage={spotifyRunning ? "Spotify is running." : "Spotify is not running."}
-                    notCompletedMessage="Spotify is not running."
-                    loadingMessage="Checking if Spotify is running..."
-                />
-                <StatusMessage
-                    loading={authenticated === null}
-                    completed={authenticated}
-                    completedMessage={`You are logged in, Welcome ${spotifyUsername}.`}
-                    notCompletedMessage="You are not logged in."
-                    loadingMessage="Checking if you are logged in..."
-                />
             </div>
             <div className="flex flex-col gap-2 w-full items-center mb-4">
                 <div className="flex gap-2">
