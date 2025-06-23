@@ -43,8 +43,7 @@ export default function KickSecrets({
         setSaved(false);
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         window.electronAPI.send("kick:setSecrets", secrets);
         setHasSecrets(true);
         setSaved(true);
@@ -78,9 +77,10 @@ export default function KickSecrets({
                     </span> from "Scopes Requested" and click to Create App button.{" "}
                     The name and description can be anything you like.{" "}
                     Copy the Client ID and Client Secret from the created app and paste them below.
+                    <span></span>
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium mb-1">Kick Client ID</label>
                         <input
@@ -106,6 +106,7 @@ export default function KickSecrets({
                     <button
                         type="submit"
                         className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-semibold"
+                        onClick={() => handleSubmit()}
                     >
                         Save
                     </button>
@@ -117,7 +118,7 @@ export default function KickSecrets({
                         Close
                     </button>
                     {saved && <p className="text-green-400 text-sm mt-2">Secrets saved ✅</p>}
-                </form>
+                </div>
             </div>
         </div>
     );

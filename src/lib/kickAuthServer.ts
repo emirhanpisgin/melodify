@@ -1,14 +1,13 @@
 import express from "express";
 import { BrowserWindow, shell } from "electron";
 import { generateCodeChallenge, generateCodeVerifier } from "./pkceUtils";
+import type { Server } from "http";
+import Config from "./config";
+import { listenToChat } from "./kick";
 
-const clientId = "01JY7N63ZHTMC8E4VJ40R6JDR1";
-const clientSecret = "7c8a927788900bc7193cf37b289465e37737a284ea6413b741e885d1009bf1fb";
 const redirectUri = "http://localhost:8889/callback";
 const port = 8889;
 
-import type { Server } from "http";
-import Config from "./config";
 //@ts-ignore
 let serverInstance: Server | null = null;
 
@@ -48,8 +47,8 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     grant_type: "authorization_code",
                     code,
                     redirect_uri: redirectUri,
-                    client_id: clientId,
-                    client_secret: clientSecret,
+                    client_id: kickClientId,
+                    client_secret: kickClientSecret,
                     code_verifier: codeVerifier,
                 });
 
@@ -74,8 +73,45 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     expiresAt: tokenData.expires_in,
                 });
 
+                const channelRequest = await fetch("https://api.kick.com/public/v1/channels", {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${tokenData.access_token}`,
+                    },
+                });
+
+                if (!channelRequest.ok) {
+                    throw new Error(`Failed to fetch channels: ${channelRequest.statusText}`);
+                }
+
+                const { data } = await channelRequest.json();
+
+                const username = data[0]?.slug;
+
+                const chatroomRequest = await fetch(`https://kick.com/api/v2/channels/${username}/chatroom`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${tokenData.access_token}`,
+                    },
+                });
+
+                if (!chatroomRequest.ok) {
+                    throw new Error(`Failed to fetch chatroom: ${chatroomRequest.statusText}`);
+                }
+
+                const chatroomData = await chatroomRequest.json();
+
+                Config.setKick({
+                    userId: data[0].broadcaster_user_id,
+                    username: username,
+                    chatroomId: chatroomData.id,
+                });
+
                 res.send("✅ Kick authentication successful! You can close this window.");
-                window.webContents.send("kick:authenticated");
+                window.webContents.send("kick:authenticated", {
+                    username: data[0].slug,
+                });
+                listenToChat(window);
                 resolve();
             } catch (error) {
                 console.error("Kick auth error", error);
@@ -98,9 +134,10 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
 export function openKickAuthUrl() {
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
-    const scopes = "chat:write user:read";
+    const scopes = "chat:write user:read channel:read";
 
     const tokens = Config.getKick();
+    const { kickClientId } = Config.getSecrets();
     tokens.codeVerifier = codeVerifier;
 
     Config.setKick(tokens);
@@ -110,7 +147,7 @@ export function openKickAuthUrl() {
     const url =
         `https://id.kick.com/oauth/authorize?` +
         `response_type=code` +
-        `&client_id=${clientId}` +
+        `&client_id=${kickClientId}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scopes)}` +
         `&code_challenge=${codeChallenge}` +

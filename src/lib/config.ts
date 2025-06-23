@@ -14,6 +14,10 @@ export interface AppStore {
         expiresAt?: number;
         codeVerifier?: string;
         username?: string;
+        userId?: string;
+        chatroomId?: string;
+        canUsersPlaySong?: boolean;
+        prefix?: string;
     };
     secrets: {
         spotifyClientId?: string;
@@ -25,7 +29,10 @@ export interface AppStore {
 
 const defaultStore: AppStore = {
     spotify: {},
-    kick: {},
+    kick: {
+        canUsersPlaySong: false,
+        prefix: "!sr",
+    },
     secrets: {},
 };
 

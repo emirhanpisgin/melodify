@@ -91,3 +91,15 @@ export async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow
     }
     return true;
 }
+
+export async function playSong(songQuery: string) {
+    const spotifyApi = getSpotifyApi();
+
+    if (!spotifyApi) return;
+
+    const tracks = await spotifyApi.searchTracks(songQuery, { limit: 1, market: "TR" });
+
+    if (!tracks.body.tracks.total) return;
+
+    spotifyApi.addToQueue(tracks.body.tracks.items[0].uri).catch(() => {});
+}

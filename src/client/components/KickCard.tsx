@@ -1,158 +1,103 @@
 import { useEffect, useState } from "react";
-import ExternalLink from "./ExternalLink";
 import StatusMessage from "./StatusMessage";
+import ExternalLink from "./ExternalLink";
 import InfoIcon from "./icons/InfoIcon";
 
-export default function SpotifyCard() {
+export default function KickCard() {
     const [hasSecrets, setHasSecrets] = useState(null);
-    const [spotifyClientId, setSpotifyClientId] = useState("");
-    const [spotifyClientSecret, setSpotifyClientSecret] = useState("");
-    const [spotifyUsername, setSpotifyUsername] = useState<string | null>(null);
-    const [authenticated, setAuthenticated] = useState<boolean | null>(null);
-    const [spotifyRunning, setSpotifyRunning] = useState<boolean | null>(null);
-    const [spotifyHasSession, setSpotifyHasSession] = useState<boolean | null>(false);
+    const [kickClientId, setKickClientId] = useState("");
+    const [kickClientSecret, setKickClientSecret] = useState("");
+    const [kickUsername, setKickUsername] = useState("");
+    const [authenticated, setAuthenticated] = useState(false);
+    const [listeningToChat, setListeningToChat] = useState(false);
     const [openConfigure, setOpenConfigure] = useState(false);
 
     useEffect(() => {
-        window.electronAPI.invoke("spotify:hasSecrets")
+        window.electronAPI.invoke("kick:hasSecrets")
             .then((secrets) => {
-                console.log("Spotify secrets fetched:", secrets);
                 setHasSecrets(secrets);
-            })
-            .catch((error) => {
-                console.error("Failed to fetch Spotify secrets:", error);
+            }).catch((error) => {
+                console.error("Error checking Kick secrets:", error);
             });
-    }, []);
 
-    useEffect(() => {
-        const checkSpotifyProcess = async () => {
-            const isRunning = await window.electronAPI.invoke("spotify:isRunning");
-            setSpotifyRunning(isRunning);
-        };
-        checkSpotifyProcess();
-        const interval = setInterval(checkSpotifyProcess, 5000);
-        return () => clearInterval(interval);
-    }, []);
+        window.electronAPI.on("kick:authenticated", (event, data) => {
+            setAuthenticated(true);
+            setKickUsername(data.username);
+        });
 
-    useEffect(() => {
-        window.electronAPI.invoke("spotify:checkAuth")
+        window.electronAPI.on("kick:chatConnected", () => {
+            setListeningToChat(true);
+        });
+
+        window.electronAPI.invoke("kick:checkAuth")
             .then((result) => {
                 setAuthenticated(result.authenticated);
-                if (result.authenticated) {
-                    setSpotifyUsername(result.username);
-                }
-            })
-            .catch((error) => {
-                setAuthenticated(false);
-                console.error("Failed to check Spotify authentication:", error);
+            }).catch((error) => {
+                console.error("Error checking Kick authentication:", error);
             });
     }, []);
 
-    useEffect(() => {
-        window.electronAPI.on("spotify:authenticated", (event, data) => {
-            setAuthenticated(true);
-            setSpotifyUsername(data.username);
-        });
-    }, []);
-
-    useEffect(() => {
-        if (!authenticated) return;
-        let interval: NodeJS.Timeout | null = null;
-
-        function checkSpotifySession() {
-            window.electronAPI.invoke("spotify:hasSession")
-                .then((hasSession) => {
-                    console.log("Spotify session check result:", hasSession);
-                    setSpotifyHasSession(hasSession);
-                    if (hasSession && interval) {
-                        clearInterval(interval);
-                        interval = null;
-                    }
-                })
-                .catch((error) => {
-                    console.error("Failed to check Spotify session:", error);
-                });
-        }
-
-        checkSpotifySession();
-        interval = setInterval(checkSpotifySession, 5000);
-
-        return () => {
-            if (interval) clearInterval(interval);
-        };
-    }, [authenticated]);
-
     const handleSecretsSubmit = async () => {
-        if (!spotifyClientId || !spotifyClientSecret) {
+        if (!kickClientId || !kickClientSecret) {
             alert("Please fill in both fields.");
             return;
         }
 
-        const result = await window.electronAPI.invoke("spotify:setSecrets", {
-            spotifyClientId,
-            spotifyClientSecret,
-        });
-
-        if (result.success) {
+        try {
+            window.electronAPI.send("kick:setSecrets", {
+                kickClientId: kickClientId,
+                kickClientSecret: kickClientSecret,
+            });
             setHasSecrets(true);
-            setSpotifyClientId("");
-            setSpotifyClientSecret("");
-        } else {
-            alert(result.message);
+        } catch (error) {
+            console.error("Error setting Kick secrets:", error);
+            alert("Failed to save Kick secrets. Please try again.");
         }
     };
 
     const handleLogin = () => {
         if (!hasSecrets) {
-            alert("Please set your Spotify API secrets first.");
+            alert("Please set Kick secrets first.");
             return;
         }
-        window.electronAPI.send("spotify:auth");
+        window.electronAPI.send("kick:auth");
     };
 
     const handleLogout = () => {
-        window.electronAPI.send("spotify:logout");
+        window.electronAPI.send("kick:logout");
         setAuthenticated(false);
-        setSpotifyUsername(null);
     };
 
     return (
-        <div className="w-[50vw] border-r flex flex-col justify-center items-center gap-3 h-full">
+        <div className="w-[50vw] flex flex-col justify-center items-center gap-3 h-full">
             <div className="flex-1 flex flex-col justify-center items-center gap-3 w-full">
-                <div className="text-2xl font-bold text-spotify-green">
-                    Spotify
+                <div className="text-2xl font-bold text-kick-green">
+                    Kick
                 </div>
                 <StatusMessage
                     loading={hasSecrets === null}
                     completed={hasSecrets}
                     completedMessage="Secrets are set."
                     notCompletedMessage="Secrets are not set."
-                    loadingMessage="Checking for Spotify secrets..."
+                    loadingMessage="Checking for Kick secrets..."
                 />
                 {hasSecrets === false && (
                     <div className="text-xs">
-                        Click "Setup Spotify" to setup.
+                        Click "Setup Kick" to setup.
                     </div>
                 )}
                 <StatusMessage
-                    loading={spotifyRunning === null}
-                    completed={spotifyRunning}
-                    completedMessage={spotifyRunning ? "Spotify is running." : "Spotify is not running."}
-                    notCompletedMessage="Spotify is not running."
-                    loadingMessage="Checking if Spotify is running..."
-                />
-                <StatusMessage
                     loading={authenticated === null}
                     completed={authenticated}
-                    completedMessage={`You are logged in, Welcome ${spotifyUsername}.`}
+                    completedMessage={`You are logged in, Welcome ${kickUsername}.`}
                     notCompletedMessage="You are not logged in."
                     loadingMessage="Checking if you are logged in..."
                 />
                 <StatusMessage
-                    loading={spotifyHasSession === null}
-                    completed={spotifyHasSession}
-                    completedMessage={`Spotify device found.`}
-                    notCompletedMessage="No Spotify devices."
+                    loading={listeningToChat === null}
+                    completed={listeningToChat}
+                    completedMessage={"Listening to chat."}
+                    notCompletedMessage="Not listening to chat."
                 />
                 {openConfigure && (
                     <div className="fixed z-50 top-0 left-0 grid place-items-center h-screen w-screen bg-black/20 text-white">
@@ -163,19 +108,19 @@ export default function SpotifyCard() {
                                 </svg>
                             </div>
                             <div className="text-xl font-bold">
-                                Setup <span className="text-spotify-green">Spotify</span>
+                                Setup <span className="text-kick-green">Kick</span>
                             </div>
                             <div>
                                 <div className="text-sm text-gray-400 mt-4">
                                     - Go to <ExternalLink
-                                        href="https://developer.spotify.com/dashboard"
-                                        className="text-spotify-green hover:text-spotify-green-dark group"
+                                        href="https://kick.com/settings/developer?action=create"
+                                        className="text-kick-green hover:text-kick-green-dark group"
                                     >
-                                        Spotify Developer Dashboard
+                                        Kick Developer Dashboard
                                         <span className="inline-flex w-min ml-1 relative" style={{ top: "2px" }}>
                                             <svg
                                                 xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4 text-spotify-green group-hover:text-spotify-green-dark inline"
+                                                className="h-4 w-4 text-kick-green group-hover:text-kick-green-dark inline"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
                                                 stroke="currentColor"
@@ -192,33 +137,47 @@ export default function SpotifyCard() {
                                     <span
                                         className="bg-zinc-500 text-white text-xs p-1 py-[2px] rounded-lg"
                                     >
-                                        http://127.0.0.1:8888/callback
+                                        http://localhost:8889/callback
                                     </span>{" "}
-                                    as a Redirect URL and save your app.
+                                    as a Redirect URL.
+                                    <br />
+                                    - Check{" "}
+                                    <span className="bg-zinc-500 text-white rounded-lg text-xs p-1 py-[2px]">
+                                        Write to Chat feed
+                                    </span>{" "}
+                                    and{" "}
+                                    <span className="bg-zinc-500 text-white rounded-lg text-xs p-1 py-[2px]">
+                                        Read channel information
+                                    </span>{" "}
+                                    from "Scopes Requested" and save your app.
                                     <br />
                                     - Copy the Client ID and Client Secret from the created app and paste them below.
+                                    <br />
+                                    <span className="text-blue-400 flex items-center gap-1 text-xs">
+                                        <InfoIcon className="size-5" /> After you save your app, you need it to edit it again and create a bot for that app.
+                                    </span>
                                 </div>
                                 <div className="mt-4 space-y-2">
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">Spotify Client ID</label>
+                                        <label className="block text-sm font-medium mb-1">Kick Client ID</label>
                                         <input
                                             type="text"
-                                            name="spotifyClientId"
-                                            placeholder="Enter your Spotify Client ID"
-                                            value={spotifyClientId}
-                                            onChange={(e) => setSpotifyClientId(e.target.value)}
+                                            name="kickClientId"
+                                            placeholder="Enter your Kick Client ID"
+                                            value={kickClientId}
+                                            onChange={(e) => setKickClientId(e.target.value)}
                                             className="w-full p-2 rounded text-sm bg-neutral-700 outline-0 focus:outline-1 focus-visible:border-none focus-visible:outline-none outline-offset-0 border-none"
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-1">Spotify Client Secret</label>
+                                        <label className="block text-sm font-medium mb-1">Kick Client Secret</label>
                                         <input
                                             type="password"
-                                            name="spotifyClientSecret"
-                                            placeholder="Enter your Spotify Client Secret"
-                                            value={spotifyClientSecret}
-                                            onChange={(e) => setSpotifyClientSecret(e.target.value)}
+                                            name="kickClientSecret"
+                                            placeholder="Enter your Kick Client Secret"
+                                            value={kickClientSecret}
+                                            onChange={(e) => setKickClientSecret(e.target.value)}
                                             className="w-full p-2 rounded text-sm bg-neutral-700 outline-0 focus:outline-1 focus-visible:border-none focus-visible:outline-none outline-offset-0 border-none"
                                             required
                                         />
@@ -228,7 +187,7 @@ export default function SpotifyCard() {
                                 <div className="mt-4 flex gap-3">
                                     <div
                                         onClick={() => handleSecretsSubmit()}
-                                        className="bg-spotify-green hover:bg-spotify-green-dark active:bg-spotify-green-darker px-4 py-2 rounded text-sm font-semibold w-min cursor-pointer"
+                                        className="bg-kick-green hover:bg-kick-green-dark active:bg-kick-green-darker text-black px-4 py-2 rounded text-sm font-semibold w-min cursor-pointer"
                                     >
                                         Save
                                     </div>
@@ -247,14 +206,14 @@ export default function SpotifyCard() {
                     </div>
                 )}
             </div>
-            <div className="flex flex-col gap-2 w-full items-center mb-4">
+            <div className="flex flex-col gap-2 w-full items-center mb-4 text-black">
                 <div className="flex gap-2">
                     {(hasSecrets === false) && (
                         <div
                             onClick={() => setOpenConfigure(true)}
-                            className="bg-spotify-green hover:bg-spotify-green-dark active:bg-spotify-green-darker cursor-pointer px-4 py-2 rounded text-sm font-semibold"
+                            className="bg-kick-green hover:bg-kick-green-dark active:bg-kick-green-darker transition-colors cursor-pointer px-4 py-2 rounded text-sm font-semibold"
                         >
-                            Setup Spotify
+                            Setup Kick
                         </div>
                     )}
                     {authenticated ? (
@@ -262,19 +221,19 @@ export default function SpotifyCard() {
                             onClick={handleLogout}
                             className="bg-red-600 hover:bg-red-700 active:bg-red-800 px-4 py-2 rounded text-sm font-semibold transition-all cursor-pointer"
                         >
-                            Logout from Spotify
+                            Logout from Kick
                         </div>
                     ) : (
                         <div className="relative">
                             <div
                                 onClick={() => handleLogin()}
-                                className={`bg-spotify-green cursor-pointer hover:bg-spotify-green-dark active:bg-spotify-green-darker px-4 py-2 rounded text-sm font-semibold transition-all ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
+                                className={`bg-kick-green cursor-pointer hover:bg-kick-green-dark active:bg-kick-green-darker px-4 py-2 rounded text-sm font-semibold transition-all ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
                             >
-                                Login with Spotify
+                                Login with Kick
                             </div>
                             {hasSecrets === false && (
-                                <span className="absolute text-center inset-0 flex items-center justify-center text-xs text-white font-semibold pointer-events-none">
-                                    Setup Spotify first
+                                <span className="absolute text-center cursor-not-allowed inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none">
+                                    Setup Kick first
                                     <br />
                                     to login.
                                 </span>

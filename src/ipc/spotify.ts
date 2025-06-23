@@ -144,7 +144,6 @@ ipcMain.handle("spotify:setSecrets", async (event, secrets) => {
         });
 
         const data = await response.json();
-        console.log(data);
         if (!response.ok) {
             return { success: false, error: "Invalid client ID or secret." };
         }
@@ -159,4 +158,18 @@ ipcMain.handle("spotify:setSecrets", async (event, secrets) => {
     } catch (err) {
         return { success: false, error: "Failed to validate credentials." };
     }
+});
+
+ipcMain.handle("spotify:hasSession", async () => {
+    const spotifyApi = getSpotifyApi();
+
+    if (!spotifyApi) return false;
+
+    const devices = await spotifyApi.getMyDevices();
+
+    if (!devices.body.devices.length) {
+        return false;
+    }
+
+    return true;
 });
