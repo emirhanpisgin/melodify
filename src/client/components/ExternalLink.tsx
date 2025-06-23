@@ -10,7 +10,6 @@ export default function ExternalLink({ className, href, children, ...props }: Ex
             onClick={(e) => {
                 e.preventDefault();
                 if (href) {
-                    console.log("first")
                     window.electronAPI.openExternal(href);
                 }
             }}

@@ -1,11 +1,15 @@
 import { BrowserWindow } from "electron";
 import { saveTokens, getSpotifyApi } from "./spotify";
 import express from "express";
+import { Server } from "http";
 
 // Make startSpotifyAuthServer accept window or webContents to send events back to frontend
 export function startSpotifyAuthServer(window: BrowserWindow) {
     const app = express();
     const port = 8888;
+
+    //@ts-ignore
+    let authServer: null | Server = null;
 
     app.get("/callback", async (req, res) => {
         const code = req.query.code as string | undefined;
@@ -30,6 +34,7 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
 
             spotifyApi.setAccessToken(access_token);
             spotifyApi.setRefreshToken(refresh_token);
+            const user = await spotifyApi.getMe();
 
             saveTokens({ accessToken: access_token, refreshToken: refresh_token, expiresIn: expires_in });
 
@@ -37,14 +42,21 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
             console.log("✅ Spotify authenticated.");
 
             // Send IPC message back to frontend
-            window.webContents.send("spotify:authenticated");
+            window.webContents.send("spotify:authenticated", {
+                username: user.body.display_name,
+            });
+            authServer.close();
         } catch (err) {
             console.error("Spotify auth error", err);
             res.status(500).send("Spotify authentication failed.");
         }
     });
 
-    app.listen(port, () => {
+    authServer = app.listen(port, () => {
         console.log(`Spotify Auth server running at http://127.0.0.1:${port}`);
+    });
+
+    authServer.on("close", () => {
+        console.log("Spotify Auth server closed");
     });
 }
