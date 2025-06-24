@@ -97,9 +97,20 @@ export async function playSong(songQuery: string) {
 
     if (!spotifyApi) return;
 
-    const tracks = await spotifyApi.searchTracks(songQuery, { limit: 1, market: "TR" });
+    let trackUri: string | null = null;
 
-    if (!tracks.body.tracks.total) return;
+    // Check if songQuery is a Spotify track URL
+    const match = songQuery.match(/(?:https?:\/\/open\.spotify\.com\/track\/|spotify:track:)([a-zA-Z0-9]+)/);
+    if (match && match[1]) {
+        trackUri = `spotify:track:${match[1]}`;
+    } else {
+        // Otherwise, search for the track
+        const tracks = await spotifyApi.searchTracks(songQuery, { limit: 1, market: "TR" });
+        if (!tracks.body.tracks.total) return;
+        trackUri = tracks.body.tracks.items[0].uri;
+    }
 
-    spotifyApi.addToQueue(tracks.body.tracks.items[0].uri).catch(() => {});
+    if (trackUri) {
+        spotifyApi.addToQueue(trackUri).catch(() => {});
+    }
 }

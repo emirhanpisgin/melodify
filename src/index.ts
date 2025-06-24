@@ -18,13 +18,14 @@ const createWindow = (): void => {
             preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
         },
         autoHideMenuBar: true,
-        
     });
 
     mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
     mainWindow.setMenu(null);
 
-    mainWindow.webContents.openDevTools();
+    console.log(process.env)
+
+    //mainWindow.webContents.openDevTools();
 };
 
 app.on("ready", createWindow);
