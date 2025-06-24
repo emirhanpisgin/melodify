@@ -1,3 +1,7 @@
+/**
+ * Navbar component. Displays the application title and branding.
+ */
+
 export default function Navbar() {
     return (
         <div className="w-full border-b flex gap-3 p-2">

@@ -1,43 +1,66 @@
+// Electron main process entry point
 import { app, BrowserWindow } from "electron";
+import path from "path";
 import "./ipc/index";
 import "./lib/config";
+
+// Constants for window configuration
+const WINDOW_WIDTH = 700;
+const WINDOW_HEIGHT = 400;
+const IS_MAC = process.platform === "darwin";
+
+// Webpack entry points (provided by electron-forge/webpack)
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
+// Handle Squirrel.Windows startup events
 if (require("electron-squirrel-startup")) {
     app.quit();
 }
 
-const createWindow = (): void => {
-    const mainWindow = new BrowserWindow({
-        height: 400,
-        width: 700,
-        fullscreenable: false,
-        resizable: false,
-        webPreferences: {
-            preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-        },
-        autoHideMenuBar: true,
-    });
+/**
+ * Creates the main application window.
+ */
+const createMainWindow = (): void => {
+    try {
+        const mainWindow = new BrowserWindow({
+            width: WINDOW_WIDTH,
+            height: WINDOW_HEIGHT,
+            fullscreenable: false,
+            resizable: false,
+            autoHideMenuBar: true,
+            webPreferences: {
+                preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+                // contextIsolation: true, // Uncomment if using context isolation
+                // nodeIntegration: false, // Uncomment if needed for security
+            },
+        });
 
-    mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-    mainWindow.setMenu(null);
+        mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
+        mainWindow.setMenu(null);
 
-    if (process.env.NODE_ENV === "development") {
-        mainWindow.webContents.openDevTools();
+        // Open DevTools in development mode only
+        if (process.env.NODE_ENV === "development") {
+            mainWindow.webContents.openDevTools();
+        }
+    } catch (error) {
+        // Log and handle window creation errors
+        // eslint-disable-next-line no-console
+        console.error("Failed to create main window:", error);
     }
 };
 
-app.on("ready", createWindow);
+// App lifecycle events
+app.on("ready", createMainWindow);
 
 app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") {
+    if (!IS_MAC) {
         app.quit();
     }
 });
 
 app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
+        createMainWindow();
     }
 });

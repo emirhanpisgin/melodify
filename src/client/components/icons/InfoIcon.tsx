@@ -1,3 +1,7 @@
+/**
+ * InfoIcon renders an SVG info icon for use in status and info messages.
+ */
+
 interface InfoIconProps extends React.HTMLAttributes<HTMLOrSVGElement> { }
 
 export default function InfoIcon({ className, ...props }: InfoIconProps) {

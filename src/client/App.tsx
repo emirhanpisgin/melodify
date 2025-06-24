@@ -3,6 +3,9 @@
 import HomePage from "./components/HomePage";
 import Navbar from "./components/Navbar";
 
+/**
+ * Root application component. Sets up the main layout and theme.
+ */
 export default function App() {
 
     return (
