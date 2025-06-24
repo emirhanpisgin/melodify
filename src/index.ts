@@ -23,9 +23,9 @@ const createWindow = (): void => {
     mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
     mainWindow.setMenu(null);
 
-    console.log(process.env)
-
-    //mainWindow.webContents.openDevTools();
+    if (process.env.NODE_ENV === "development") {
+        mainWindow.webContents.openDevTools();
+    }
 };
 
 app.on("ready", createWindow);
