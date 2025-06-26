@@ -14,4 +14,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     setSpotifySecrets: (secrets: Record<string, string>) => ipcRenderer.send("spotify:setSecrets", secrets),
     getKickSecrets: () => ipcRenderer.invoke("kick:getSecrets"),
     setKickSecrets: (secrets: Record<string, string>) => ipcRenderer.send("kick:setSecrets", secrets),
+    minimize: () => ipcRenderer.send("window:minimize"),
+    close: () => ipcRenderer.send("window:close"),
 });

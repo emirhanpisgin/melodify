@@ -11,6 +11,10 @@ module.exports = {
                 "kick-green-dark": "#3b9e0f",
                 "kick-green-darker": "#2a6b0a",
             },
+            height: {
+                // Override h-screen to be 2.25rem shorter than 100vh
+                screen: 'calc(100vh - 2.25rem)',
+            },
         },
     },
     plugins: [],

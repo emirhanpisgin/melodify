@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import StatusMessage from "./StatusMessage";
 import SecretsSetupModal from "./SecretsSetupModal";
 import { SPOTIFY_REDIRECT_URI } from "../../lib/constants";
+import SpotifyIcon from "./icons/SpotifyIcon";
 
 export default function SpotifyCard() {
     const [hasSecrets, setHasSecrets] = useState(null);
@@ -121,7 +122,7 @@ export default function SpotifyCard() {
     };
 
     return (
-        <div className="w-[50vw] border-r flex flex-col justify-center items-center gap-3 h-full">
+        <div className="w-[50vw] border-r border-zinc-700 flex flex-col justify-center items-center gap-3 h-full">
             <div className="flex-1 flex flex-col justify-center items-center gap-3 w-full">
                 <div className="text-2xl font-bold text-spotify-green">
                     Spotify
@@ -196,13 +197,14 @@ export default function SpotifyCard() {
                                 onClick={() => handleLogin()}
                                 className={`bg-spotify-green cursor-pointer hover:bg-spotify-green-dark active:bg-spotify-green-darker px-4 py-2 rounded text-sm font-semibold transition-all ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
                             >
-                                Login with Spotify
+                                <span className="flex items-center gap-2 justify-center">
+                                    <SpotifyIcon className="size-5" />
+                                    Login with Spotify
+                                </span>
                             </div>
                             {hasSecrets === false && (
                                 <span className="absolute text-center inset-0 flex items-center justify-center text-xs text-white font-semibold pointer-events-none">
-                                    Setup Spotify first
-                                    <br />
-                                    to login.
+                                    Setup Spotify first<br />to login.
                                 </span>
                             )}
                         </div>

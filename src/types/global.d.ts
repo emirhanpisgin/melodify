@@ -12,6 +12,8 @@ declare global {
             setSpotifySecrets: (secrets: Record<string, string>) => void;
             getKickSecrets: () => Promise<Record<string, string>>;
             setKickSecrets: (secrets: Record<string, string>) => void;
+            minimize: () => void;
+            close: () => void;
         };
     }
 }

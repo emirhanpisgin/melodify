@@ -1,5 +1,5 @@
 // Electron main process entry point
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import "./ipc/index";
 import "./lib/config";
@@ -30,6 +30,7 @@ const createMainWindow = (): void => {
             fullscreenable: false,
             resizable: false,
             autoHideMenuBar: true,
+            frame: false, // Remove native titlebar for custom
             webPreferences: {
                 preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
                 // contextIsolation: true, // Uncomment if using context isolation
@@ -44,6 +45,14 @@ const createMainWindow = (): void => {
         if (process.env.NODE_ENV === "development") {
             mainWindow.webContents.openDevTools({ mode: "detach" });
         }
+
+        // IPC for window controls
+        ipcMain.on("window:minimize", () => {
+            mainWindow.minimize();
+        });
+        ipcMain.on("window:close", () => {
+            mainWindow.close();
+        });
     } catch (error) {
         logError(error, "main:createMainWindow");
         // eslint-disable-next-line no-console

@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Config from "../lib/config";
 import { startKickAuthServer, openKickAuthUrl } from "../lib/kickAuthServer";
-import { listenToChat, refreshAccessTokenIfNeeded, sendKickMessage } from "../lib/kick";
+import { listenToChat, refreshAccessTokenIfNeeded, sendKickMessage, startKickTokenAutoRefresh, stopKickTokenAutoRefresh } from "../lib/kick";
 
 ipcMain.on("kick:auth", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
@@ -42,18 +42,25 @@ ipcMain.on("kick:sendMessage", async (event, message) => {
 
 ipcMain.handle("kick:checkAuth", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
-    const accessToken = Config.get("kickAccessToken");
+    let accessToken = Config.get("kickAccessToken");
     const refreshToken = Config.get("kickRefreshToken");
     if (!accessToken || !refreshToken) {
+        stopKickTokenAutoRefresh();
         return { authenticated: false };
     }
 
     const refreshed = await refreshAccessTokenIfNeeded(window);
     if (!refreshed) {
+        stopKickTokenAutoRefresh();
         return { authenticated: false };
     }
 
+    if (refreshed) {
+        accessToken = Config.get("kickAccessToken");
+    }
+
     listenToChat(window);
+    startKickTokenAutoRefresh(window);
 
     const channelRequest = await fetch("https://api.kick.com/public/v1/channels", {
         method: "GET",
@@ -74,6 +81,7 @@ ipcMain.handle("kick:checkAuth", async (event) => {
 });
 
 ipcMain.on("kick:logout", (event) => {
+    stopKickTokenAutoRefresh();
     Config.set({ kickAccessToken: undefined, kickRefreshToken: undefined, kickExpiresAt: undefined });
 });
 

@@ -7,6 +7,7 @@ import StatusMessage from "./StatusMessage";
 import InfoIcon from "./icons/InfoIcon";
 import SecretsSetupModal from "./SecretsSetupModal";
 import { KICK_REDIRECT_URI } from "../../lib/constants";
+import KickIcon from "./icons/KickIcon";
 
 export default function KickCard() {
     const [hasSecrets, setHasSecrets] = useState(null);
@@ -147,13 +148,14 @@ export default function KickCard() {
                                 onClick={() => handleLogin()}
                                 className={`bg-kick-green cursor-pointer hover:bg-kick-green-dark active:bg-kick-green-darker px-4 py-2 rounded text-sm font-semibold transition-all ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
                             >
-                                Login with Kick
+                                <span className="flex items-center gap-2 justify-center">
+                                    <KickIcon className="size-5" />
+                                    Login with Kick
+                                </span>
                             </div>
                             {hasSecrets === false && (
                                 <span className="absolute text-center cursor-not-allowed inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none">
-                                    Setup Kick first
-                                    <br />
-                                    to login.
+                                    Setup Kick first<br />to login.
                                 </span>
                             )}
                         </div>

@@ -4,6 +4,8 @@ import Pusher from "pusher-js";
 import { playSong } from "./spotify";
 
 const redirectUri = "http://localhost:8889/callback";
+let isListening = false;
+let refreshKickTokenInterval: NodeJS.Timeout | null = null;
 
 async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Promise<boolean> {
     const kickAccessToken = Config.get("kickAccessToken");
@@ -82,6 +84,10 @@ export async function sendKickMessage(message: string): Promise<void> {
 }
 
 export async function listenToChat(window?: Electron.BrowserWindow) {
+    if (isListening) {
+        console.log("Already listening to Kick chat");
+        return;
+    }
     const pusher = new Pusher("32cbd69e4b950bf97679", {
         cluster: "us2",
     });
@@ -92,6 +98,7 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
     const channel = pusher.subscribe(`chatrooms.${chatroomId}.v2`);
 
     console.log(`📡 Listening to Kick chat for chatroom ID: ${chatroomId}`);
+    isListening = true;
     window?.webContents.send("kick:chatConnected");
 
     channel.bind("App\\Events\\ChatMessageEvent", (raw: any) => {
@@ -135,6 +142,25 @@ function canPlaySongs(badges: string[]): boolean {
         return true;
     }
     return false;
+}
+
+export async function startKickTokenAutoRefresh(window?: Electron.BrowserWindow) {
+    // Clear any existing interval
+    if (refreshKickTokenInterval) clearInterval(refreshKickTokenInterval);
+    // Check every 60 seconds
+    refreshKickTokenInterval = setInterval(async () => {
+        const kickExpiresAt = Config.get("kickExpiresAt");
+        if (!kickExpiresAt) return;
+        // Refresh 2 minutes before expiry
+        if (Date.now() >= kickExpiresAt - 2 * 60 * 1000) {
+            await refreshAccessTokenIfNeeded(window);
+        }
+    }, 60 * 1000);
+}
+
+export function stopKickTokenAutoRefresh() {
+    if (refreshKickTokenInterval) clearInterval(refreshKickTokenInterval);
+    refreshKickTokenInterval = null;
 }
 
 export { refreshAccessTokenIfNeeded };
