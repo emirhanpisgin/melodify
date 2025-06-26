@@ -2,110 +2,101 @@ import fs from "fs";
 import path from "path";
 import { app } from "electron";
 
-export interface AppStore {
-    spotify: {
-        accessToken?: string;
-        refreshToken?: string;
-        expiresAt?: number;
-    };
-    kick: {
-        accessToken?: string;
-        refreshToken?: string;
-        expiresAt?: number;
-        codeVerifier?: string;
-        username?: string;
-        userId?: string;
-        chatroomId?: string;
-        canUsersPlaySong?: boolean;
-        prefix?: string;
-    };
-    secrets: {
-        spotifyClientId?: string;
-        spotifyClientSecret?: string;
-        kickClientId?: string;
-        kickClientSecret?: string;
-    };
+export interface AppConfig {
+    // Kick tokens
+    kickAccessToken?: string;
+    kickRefreshToken?: string;
+    kickExpiresAt?: number;
+
+    // Spotify tokens
+    spotifyAccessToken?: string;
+    spotifyRefreshToken?: string;
+    spotifyExpiresAt?: number;
+
+    // Common
+    codeVerifier?: string;
+    username?: string;
+    userId?: string;
+    chatroomId?: string;
+    canUsersPlaySong?: boolean;
+    prefix?: string;
+
+    // API secrets
+    spotifyClientId?: string;
+    spotifyClientSecret?: string;
+    kickClientId?: string;
+    kickClientSecret?: string;
 }
 
-const defaultStore: AppStore = {
-    spotify: {},
-    kick: {
-        canUsersPlaySong: false,
-        prefix: "!sr",
-    },
-    secrets: {},
+const defaultConfig: AppConfig = {
+    canUsersPlaySong: false,
+    prefix: "!sr",
 };
 
 const storePath = path.join(app.getPath("userData"), "config.json");
 
-let cache: AppStore = { ...defaultStore };
+let cache: AppConfig = { ...defaultConfig };
 
-function load() {
+/**
+ * Load configuration from disk into memory cache.
+ */
+function load(): void {
     try {
         if (fs.existsSync(storePath)) {
             const raw = fs.readFileSync(storePath, "utf-8");
-            cache = { ...defaultStore, ...JSON.parse(raw) };
+            cache = { ...defaultConfig, ...JSON.parse(raw) };
         } else {
             save();
         }
     } catch (err) {
-        console.error("Failed to load config:", err);
-        cache = { ...defaultStore };
+        console.error("[Config] Failed to load config:", err);
+        cache = { ...defaultConfig };
     }
 }
 
-function save() {
+/**
+ * Save current memory cache to disk.
+ */
+function save(): void {
     try {
         fs.writeFileSync(storePath, JSON.stringify(cache, null, 2), "utf-8");
     } catch (err) {
-        console.error("Failed to save config:", err);
+        console.error("[Config] Failed to save config:", err);
     }
 }
 
 load();
 
+// Overloaded function declarations
+function get(): AppConfig;
+function get<K extends keyof AppConfig>(key: K): AppConfig[K];
+function get(key?: keyof AppConfig) {
+    return typeof key === "undefined" ? { ...cache } : cache[key];
+}
+
 const Config = {
-    getSpotify(): AppStore["spotify"] {
-        return cache.spotify;
+    get,
+    getMany<K extends keyof AppConfig>(keys: K[]): Pick<AppConfig, K> {
+        return keys.reduce((acc, key) => {
+            acc[key] = cache[key];
+            return acc;
+        }, {} as Pick<AppConfig, K>);
     },
-    setSpotify(data: Partial<AppStore["spotify"]>) {
-        cache.spotify = { ...cache.spotify, ...data };
-        save();
-    },
-    clearSpotify() {
-        cache.spotify = {};
+
+    set(data: Partial<AppConfig>): void {
+        cache = { ...cache, ...data };
         save();
     },
 
-    getKick(): AppStore["kick"] {
-        return cache.kick;
-    },
-    setKick(data: Partial<AppStore["kick"]>) {
-        cache.kick = { ...cache.kick, ...data };
-        save();
-    },
-    clearKick() {
-        cache.kick = {};
-        save();
-    },
-    getKickUsername(): string | undefined {
-        return cache.kick.username;
-    },
-    setKickUsername(username: string) {
-        cache.kick.username = username;
+    setMany<K extends keyof AppConfig>(entries: [K, AppConfig[K]][]): void {
+        for (const [key, value] of entries) {
+            cache[key] = value;
+        }
         save();
     },
 
-    getSecrets(): AppStore["secrets"] {
-        return cache.secrets;
-    },
-    setSecrets(data: Partial<AppStore["secrets"]>) {
-        cache.secrets = { ...cache.secrets, ...data };
-        save();
-    },
-
-    reset() {
-        cache = { ...defaultStore };
+    reset(): void {
+        cache = { ...defaultConfig };
         save();
     },
 

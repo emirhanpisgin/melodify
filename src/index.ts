@@ -3,10 +3,11 @@ import { app, BrowserWindow } from "electron";
 import path from "path";
 import "./ipc/index";
 import "./lib/config";
+import { logError } from "./lib/logger";
 
 // Constants for window configuration
 const WINDOW_WIDTH = 700;
-const WINDOW_HEIGHT = 400;
+const WINDOW_HEIGHT = 450;
 const IS_MAC = process.platform === "darwin";
 
 // Webpack entry points (provided by electron-forge/webpack)
@@ -39,12 +40,12 @@ const createMainWindow = (): void => {
         mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
         mainWindow.setMenu(null);
 
-        // Open DevTools in development mode only
+        // Open DevTools in a separate window in development mode only
         if (process.env.NODE_ENV === "development") {
-            mainWindow.webContents.openDevTools();
+            mainWindow.webContents.openDevTools({ mode: "detach" });
         }
     } catch (error) {
-        // Log and handle window creation errors
+        logError(error, "main:createMainWindow");
         // eslint-disable-next-line no-console
         console.error("Failed to create main window:", error);
     }
@@ -63,4 +64,14 @@ app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createMainWindow();
     }
+});
+
+// Error handling
+process.on("uncaughtException", (err) => {
+    logError(err, "main:uncaughtException");
+    // Optionally, show a dialog or notification to the user
+});
+
+process.on("unhandledRejection", (reason) => {
+    logError(reason, "main:unhandledRejection");
 });

@@ -6,14 +6,17 @@ import { playSong } from "./spotify";
 const redirectUri = "http://localhost:8889/callback";
 
 async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Promise<boolean> {
-    const tokens = Config.getKick();
-    if (!tokens) return false;
+    const kickAccessToken = Config.get("kickAccessToken");
+    const kickRefreshToken = Config.get("kickRefreshToken");
+    const kickExpiresAt = Config.get("kickExpiresAt");
+    if (!kickAccessToken || !kickRefreshToken || !kickExpiresAt) return false;
 
-    if (Date.now() >= (tokens.expiresAt as number)) {
+    if (Date.now() >= kickExpiresAt) {
         try {
-            const { kickClientId, kickClientSecret } = Config.getSecrets();
+            const kickClientId = Config.get("kickClientId");
+            const kickClientSecret = Config.get("kickClientSecret");
             if (!kickClientId || !kickClientSecret) {
-                window.webContents.send("toast", {
+                window?.webContents.send("toast", {
                     type: "error",
                     message: "Kick client ID or secret is not set. Please configure in settings.",
                 });
@@ -21,7 +24,7 @@ async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Prom
             }
             const params = new URLSearchParams({
                 grant_type: "refresh_token",
-                refresh_token: `${tokens.refreshToken}`,
+                refresh_token: `${kickRefreshToken}`,
                 client_id: kickClientId,
                 client_secret: kickClientSecret,
             });
@@ -39,10 +42,10 @@ async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Prom
             const data = await res.json();
             const { access_token, refresh_token, expires_in } = data as any;
 
-            Config.setKick({
-                accessToken: access_token,
-                refreshToken: refresh_token ?? tokens.refreshToken,
-                expiresAt: expires_in,
+            Config.set({
+                kickAccessToken: access_token,
+                kickRefreshToken: refresh_token ?? kickRefreshToken,
+                kickExpiresAt: Date.now() + expires_in * 1000,
             });
 
             console.log("Kick access token refreshed");
@@ -57,13 +60,15 @@ async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Prom
 }
 
 export async function sendKickMessage(message: string): Promise<void> {
-    const { accessToken, userId } = Config.getKick();
+    const kickAccessToken = Config.get("kickAccessToken");
+    const userId = Config.get("userId");
+    if (!kickAccessToken || !userId) throw new Error("Missing Kick access token or userId");
 
     const response = await fetch(`https://api.kick.com/public/v1/chat`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${kickAccessToken}`,
         },
         body: JSON.stringify({
             broadcaster_user_id: userId,
@@ -82,12 +87,13 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
         cluster: "us2",
     });
 
-    const { chatroomId } = Config.getKick();
+    const chatroomId = Config.get("chatroomId");
+    if (!chatroomId) return;
 
     const channel = pusher.subscribe(`chatrooms.${chatroomId}.v2`);
 
     console.log(`📡 Listening to Kick chat for chatroom ID: ${chatroomId}`);
-    window.webContents.send("kick:chatConnected");
+    window?.webContents.send("kick:chatConnected");
 
     channel.bind("App\\Events\\ChatMessageEvent", (raw: any) => {
         const data = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -97,7 +103,8 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
 
         if (!username || !message) return;
 
-        if (!message.startsWith(Config.getKick().prefix)) return;
+        const prefix = Config.get("prefix") || "!sr";
+        if (!message.startsWith(prefix)) return;
 
         const badges = data?.sender?.identity?.badges.map(
             (badge: { type: string; text: string; count?: number }) => badge.type
@@ -107,7 +114,7 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
 
         if (!canPlay) return;
 
-        const songQuery = message.replace(Config.getKick().prefix, "").trim();
+        const songQuery = message.replace(prefix, "").trim();
 
         playSong(songQuery);
 
@@ -116,7 +123,7 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
 }
 
 function canPlaySongs(badges: string[]): boolean {
-    const { canUsersPlaySong } = Config.getKick();
+    const canUsersPlaySong = Config.get("canUsersPlaySong");
 
     if (canUsersPlaySong) return true;
 

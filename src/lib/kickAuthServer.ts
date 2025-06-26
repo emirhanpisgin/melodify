@@ -27,14 +27,15 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
             }
 
             try {
-                const { codeVerifier } = Config.getKick();
+                const codeVerifier = Config.get("codeVerifier");
                 if (!codeVerifier) {
                     res.status(500).send("Missing code verifier.");
                     reject(new Error("Missing code verifier"));
                     return;
                 }
 
-                const { kickClientId, kickClientSecret } = Config.getSecrets();
+                const kickClientId = Config.get("kickClientId");
+                const kickClientSecret = Config.get("kickClientSecret");
                 if (!kickClientId || !kickClientSecret) {
                     window.webContents.send("toast", {
                         message: "Check settings for Kick client ID and secret.",
@@ -67,10 +68,10 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
 
                 const tokenData = await tokenResponse.json();
 
-                Config.setKick({
-                    accessToken: tokenData.access_token,
-                    refreshToken: tokenData.refresh_token,
-                    expiresAt: tokenData.expires_in,
+                Config.set({
+                    kickAccessToken: tokenData.access_token,
+                    kickRefreshToken: tokenData.refresh_token,
+                    kickExpiresAt: Date.now() + (tokenData.expires_in * 1000),
                 });
 
                 const channelRequest = await fetch("https://api.kick.com/public/v1/channels", {
@@ -101,7 +102,7 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
 
                 const chatroomData = await chatroomRequest.json();
 
-                Config.setKick({
+                Config.set({
                     userId: data[0].broadcaster_user_id,
                     username: username,
                     chatroomId: chatroomData.id,
@@ -136,12 +137,9 @@ export function openKickAuthUrl() {
     const codeChallenge = generateCodeChallenge(codeVerifier);
     const scopes = "chat:write user:read channel:read";
 
-    const tokens = Config.getKick();
-    const { kickClientId } = Config.getSecrets();
-    tokens.codeVerifier = codeVerifier;
+    Config.set({ codeVerifier });
 
-    Config.setKick(tokens);
-
+    const kickClientId = Config.get("kickClientId");
     const state = Math.random().toString(36).slice(2);
 
     const url =
@@ -150,10 +148,11 @@ export function openKickAuthUrl() {
         `&client_id=${kickClientId}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&scope=${encodeURIComponent(scopes)}` +
+        `&state=${state}` +
         `&code_challenge=${codeChallenge}` +
-        `&code_challenge_method=S256` +
-        `&state=${state}`;
+        `&code_challenge_method=S256`;
 
-    console.log(`🌍 Opening Kick auth URL: ${url}`);
     shell.openExternal(url);
 }
+
+// All legacy Config.getKick, Config.setKick, Config.getSecrets usages removed. All config is now flat and type-safe.

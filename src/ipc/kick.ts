@@ -13,10 +13,9 @@ ipcMain.on("kick:auth", async (event) => {
 });
 
 ipcMain.handle("kick:getUserData", async (event) => {
-    const { username, chatroomId } = Config.getKick();
     return {
-        username: username || "",
-        chatroomId: chatroomId || "",
+        username: Config.get("username") || "",
+        chatroomId: Config.get("chatroomId") || "",
     };
 });
 
@@ -32,7 +31,7 @@ ipcMain.handle("kick:findChatroom", async (event, data) => {
 
     const chatroomId = body.chatroom.id;
     const userId = body.id;
-    Config.setKick({ username, chatroomId, userId });
+    Config.set({ username, chatroomId, userId });
 
     return chatroomId;
 });
@@ -43,7 +42,8 @@ ipcMain.on("kick:sendMessage", async (event, message) => {
 
 ipcMain.handle("kick:checkAuth", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
-    const { accessToken, refreshToken } = Config.getKick();
+    const accessToken = Config.get("kickAccessToken");
+    const refreshToken = Config.get("kickRefreshToken");
     if (!accessToken || !refreshToken) {
         return { authenticated: false };
     }
@@ -59,19 +59,22 @@ ipcMain.handle("kick:checkAuth", async (event) => {
 });
 
 ipcMain.on("kick:logout", (event) => {
-    Config.clearKick();
+    Config.set({ kickAccessToken: undefined, kickRefreshToken: undefined, kickExpiresAt: undefined });
 });
 
 ipcMain.handle("kick:hasSecrets", async () => {
-    const { kickClientId, kickClientSecret } = Config.getSecrets();
+    const kickClientId = Config.get("kickClientId");
+    const kickClientSecret = Config.get("kickClientSecret");
     return !!kickClientId && !!kickClientSecret;
 });
 
 ipcMain.handle("kick:getSecrets", async () => {
-    const { kickClientId, kickClientSecret } = Config.getSecrets();
-    return { kickClientId, kickClientSecret };
+    return {
+        kickClientId: Config.get("kickClientId"),
+        kickClientSecret: Config.get("kickClientSecret"),
+    };
 });
 
 ipcMain.on("kick:setSecrets", async (event, secrets) => {
-    Config.setSecrets(secrets);
+    Config.set(secrets);
 });
