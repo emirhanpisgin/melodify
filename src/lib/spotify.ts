@@ -1,5 +1,7 @@
 import SpotifyWebApi from "spotify-web-api-node";
 import Config from "./config";
+import { sendKickMessage } from "./kick";
+import { logError } from "./logger";
 
 let spotifyApi: SpotifyWebApi | null = null;
 
@@ -90,21 +92,41 @@ export async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow
     return true;
 }
 
-export async function playSong(songQuery: string) {
+export async function playSong(songQuery: string, username: string): Promise<void> {
     const spotifyApi = getSpotifyApi();
     if (!spotifyApi) return;
     let trackUri: string | null = null;
+    let track: any = null;
     // Check if songQuery is a Spotify track URL
     const match = songQuery.match(/(?:https?:\/\/open\.spotify\.com\/track\/|spotify:track:)([a-zA-Z0-9]+)/);
     if (match && match[1]) {
         trackUri = `spotify:track:${match[1]}`;
+        // Fetch track details for reply message
+        try {
+            const trackData = await spotifyApi.getTrack(match[1]);
+            track = trackData.body;
+        } catch {}
     } else {
         // Otherwise, search for the track
         const tracks = await spotifyApi.searchTracks(songQuery, { limit: 1, market: "TR" });
         if (!tracks.body.tracks.total) return;
-        trackUri = tracks.body.tracks.items[0].uri;
+        track = tracks.body.tracks.items[0];
+        trackUri = track.uri;
     }
     if (trackUri) {
-        spotifyApi.addToQueue(trackUri).catch(() => {});
+        await spotifyApi.addToQueue(trackUri).catch(() => {});
+        // Send reply message if track info is available
+        if (track) {
+            const template = Config.get("songReplyMessage") || "Now playing: {title} by {artist} (requested by {user})";
+            const reply = template
+                .replace("{title}", track.name)
+                .replace("{artist}", track.artists.map((a: any) => a.name).join(", "))
+                .replace("{user}", username || "user");
+
+            sendKickMessage(reply).catch((err) => {
+                logError(err, "sendKickMessage");
+                console.error("Failed to send Kick message:", err);
+            });
+        }
     }
 }

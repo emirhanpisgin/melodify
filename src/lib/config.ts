@@ -26,11 +26,15 @@ export interface AppConfig {
     spotifyClientSecret?: string;
     kickClientId?: string;
     kickClientSecret?: string;
+
+    // Song reply message template
+    songReplyMessage?: string; // e.g. "Now playing: {title} by {artist} (requested by {user})"
 }
 
 const defaultConfig: AppConfig = {
     canUsersPlaySong: false,
     prefix: "!sr",
+    songReplyMessage: 'Now playing: {title} by {artist} (requested by {user})',
 };
 
 const storePath = path.join(app.getPath("userData"), "config.json");

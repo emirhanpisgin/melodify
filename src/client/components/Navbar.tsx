@@ -10,13 +10,11 @@ export default function Navbar({ onSettingsClick }: { onSettingsClick?: () => vo
                 <span className="text-spotify-green">Song</span><span className="text-kick-green">ülfy</span>
             </div>
             {onSettingsClick && (
-                <button
+                <div
                     className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded"
-                    onClick={onSettingsClick}
-                    aria-label="Open settings"
                 >
-                    <SettingsIcon className="w-6 h-6 text-zinc-400 hover:text-white" />
-                </button>
+                    <SettingsIcon onClick={onSettingsClick} aria-label="Open settings" className="w-6 h-6 text-zinc-400 cursor-pointer hover:text-white" />
+                </div>
             )}
         </div>
     );

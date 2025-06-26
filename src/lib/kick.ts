@@ -60,8 +60,7 @@ async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Prom
 }
 
 export async function sendKickMessage(message: string): Promise<void> {
-    const kickAccessToken = Config.get("kickAccessToken");
-    const userId = Config.get("userId");
+    const { kickAccessToken, userId } = Config.getMany(["kickAccessToken", "userId"]);
     if (!kickAccessToken || !userId) throw new Error("Missing Kick access token or userId");
 
     const response = await fetch(`https://api.kick.com/public/v1/chat`, {
@@ -116,7 +115,7 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
 
         const songQuery = message.replace(prefix, "").trim();
 
-        playSong(songQuery);
+        playSong(songQuery, username);
 
         console.log(`📥 New message from ${badges} ${username}: ${message}`);
     });

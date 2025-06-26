@@ -27,6 +27,7 @@ export default function KickCard() {
 
         window.electronAPI.on("kick:authenticated", (event, data) => {
             setAuthenticated(true);
+            console.log(data);
             setKickUsername(data.username);
         });
 
@@ -37,6 +38,9 @@ export default function KickCard() {
         window.electronAPI.invoke("kick:checkAuth")
             .then((result) => {
                 setAuthenticated(result.authenticated);
+                if (result.authenticated) {
+                    setKickUsername(result.username);
+                }
             }).catch((error) => {
                 console.error("Error checking Kick authentication:", error);
             });

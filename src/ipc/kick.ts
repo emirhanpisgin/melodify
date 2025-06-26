@@ -55,7 +55,22 @@ ipcMain.handle("kick:checkAuth", async (event) => {
 
     listenToChat(window);
 
-    return { authenticated: true };
+    const channelRequest = await fetch("https://api.kick.com/public/v1/channels", {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+
+    if (!channelRequest.ok) {
+        throw new Error(`Failed to fetch channels: ${channelRequest.statusText}`);
+    }
+
+    const { data } = await channelRequest.json();
+
+    const username = data[0]?.slug;
+
+    return { authenticated: true, username: username || "" };
 });
 
 ipcMain.on("kick:logout", (event) => {

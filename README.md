@@ -1,79 +1,111 @@
 # Songülfy
 
-Songülfy is a modern Electron desktop app that connects your Spotify account with your Kick chat, allowing users to play songs directly from Kick chat commands. It provides a seamless way for streamers and their communities to interact with music playback in real time.
+**The Ultimate Spotify + Kick Chat Song Request App for Streamers**
 
-## Features
+Songülfy is a next-generation desktop app that lets your viewers control the music on your stream—directly from your Kick chat! Instantly turn your Kick channel into a live, interactive jukebox powered by Spotify. Delight your community, boost engagement, and keep your stream's vibe fresh—all with a beautiful, modern UI.
 
-- **Kick & Spotify Integration:**
-  - Authenticate with both Kick and Spotify
-  - Manage API secrets securely (stored locally)
-  - Detect and display Spotify playback status and devices
-  - Listen to Kick chat and respond to song requests
-- **Play Songs from Kick Chat:**
-  - Users can request songs in Kick chat using commands (e.g., `!sr(by default) <song name>`)
-  - The app searches Spotify and plays the requested track
-  - Feedback and status messages are sent to chat
-- **Modern UI:**
-  - Built with React, Tailwind CSS, and TypeScript
-  - Responsive, accessible, and dark-mode friendly
-- **Notifications:**
-  - Toast notifications for errors, info, and success
+---
 
-## Getting Started
+## 🚀 Features
+
+-   **Seamless Kick & Spotify Integration**
+
+    -   Securely authenticate with both Kick and Spotify
+    -   Manage API secrets locally—your data stays private
+    -   Instantly detect and display your Spotify playback status and devices
+    -   Listen to Kick chat in real time and respond to song requests automatically
+
+-   **Effortless Song Requests from Chat**
+
+    -   Viewers request songs in Kick chat using a simple command (e.g., `!sr <song name>`)
+    -   Songülfy searches Spotify and queues the requested track on your device
+    -   Customizable feedback and status messages sent to chat
+
+-   **Modern, Streamer-Friendly UI**
+
+    -   Built with React, Tailwind CSS, and TypeScript
+    -   Responsive, accessible, and dark-mode ready
+    -   Intuitive settings and onboarding—no tech skills required
+
+-   **Smart Notifications & Error Handling**
+
+    -   Toast notifications for errors, info, and success
+    -   Automatic error logging—get a log file for support if anything goes wrong
+
+-   **Fully Customizable**
+    -   Change your song request prefix, reply messages, and more in the settings
+    -   Open source and easy to extend
+
+---
+
+## 🛠️ Getting Started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18+ recommended)
-- [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
+
+-   [Node.js](https://nodejs.org/) (v18+ recommended)
+-   [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
 
 ### Installation
 
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/yourusername/songulfy.git
-   cd songulfy
-   ```
-2. Install dependencies:
-   ```sh
-   yarn install
-   # or
-   npm install
-   ```
-3. Start the app in development mode:
-   ```sh
-   yarn start
-   # or
-   npm start
-   ```
+1. **Clone the repository:**
+    ```sh
+    git clone https://github.com/yourusername/songulfy.git
+    cd songulfy
+    ```
+2. **Install dependencies:**
+    ```sh
+    yarn install
+    # or
+    npm install
+    ```
+3. **Start the app in development mode:**
+    ```sh
+    yarn start
+    # or
+    npm start
+    ```
 
 ### Build for Production
+
 ```sh
 yarn make
 # or
 npm run make
 ```
 
-## Usage
+---
+
+## 🎤 How It Works
 
 1. **Connect your Spotify and Kick accounts** in the app settings.
 2. **Start your Kick stream and open chat.**
-3. **Viewers can request songs** by typing `!sr(by default) <song name>` in Kick chat.
-4. The app will search Spotify and play the requested song on your connected device.
+3. **Viewers request songs** by typing `!sr <song name/url>` in Kick chat (prefix is customizable).
+4. Songülfy searches Spotify and plays the requested song on your connected device.
+5. The app sends a customizable reply message to chat, confirming the song request.
 
-## Project Structure
+---
 
-- `src/`
-  - `client/` — React UI components
-  - `ipc/` — Electron IPC handlers
-  - `lib/` — Utilities, config, and API logic
-  - `types/` — TypeScript type definitions
-  - `index.ts` — Electron main process
+## 📁 Project Structure
 
-## Contributing
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+-   `src/`
+    -   `client/` — React UI components
+    -   `ipc/` — Electron IPC handlers
+    -   `lib/` — Utilities, config, and API logic
+    -   `types/` — TypeScript type definitions
+    -   `index.ts` — Electron main process
 
-## License
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome! For major changes, please open an issue first to discuss your ideas.
+
+## 📄 License
+
 [MIT](LICENSE)
 
 ---
 
-**Note:** This project is not affiliated with Kick or Spotify. Use at your own risk.
+**Not affiliated with Kick or Spotify. Use at your own risk.**
+
+> **Songülfy: Let your community DJ your stream!**

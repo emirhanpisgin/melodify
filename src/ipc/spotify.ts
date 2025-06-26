@@ -40,41 +40,6 @@ ipcMain.handle("spotify:getUserData", async () => {
     }
 });
 
-ipcMain.on("spotify:playSong", async (event, songQuery) => {
-    const spotifyApi = getSpotifyApi();
-    if (!spotifyApi) {
-        event.sender.send("toast", {
-            type: "error",
-            message: "Spotify API not initialized. Please try again.",
-        });
-        return;
-    }
-    try {
-        const searchResults = await spotifyApi.searchTracks(songQuery, { limit: 10, market: "TR" });
-        const tracks = searchResults.body.tracks.items;
-        if (tracks.length === 0) {
-            event.sender.send("toast", {
-                type: "error",
-                message: "No songs found for the given query.",
-            });
-            return;
-        }
-        const trackUri = tracks[0].uri;
-        await spotifyApi.addToQueue(trackUri);
-        event.sender.send("toast", {
-            type: "success",
-            message: `Playing "${tracks[0].name}" by ${tracks[0].artists.map((a) => a.name).join(", ")}`,
-        });
-    } catch (err) {
-        logError(err, "spotify:playSong");
-        console.error("Failed to play song", err);
-        event.sender.send("toast", {
-            type: "error",
-            message: "Failed to play song. Please try again.",
-        });
-    }
-});
-
 ipcMain.handle("spotify:checkAuth", async () => {
     const accessToken = Config.get("spotifyAccessToken");
     const refreshToken = Config.get("spotifyRefreshToken");
