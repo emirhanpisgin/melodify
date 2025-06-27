@@ -130,8 +130,6 @@ ipcMain.handle("spotify:hasSession", async () => {
     const spotifyApi = getSpotifyApi();
     if (!spotifyApi) return false;
     const devices = await spotifyApi.getMyDevices();
-    if (!devices.body.devices.length) {
-        return false;
-    }
-    return true;
+    const hasActiveDevice = devices.body.devices.some((device) => device.is_active);
+    return hasActiveDevice;
 });

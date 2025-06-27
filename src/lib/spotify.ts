@@ -5,6 +5,9 @@ import { logError } from "./logger";
 
 let spotifyApi: SpotifyWebApi | null = null;
 
+/**
+ * Get a configured SpotifyWebApi instance, or null if secrets are missing.
+ */
 export function getSpotifyApi(): SpotifyWebApi | null {
     if (spotifyApi) return spotifyApi;
     const spotifyClientId = Config.get("spotifyClientId");
@@ -25,6 +28,9 @@ export function getSpotifyApi(): SpotifyWebApi | null {
     return spotifyApi;
 }
 
+/**
+ * Load Spotify tokens from config and set them on the API instance.
+ */
 export function loadTokens() {
     const accessToken = Config.get("spotifyAccessToken");
     const expiresAt = Config.get("spotifyExpiresAt");
@@ -40,6 +46,9 @@ export function loadTokens() {
     return null;
 }
 
+/**
+ * Save Spotify tokens to config and update the API instance.
+ */
 export function saveTokens({
     accessToken,
     refreshToken,
@@ -58,6 +67,9 @@ export function saveTokens({
     }
 }
 
+/**
+ * Clear Spotify tokens from config and API instance.
+ */
 export function clearTokens() {
     Config.set({ spotifyAccessToken: undefined, spotifyRefreshToken: undefined, spotifyExpiresAt: undefined });
     const api = getSpotifyApi();
@@ -67,6 +79,9 @@ export function clearTokens() {
     }
 }
 
+/**
+ * Refresh the Spotify access token if expired.
+ */
 export async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Promise<boolean> {
     const tokens = loadTokens();
     if (!tokens) return false;
@@ -92,6 +107,9 @@ export async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow
     return true;
 }
 
+/**
+ * Add a song to the Spotify queue and send a reply message to Kick chat.
+ */
 export async function playSong(songQuery: string, username: string): Promise<void> {
     const spotifyApi = getSpotifyApi();
     if (!spotifyApi) return;
@@ -114,7 +132,10 @@ export async function playSong(songQuery: string, username: string): Promise<voi
         trackUri = track.uri;
     }
     if (trackUri) {
-        await spotifyApi.addToQueue(trackUri).catch(() => {});
+        await spotifyApi.addToQueue(trackUri).catch((err) => {
+            logError(err, "playSong");
+            console.error("Failed to add song to queue:", err);
+        });
         // Send reply message if track info is available
         if (track) {
             const template = Config.get("songReplyMessage") || "Now playing: {title} by {artist} (requested by {user})";

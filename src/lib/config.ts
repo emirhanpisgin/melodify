@@ -71,7 +71,9 @@ function save(): void {
 
 load();
 
-// Overloaded function declarations
+/**
+ * Get a copy of the current config or a specific key.
+ */
 function get(): AppConfig;
 function get<K extends keyof AppConfig>(key: K): AppConfig[K];
 function get(key?: keyof AppConfig) {
@@ -80,6 +82,9 @@ function get(key?: keyof AppConfig) {
 
 const Config = {
     get,
+    /**
+     * Get multiple config keys at once.
+     */
     getMany<K extends keyof AppConfig>(keys: K[]): Pick<AppConfig, K> {
         return keys.reduce((acc, key) => {
             acc[key] = cache[key];
@@ -87,11 +92,17 @@ const Config = {
         }, {} as Pick<AppConfig, K>);
     },
 
+    /**
+     * Set multiple config values at once.
+     */
     set(data: Partial<AppConfig>): void {
         cache = { ...cache, ...data };
         save();
     },
 
+    /**
+     * Set many config entries from an array of [key, value] pairs.
+     */
     setMany<K extends keyof AppConfig>(entries: [K, AppConfig[K]][]): void {
         for (const [key, value] of entries) {
             cache[key] = value;
@@ -99,11 +110,17 @@ const Config = {
         save();
     },
 
+    /**
+     * Reset config to default values.
+     */
     reset(): void {
         cache = { ...defaultConfig };
         save();
     },
 
+    /**
+     * Get the path to the config file on disk.
+     */
     getPath(): string {
         return storePath;
     },

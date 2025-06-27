@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import EyeIcon from "./icons/EyeIcon";
 
 const TABS = [
     { key: "general", label: "General" },
@@ -21,14 +20,11 @@ interface Config {
     [key: string]: string | boolean | string[] | undefined;
 }
 
-interface SecretsVisible {
-    [key: string]: boolean;
-}
-
 export default function Settings({ onClose }: { onClose: () => void }) {
     const [tab, setTab] = useState<string>("general");
     const [config, setConfig] = useState<Config>({});
-    const [secretsVisible, setSecretsVisible] = useState<SecretsVisible>({});
+    const [saveMessage, setSaveMessage] = useState<string>("");
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     // IPC: get config on mount
     useEffect(() => {
@@ -38,82 +34,68 @@ export default function Settings({ onClose }: { onClose: () => void }) {
     // IPC: save config
     const handleSave = () => {
         window.electronAPI.send("config:set", config);
-        onClose();
+        setSaveMessage("Settings have been saved successfully.");
+        setHasUnsavedChanges(false);
+        setTimeout(() => setSaveMessage(""), 3000); // Clear message after 3 seconds
     };
 
     const handleInput = (key: string, value: string | boolean | string[]) => {
-        setConfig((prevConfig) => ({ ...prevConfig, [key]: value }));
+        setConfig((prevConfig) => {
+            const newConfig = { ...prevConfig, [key]: value };
+            setHasUnsavedChanges(JSON.stringify(newConfig) !== JSON.stringify(prevConfig));
+            return newConfig;
+        });
     };
 
     const renderTabContent = () => {
         switch (tab) {
             case "general":
                 return (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">General Settings</h2>
-                        <div className="flex flex-col gap-4">
-                            <label className="flex flex-col gap-1">
-                                Song Request Prefix
-                                <input
-                                    className="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
-                                    value={config.prefix || ""}
-                                    onChange={(e) => handleInput("prefix", e.target.value)}
-                                />
-                            </label>
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={!!config.canAnyonePlaySong}
-                                    onChange={(e) => handleInput("canAnyonePlaySong", e.target.checked)}
-                                />
-                                Allow Anyone to Play Songs
-                            </label>
-                            <label className="flex flex-col gap-1">
-                                Song Reply Message
-                                <input
-                                    className="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
-                                    value={config.songReplyMessage || ""}
-                                    onChange={(e) => handleInput("songReplyMessage", e.target.value)}
-                                />
-                                <span className="text-xs text-zinc-400">Use <code>{`{title}`}</code>, <code>{`{artist}`}</code>, <code>{`{user}`}</code> as variables.</span>
-                            </label>
-                            <label className="flex flex-col gap-1">
-                                Allowed Badges
-                                <input
-                                    className="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white"
-                                    value={(config.allowedBadges || []).join(", ")}
-                                    onChange={(e) => handleInput("allowedBadges", e.target.value.split(", "))}
-                                />
-                                <span className="text-xs text-zinc-400">Enter badges separated by commas.</span>
-                            </label>
-                        </div>
+                    <div className="flex flex-col gap-4">
+                        <label className="flex items-center gap-2">
+                            <div
+                                className={`w-10 h-5 flex items-center rounded-full p-1 transition cursor-pointer ${config.canAnyonePlaySong ? "bg-green-500" : "bg-zinc-700"}`}
+                                onClick={() => handleInput("canAnyonePlaySong", !config.canAnyonePlaySong)}
+                            >
+                                <div
+                                    className={`w-4 h-4 bg-white rounded-full shadow-md transform transition ${config.canAnyonePlaySong ? "translate-x-[1.10rem]" : "-translate-x-0.5"}`}
+                                ></div>
+                            </div>
+                            Allow Anyone to Play Songs
+                        </label>
+                        <label className="flex flex-col gap-1">
+                            Song Request Prefix
+                            <input
+                                className="bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-green-500 rounded px-3 py-2 text-white"
+                                value={config.prefix || ""}
+                                onChange={(e) => handleInput("prefix", e.target.value)}
+                            />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                            Song Reply Message
+                            <input
+                                className="bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-green-500 rounded px-3 py-2 text-white"
+                                value={config.songReplyMessage || ""}
+                                onChange={(e) => handleInput("songReplyMessage", e.target.value)}
+                            />
+                            <span className="text-xs text-zinc-400">Use <code>{`{title}`}</code>, <code>{`{artist}`}</code>, <code>{`{user}`}</code> as variables.</span>
+                        </label>
                     </div>
                 );
             case "secrets":
                 return (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">API Secrets</h2>
-                        <div className="flex flex-col gap-4">
-                            {secretFields.map((field) => (
-                                <label key={field.key} className="flex flex-col gap-1 relative">
-                                    {field.label}
-                                    <input
-                                        className="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-white pr-10"
-                                        type={secretsVisible[field.key] ? "text" : "password"}
-                                        value={typeof config[field.key] === "string" ? config[field.key] as string : ""}
-                                        onChange={(e) => handleInput(field.key, e.target.value)}
-                                    />
-                                    <button
-                                        type="button"
-                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-zinc-400 hover:text-white"
-                                        onClick={() => setSecretsVisible((prev) => ({ ...prev, [field.key]: !prev[field.key] }))}
-                                        tabIndex={-1}
-                                    >
-                                        <EyeIcon open={!!secretsVisible[field.key]} className="w-5 h-5" />
-                                    </button>
-                                </label>
-                            ))}
-                        </div>
+                    <div className="flex flex-col gap-4">
+                        {secretFields.map((field) => (
+                            <label key={field.key} className="flex flex-col gap-1">
+                                {field.label}
+                                <input
+                                    className="bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-green-500 rounded px-3 py-2 text-white"
+                                    type="text"
+                                    value={typeof config[field.key] === "string" ? config[field.key] as string : ""}
+                                    onChange={(e) => handleInput(field.key, e.target.value)}
+                                />
+                            </label>
+                        ))}
                     </div>
                 );
             default:
@@ -136,21 +118,25 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 ))}
             </div>
             {/* Content */}
-            <div className="flex-1 p-6 overflow-y-auto relative max-h-screen">
+            <div className="flex-1 p-6 py-4 overflow-y-auto relative max-h-screen">
                 {renderTabContent()}
-                <div className="mt-8 flex justify-end gap-4">
-                    <div
-                        className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold px-6 py-2 rounded shadow cursor-pointer"
-                        onClick={onClose}
-                    >
-                        Close
-                    </div>
-                    <div
-                        className="bg-spotify-green hover:bg-spotify-green-dark text-black font-bold px-6 py-2 rounded shadow cursor-pointer"
-                        onClick={handleSave}
-                    >
-                        Save Settings
-                    </div>
+            </div>
+            {/* Footer */}
+            <div className="absolute bottom-0 left-0 w-full bg-zinc-800 p-2 flex justify-between items-center">
+                <div className="text-sm text-white ml-4">
+                    {saveMessage ? (
+                        <span className="text-green-500">{saveMessage}</span>
+                    ) : hasUnsavedChanges ? (
+                        <span className="text-yellow-500">Unsaved changes detected</span>
+                    ) : (
+                        <span className="text-zinc-400">All settings are up-to-date</span>
+                    )}
+                </div>
+                <div
+                    className="bg-spotify-green hover:bg-spotify-green-dark text-black font-bold px-6 py-2 rounded shadow cursor-pointer"
+                    onClick={handleSave}
+                >
+                    Save
                 </div>
             </div>
         </div>

@@ -36,6 +36,13 @@ export default function KickCard() {
             setListeningToChat(true);
         });
 
+        window.electronAPI.invoke("kick:isListeningToChat")
+            .then((isListening) => {
+                setListeningToChat(isListening);
+            }).catch((error) => {
+                console.error("Error checking Kick chat listening status:", error);
+            });
+
         window.electronAPI.invoke("kick:checkAuth")
             .then((result) => {
                 setAuthenticated(result.authenticated);

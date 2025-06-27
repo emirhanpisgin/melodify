@@ -159,6 +159,11 @@ export default function SpotifyCard() {
                     completedMessage={`Spotify device found.`}
                     notCompletedMessage="No Spotify devices."
                 />
+                {spotifyHasSession === false && (
+                    <div className="text-xs text-balance text-center max-w-[75%]">
+                        Please open Spotify and start playing music to create a session.
+                    </div>
+                )}
                 {openConfigure && (
                     <SecretsSetupModal
                         service="Spotify"

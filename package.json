@@ -9,7 +9,18 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.yourname.songulfy",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kryparnold",
+        "repo": "songulfy"
+      }
+    ]
   },
   "keywords": [],
   "author": {
@@ -37,6 +48,7 @@
     "autoprefixer": "^10.4.21",
     "css-loader": "^6.11.0",
     "electron": "36.5.0",
+    "electron-builder": "^26.0.12",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.31.0",
     "fork-ts-checker-webpack-plugin": "^7.3.0",
@@ -52,6 +64,7 @@
     "clsx": "^2.1.1",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^10.1.0",
+    "electron-updater": "^6.6.2",
     "lucide-react": "^0.523.0",
     "node-fetch": "^3.3.2",
     "ps-list": "^8.1.1",

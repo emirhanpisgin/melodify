@@ -2,9 +2,10 @@ import fetch from "node-fetch";
 import Config from "./config";
 import Pusher from "pusher-js";
 import { playSong } from "./spotify";
+import { parseKickCommand } from "./kickCommands";
 
 const redirectUri = "http://localhost:8889/callback";
-let isListening = false;
+export let isListening = false;
 let refreshKickTokenInterval: NodeJS.Timeout | null = null;
 
 async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Promise<boolean> {
@@ -83,6 +84,10 @@ export async function sendKickMessage(message: string): Promise<void> {
     }
 }
 
+/**
+ * Listen to Kick chat and handle song requests via chat commands.
+ * @param window Optional Electron window for sending events.
+ */
 export async function listenToChat(window?: Electron.BrowserWindow) {
     if (isListening) {
         console.log("Already listening to Kick chat");
@@ -110,19 +115,21 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
         if (!username || !message) return;
 
         const prefix = Config.get("prefix") || "!sr";
-        if (!message.startsWith(prefix)) return;
+        const parsed = parseKickCommand(message, prefix);
+        if (!parsed) return;
 
         const badges = data?.sender?.identity?.badges.map(
             (badge: { type: string; text: string; count?: number }) => badge.type
         );
 
         const canPlay = canPlaySongs(badges);
-
         if (!canPlay) return;
 
-        const songQuery = message.replace(prefix, "").trim();
-
-        playSong(songQuery, username);
+        // For MVP: only handle play command
+        if (parsed.command === "play" || parsed.command === undefined) {
+            const songQuery = parsed.args.join(" ").trim();
+            playSong(songQuery, username);
+        }
 
         console.log(`📥 New message from ${badges} ${username}: ${message}`);
     });

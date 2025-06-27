@@ -1,7 +1,14 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Config from "../lib/config";
 import { startKickAuthServer, openKickAuthUrl } from "../lib/kickAuthServer";
-import { listenToChat, refreshAccessTokenIfNeeded, sendKickMessage, startKickTokenAutoRefresh, stopKickTokenAutoRefresh } from "../lib/kick";
+import {
+    isListening,
+    listenToChat,
+    refreshAccessTokenIfNeeded,
+    sendKickMessage,
+    startKickTokenAutoRefresh,
+    stopKickTokenAutoRefresh,
+} from "../lib/kick";
 
 ipcMain.on("kick:auth", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
@@ -100,4 +107,8 @@ ipcMain.handle("kick:getSecrets", async () => {
 
 ipcMain.on("kick:setSecrets", async (event, secrets) => {
     Config.set(secrets);
+});
+
+ipcMain.handle("kick:isListeningToChat", async () => {
+    return isListening;
 });
