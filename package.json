@@ -13,7 +13,7 @@
     "dist": "electron-builder"
   },
   "build": {
-    "appId": "com.yourname.songulfy",
+    "appId": "com.emirhanpisgin.songulfy",
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
@@ -21,7 +21,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "kryparnold",
+        "owner": "emirhanpisgin",
         "repo": "songulfy"
       }
     ]
