@@ -21,7 +21,13 @@ const config: ForgeConfig = {
     },
     rebuildConfig: {},
     makers: [
-        new MakerSquirrel({}),
+        new MakerSquirrel({
+            authors: "Emirhan Pisgin",
+            description: "Songülfy - Listen with your viewers!",
+            setupExe: "Songulfy.Setup.exe",
+            name: "Songülfy",
+            exe: "Songulfy.exe",
+        }),
         new MakerZIP({}, ["darwin"]),
         new MakerRpm({}),
         new MakerDeb({}),
