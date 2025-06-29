@@ -17,7 +17,7 @@ const config: ForgeConfig = {
         name: "Songülfy",
     },
     rebuildConfig: {},
-    makers: [new MakerZIP({}, ["darwin"]), new MakerRpm({}), new MakerDeb({})],
+    makers: [new MakerZIP({}, ["darwin", "win32"]), new MakerRpm({}), new MakerDeb({})],
     plugins: [
         new AutoUnpackNativesPlugin({}),
         new WebpackPlugin({
