@@ -1,10 +1,10 @@
 // Electron main process entry point
 import { app, BrowserWindow, ipcMain } from "electron";
-import path from "path";
 import "./ipc/index";
 import "./lib/config";
 import { logError } from "./lib/logger";
-import { autoUpdater } from "electron-updater";
+import { updateElectronApp } from "update-electron-app";
+updateElectronApp();
 
 // Constants for window configuration
 const WINDOW_WIDTH = 700;
@@ -64,7 +64,6 @@ const createMainWindow = (): void => {
 // App lifecycle events
 app.on("ready", () => {
     createMainWindow();
-    autoUpdater.checkForUpdatesAndNotify();
 });
 
 app.on("window-all-closed", () => {
@@ -87,18 +86,6 @@ process.on("uncaughtException", (err) => {
 
 process.on("unhandledRejection", (reason) => {
     logError(reason, "main:unhandledRejection");
-});
-
-// Listen for update events and forward to renderer
-autoUpdater.on("update-available", () => {
-    BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send("update-available");
-    });
-});
-autoUpdater.on("update-downloaded", () => {
-    BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send("update-downloaded");
-    });
 });
 
 ipcMain.on("app:restart", () => {

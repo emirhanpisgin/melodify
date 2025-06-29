@@ -2,13 +2,14 @@ import fetch from "node-fetch";
 import Config from "./config";
 import Pusher from "pusher-js";
 import { playSong } from "./spotify";
-import { parseKickCommand } from "./kickCommands";
 
 const redirectUri = "http://localhost:8889/callback";
 export let isListening = false;
 let refreshKickTokenInterval: NodeJS.Timeout | null = null;
 
-async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Promise<boolean> {
+async function refreshAccessTokenIfNeeded(
+    window?: Electron.BrowserWindow
+): Promise<boolean> {
     const kickAccessToken = Config.get("kickAccessToken");
     const kickRefreshToken = Config.get("kickRefreshToken");
     const kickExpiresAt = Config.get("kickExpiresAt");
@@ -21,7 +22,8 @@ async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Prom
             if (!kickClientId || !kickClientSecret) {
                 window?.webContents.send("toast", {
                     type: "error",
-                    message: "Kick client ID or secret is not set. Please configure in settings.",
+                    message:
+                        "Kick client ID or secret is not set. Please configure in settings.",
                 });
                 return false;
             }
@@ -34,7 +36,9 @@ async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Prom
 
             const res = await fetch("https://id.kick.com/oauth/token", {
                 method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
                 body: params.toString(),
             });
 
@@ -63,8 +67,12 @@ async function refreshAccessTokenIfNeeded(window?: Electron.BrowserWindow): Prom
 }
 
 export async function sendKickMessage(message: string): Promise<void> {
-    const { kickAccessToken, userId } = Config.getMany(["kickAccessToken", "userId"]);
-    if (!kickAccessToken || !userId) throw new Error("Missing Kick access token or userId");
+    const { kickAccessToken, userId } = Config.getMany([
+        "kickAccessToken",
+        "userId",
+    ]);
+    if (!kickAccessToken || !userId)
+        throw new Error("Missing Kick access token or userId");
 
     const response = await fetch(`https://api.kick.com/public/v1/chat`, {
         method: "POST",
@@ -114,24 +122,22 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
 
         if (!username || !message) return;
 
-        const prefix = Config.get("prefix") || "!sr";
-        const parsed = parseKickCommand(message, prefix);
-        if (!parsed) return;
+        const prefix = Config.get("prefix");
+
+        if (!message.startsWith(prefix)) return;
 
         const badges = data?.sender?.identity?.badges.map(
-            (badge: { type: string; text: string; count?: number }) => badge.type
+            (badge: { type: string; text: string; count?: number }) =>
+                badge.type
         );
 
         const canPlay = canPlaySongs(badges);
         if (!canPlay) return;
 
-        // For MVP: only handle play command
-        if (parsed.command === "play" || parsed.command === undefined) {
-            const songQuery = parsed.args.join(" ").trim();
-            playSong(songQuery, username);
-        }
+        const songQuery = message.slice(prefix.length);
 
-        console.log(`📥 New message from ${badges} ${username}: ${message}`);
+        playSong(songQuery, username);
+        console.log("🎵 Playing song:", songQuery);
     });
 }
 
@@ -151,7 +157,9 @@ function canPlaySongs(badges: string[]): boolean {
     return false;
 }
 
-export async function startKickTokenAutoRefresh(window?: Electron.BrowserWindow) {
+export async function startKickTokenAutoRefresh(
+    window?: Electron.BrowserWindow
+) {
     // Clear any existing interval
     if (refreshKickTokenInterval) clearInterval(refreshKickTokenInterval);
     // Check every 60 seconds
