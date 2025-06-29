@@ -15,9 +15,15 @@ const config: ForgeConfig = {
         asar: true,
         icon: "./assets/icon",
         name: "Songülfy",
+        executableName: "songulfy",
+        appBundleId: "com.emirhanpisgin.songulfy",
     },
     rebuildConfig: {},
-    makers: [new MakerZIP({}, ["darwin", "win32"]), new MakerRpm({}), new MakerDeb({})],
+    makers: [
+        new MakerZIP({}, ["darwin", "win32"]),
+        new MakerRpm({}),
+        new MakerDeb({}),
+    ],
     plugins: [
         new AutoUnpackNativesPlugin({}),
         new WebpackPlugin({
