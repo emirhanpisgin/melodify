@@ -24,10 +24,7 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Make distributables
-              run: npm run make
-
-            - name: Publish to GitHub Releases
+            - name: Make Distributables and Publish to GitHub Releases
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: npm run publish

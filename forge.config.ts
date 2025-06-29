@@ -16,7 +16,7 @@ const config: ForgeConfig = {
         asar: true,
         icon: "./assets/icon",
         name: "Songülfy",
-        executableName: "songulfy",
+        executableName: "Songulfy",
         appBundleId: "com.emirhanpisgin.songulfy",
     },
     rebuildConfig: {},
