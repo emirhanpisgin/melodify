@@ -4,12 +4,6 @@ import "./ipc/index";
 import "./lib/config";
 import { logError } from "./lib/logger";
 import { updateElectronApp, UpdateSourceType } from "update-electron-app";
-updateElectronApp({
-    updateSource: {
-        type: UpdateSourceType.ElectronPublicUpdateService,
-        repo: "emirhanpisgin/songulfy",
-    },
-});
 
 // Constants for window configuration
 const WINDOW_WIDTH = 700;
@@ -58,6 +52,14 @@ const createMainWindow = (): void => {
         });
         ipcMain.on("window:close", () => {
             mainWindow.close();
+        });
+
+        updateElectronApp({
+            updateSource: {
+                type: UpdateSourceType.ElectronPublicUpdateService,
+                repo: "emirhanpisgin/songulfy",
+            },
+            updateInterval: "1 hour",
         });
     } catch (error) {
         logError(error, "main:createMainWindow");
