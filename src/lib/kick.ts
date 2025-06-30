@@ -142,9 +142,9 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
 }
 
 function canPlaySongs(badges: string[]): boolean {
-    const canUsersPlaySong = Config.get("canUsersPlaySong");
+    const canAnyonePlaySong = Config.get("canAnyonePlaySong");
 
-    if (canUsersPlaySong) return true;
+    if (canAnyonePlaySong) return true;
 
     if (
         badges.includes("og") ||

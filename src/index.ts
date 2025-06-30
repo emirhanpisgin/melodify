@@ -1,7 +1,7 @@
 // Electron main process entry point
 import { app, BrowserWindow, ipcMain } from "electron";
 import "./ipc/index";
-import "./lib/config";
+import Config from "./lib/config";
 import { logError } from "./lib/logger";
 import { updateElectronApp, UpdateSourceType } from "update-electron-app";
 import fs from "fs";
@@ -82,7 +82,10 @@ setInterval(async () => {
             const title = track.name;
             const artist = track.artists.map((a) => a.name).join(", ");
             const songPath = path.join(app.getPath("userData"), "song.txt");
-            fs.writeFileSync(songPath, `${title} - ${artist}`, "utf-8");
+            const currentSongText = Config.get("currentSongFormat")
+                .replace("{title}", title)
+                .replace("{artist}", artist);
+            fs.writeFileSync(songPath, currentSongText, "utf-8");
         }
     } catch (err) {
         logError(err, "main:checkSpotifySong");

@@ -17,6 +17,7 @@ interface Config {
     canAnyonePlaySong?: boolean;
     songReplyMessage?: string;
     allowedBadges?: string[];
+    currentSongFormat?: string;
     [key: string]: string | boolean | string[] | undefined;
 }
 
@@ -79,6 +80,15 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                                 onChange={(e) => handleInput("songReplyMessage", e.target.value)}
                             />
                             <span className="text-xs text-zinc-400">Use <code>{`{title}`}</code>, <code>{`{artist}`}</code>, <code>{`{user}`}</code> as variables.</span>
+                        </label>
+                        <label className="flex flex-col gap-1">
+                            Current Song Text Format
+                            <input
+                                className="bg-zinc-800 border-none outline-none focus:ring-2 focus:ring-green-500 rounded px-3 py-2 text-white"
+                                value={config.currentSongFormat || ""}
+                                onChange={(e) => handleInput("currentSongFormat", e.target.value)}
+                            />
+                            <span className="text-xs text-zinc-400">Use <code>{`{title}`}</code>, <code>{`{artist}`}</code> as variables.</span>
                         </label>
                     </div>
                 );

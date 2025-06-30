@@ -18,7 +18,7 @@ export interface AppConfig {
     username?: string;
     userId?: string;
     chatroomId?: string;
-    canUsersPlaySong?: boolean;
+    canAnyonePlaySong?: boolean;
     prefix?: string;
 
     // API secrets
@@ -28,13 +28,16 @@ export interface AppConfig {
     kickClientSecret?: string;
 
     // Song reply message template
-    songReplyMessage?: string; // e.g. "Now playing: {title} by {artist} (requested by {user})"
+    songReplyMessage?: string;
+    currentSongFormat?: string;
 }
 
 const defaultConfig: AppConfig = {
-    canUsersPlaySong: false,
+    canAnyonePlaySong: false,
     prefix: "!sr",
-    songReplyMessage: 'Now playing: {title} by {artist} (requested by {user})',
+    songReplyMessage:
+        "Added to queue: {title} by {artist} (requested by {user})",
+    currentSongFormat: "{title} - {artist}",
 };
 
 const storePath = path.join(app.getPath("userData"), "config.json");
