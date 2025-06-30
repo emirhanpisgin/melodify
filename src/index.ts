@@ -4,8 +4,6 @@ import "./ipc/index";
 import "./lib/config";
 import { logError } from "./lib/logger";
 import { updateElectronApp, UpdateSourceType } from "update-electron-app";
-import path from "path";
-import { spawn } from "child_process";
 
 // Constants for window configuration
 const WINDOW_WIDTH = 700;
@@ -16,20 +14,8 @@ const IS_MAC = process.platform === "darwin";
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
-function createUninstallShortcut() {
-    const updateExe = path.resolve(process.execPath, "..", "..", "Update.exe");
-    spawn(
-        updateExe,
-        ["--createShortcut=Songulfy.exe", "--shortcut-locations=StartMenu"],
-        {
-            detached: true,
-        }
-    );
-}
-
 // Handle Squirrel.Windows startup events
-if (process.argv.includes("--squirrel-firstrun")) {
-    createUninstallShortcut();
+if (require("electron-squirrel-startup")) {
     app.quit();
 }
 
