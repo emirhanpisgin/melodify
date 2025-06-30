@@ -4,6 +4,9 @@ import "./ipc/index";
 import "./lib/config";
 import { logError } from "./lib/logger";
 import { updateElectronApp, UpdateSourceType } from "update-electron-app";
+import fs from "fs";
+import { getSpotifyApi } from "./lib/spotify";
+import path from "path";
 
 // Constants for window configuration
 const WINDOW_WIDTH = 700;
@@ -67,6 +70,24 @@ const createMainWindow = (): void => {
         console.error("Failed to create main window:", error);
     }
 };
+
+// Check current Spotify song every 10 seconds and save title to song.txt
+setInterval(async () => {
+    try {
+        const spotifyApi = getSpotifyApi();
+        if (!spotifyApi) return;
+        const playback = await spotifyApi.getMyCurrentPlaybackState();
+        const track = playback.body?.item;
+        if (track && track.type === "track") {
+            const title = track.name;
+            const artist = track.artists.map((a) => a.name).join(", ");
+            const songPath = path.join(app.getPath("userData"), "song.txt");
+            fs.writeFileSync(songPath, `${title} - ${artist}`, "utf-8");
+        }
+    } catch (err) {
+        logError(err, "main:checkSpotifySong");
+    }
+}, 10000);
 
 // App lifecycle events
 app.on("ready", () => {
