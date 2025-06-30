@@ -52,7 +52,6 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "electron-squirrel-startup": "^1.0.1",
-    "electron-updater": "^6.6.2",
     "lucide-react": "^0.523.0",
     "node-fetch": "^3.3.2",
     "ps-list": "^8.1.1",
