@@ -17,4 +17,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     minimize: () => ipcRenderer.send("window:minimize"),
     close: () => ipcRenderer.send("window:close"),
     restart: () => ipcRenderer.send("app:restart"),
+    onUpdateStatus: (callback: (event: any, data: any) => void) => ipcRenderer.on("update:status", callback),
+    checkForUpdates: () => ipcRenderer.send("update:check"),
+    setAutoUpdate: (enabled: boolean) => ipcRenderer.send("update:setAuto", enabled),
+    getAutoUpdate: () => ipcRenderer.invoke("update:getAuto"),
+    getAppVersion: () => ipcRenderer.invoke("app:getVersion"),
 });

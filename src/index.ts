@@ -1,12 +1,12 @@
 // Electron main process entry point
 import { app, BrowserWindow, ipcMain } from "electron";
 import "./ipc/index";
-import Config from "./lib/config";
 import { logError } from "./lib/logger";
 import { updateElectronApp, UpdateSourceType } from "update-electron-app";
 import fs from "fs";
 import { getSpotifyApi } from "./lib/spotify";
 import path from "path";
+import Config from "./lib/config";
 
 // Constants for window configuration
 const WINDOW_WIDTH = 700;
@@ -91,6 +91,7 @@ setInterval(async () => {
         logError(err, "main:checkSpotifySong");
     }
 }, 10000);
+
 
 // App lifecycle events
 app.on("ready", () => {

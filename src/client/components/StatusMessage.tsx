@@ -1,9 +1,7 @@
 // components/Status.tsx
 import { ReactNode } from "react";// or your custom icons
-import LoadingIcon from "./icons/LoadingIcon";
-import CheckIcon from "./icons/CheckIcon";
-import CrossIcon from "./icons/CrossIcon";
 import { cn } from "../../lib/utils";
+import { CheckIcon, LoaderCircleIcon, XIcon } from "lucide-react";
 
 type StatusProps = {
     loading: boolean;
@@ -29,13 +27,13 @@ export default function StatusMessage({
     let message: string;
 
     if (loading) {
-        icon = <LoadingIcon className="size-4" />;
+        icon = <LoaderCircleIcon className="size-4 animate-spin" />;
         message = loadingMessage;
     } else if (completed) {
         icon = <CheckIcon className="size-4 text-green-500" />;
         message = completedMessage || "Completed.";
     } else {
-        icon = <CrossIcon className="size-4 text-red-500" />;
+        icon = <XIcon className="size-4 text-red-500" />;
         message = notCompletedMessage || "Not completed.";
     }
 

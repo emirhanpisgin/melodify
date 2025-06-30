@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import InfoIcon from "./icons/InfoIcon";
+import { InfoIcon } from "lucide-react";
 import ExternalLink from "./ExternalLink";
 
 interface SecretsSetupModalProps {
@@ -74,7 +74,7 @@ export default function SecretsSetupModal({
                         {hasSecrets ? (
                             <div className="text-xs text-green-500 mt-2">Secrets are set, you can close this window.</div>
                         ) : (
-                            <span className="text-blue-400 flex items-center gap-1 text-xs"><InfoIcon className="size-5 " /> You can change these values later in the app settings.</span>
+                            <span className="text-blue-400 flex items-center gap-1 text-xs"><InfoIcon className="size-5" /> You can change these values later in the app settings.</span>
                         )}
                     </div>
                 </div>

@@ -30,6 +30,9 @@ export interface AppConfig {
     // Song reply message template
     songReplyMessage?: string;
     currentSongFormat?: string;
+
+    // Auto update preference
+    autoUpdateEnabled?: boolean;
 }
 
 const defaultConfig: AppConfig = {
@@ -38,6 +41,7 @@ const defaultConfig: AppConfig = {
     songReplyMessage:
         "Added to queue: {title} by {artist} (requested by {user})",
     currentSongFormat: "{title} - {artist}",
+    autoUpdateEnabled: true,
 };
 
 const storePath = path.join(app.getPath("userData"), "config.json");

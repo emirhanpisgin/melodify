@@ -4,10 +4,10 @@
 
 import { useEffect, useState } from "react";
 import StatusMessage from "./StatusMessage";
-import InfoIcon from "./icons/InfoIcon";
 import SecretsSetupModal from "./SecretsSetupModal";
 import { KICK_REDIRECT_URI } from "../../lib/constants";
 import KickIcon from "./icons/KickIcon";
+import { InfoIcon } from "lucide-react";
 
 export default function KickCard() {
     const [hasSecrets, setHasSecrets] = useState(null);
