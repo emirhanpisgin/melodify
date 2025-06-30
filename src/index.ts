@@ -20,7 +20,7 @@ function createUninstallShortcut() {
     const updateExe = path.resolve(process.execPath, "..", "..", "Update.exe");
     spawn(
         updateExe,
-        ["--createShortcut=Songülfy.exe", "--shortcut-locations=StartMenu"],
+        ["--createShortcut=Songulfy.exe", "--shortcut-locations=StartMenu"],
         {
             detached: true,
         }

@@ -15,7 +15,7 @@ const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
         icon: "./assets/icon",
-        name: "Songülfy",
+        name: "Songulfy",
         executableName: "Songulfy",
         appBundleId: "com.emirhanpisgin.songulfy",
     },
@@ -25,7 +25,7 @@ const config: ForgeConfig = {
             authors: "Emirhan Pisgin",
             description: "Songülfy - Listen with your viewers!",
             setupExe: "Songulfy.Setup.exe",
-            name: "Songülfy",
+            name: "Songulfy",
             exe: "Songulfy.exe",
         }),
         new MakerZIP({}, ["darwin"]),
