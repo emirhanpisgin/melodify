@@ -3,8 +3,13 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import "./ipc/index";
 import "./lib/config";
 import { logError } from "./lib/logger";
-import { updateElectronApp } from "update-electron-app";
-updateElectronApp();
+import { updateElectronApp, UpdateSourceType } from "update-electron-app";
+updateElectronApp({
+    updateSource: {
+        type: UpdateSourceType.ElectronPublicUpdateService,
+        repo: "emirhanpisgin/songulfy",
+    },
+});
 
 // Constants for window configuration
 const WINDOW_WIDTH = 700;
