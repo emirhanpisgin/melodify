@@ -1,7 +1,7 @@
 {
   "name": "songulfy",
   "productName": "songulfy",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "My Electron application description",
   "main": ".webpack/main",
   "scripts": {
