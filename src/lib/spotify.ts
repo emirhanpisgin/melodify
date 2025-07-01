@@ -118,8 +118,9 @@ export async function playSong(
     if (!spotifyApi) return;
     let trackUri: string | null = null;
     let track: any = null;
+    // Updated regex to handle /intl-xx/ in the URL path and optional query params
     const match = songQuery.match(
-        /(?:https?:\/\/open\.spotify\.com\/track\/|spotify:track:)([a-zA-Z0-9]+)/
+        /(?:https?:\/\/open\.spotify\.com\/(?:intl-[a-z]{2,3}\/)?track\/|spotify:track:)([a-zA-Z0-9]+)/
     );
     if (match && match[1]) {
         trackUri = `spotify:track:${match[1]}`;
