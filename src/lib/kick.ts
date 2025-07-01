@@ -7,7 +7,67 @@ const redirectUri = "http://localhost:8889/callback";
 export let isListening = false;
 let refreshKickTokenInterval: NodeJS.Timeout | null = null;
 
-async function refreshAccessTokenIfNeeded(
+/**
+ * Refresh the Kick access token using the refresh token.
+ * Returns true if successful, false otherwise.
+ */
+export async function refreshKickAccessToken(
+    window?: Electron.BrowserWindow
+): Promise<boolean> {
+    const kickRefreshToken = Config.get("kickRefreshToken");
+    if (!kickRefreshToken) return false;
+    try {
+        const kickClientId = Config.get("kickClientId");
+        const kickClientSecret = Config.get("kickClientSecret");
+        if (!kickClientId || !kickClientSecret) {
+            window?.webContents.send("toast", {
+                type: "error",
+                message:
+                    "Kick client ID or secret is not set. Please configure in settings.",
+            });
+            return false;
+        }
+        const params = new URLSearchParams({
+            grant_type: "refresh_token",
+            refresh_token: `${kickRefreshToken}`,
+            client_id: kickClientId,
+            client_secret: kickClientSecret,
+        });
+
+        const res = await fetch("https://id.kick.com/oauth/token", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: params.toString(),
+        });
+
+        if (!res.ok) {
+            throw new Error(`Failed to refresh token: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        const { access_token, refresh_token, expires_in } = data as any;
+
+        Config.set({
+            kickAccessToken: access_token,
+            kickRefreshToken: refresh_token ?? kickRefreshToken,
+            kickExpiresAt: Date.now() + expires_in * 1000,
+        });
+
+        console.log("Kick access token refreshed");
+        return true;
+    } catch (error) {
+        console.error("Failed to refresh Kick access token", error);
+        return false;
+    }
+}
+
+/**
+ * Checks if the Kick access token is valid, and refreshes if needed.
+ * Returns true if the token is valid/usable, false otherwise.
+ */
+export async function checkKickAccessToken(
     window?: Electron.BrowserWindow
 ): Promise<boolean> {
     const kickAccessToken = Config.get("kickAccessToken");
@@ -16,53 +76,8 @@ async function refreshAccessTokenIfNeeded(
     if (!kickAccessToken || !kickRefreshToken || !kickExpiresAt) return false;
 
     if (Date.now() >= kickExpiresAt) {
-        try {
-            const kickClientId = Config.get("kickClientId");
-            const kickClientSecret = Config.get("kickClientSecret");
-            if (!kickClientId || !kickClientSecret) {
-                window?.webContents.send("toast", {
-                    type: "error",
-                    message:
-                        "Kick client ID or secret is not set. Please configure in settings.",
-                });
-                return false;
-            }
-            const params = new URLSearchParams({
-                grant_type: "refresh_token",
-                refresh_token: `${kickRefreshToken}`,
-                client_id: kickClientId,
-                client_secret: kickClientSecret,
-            });
-
-            const res = await fetch("https://id.kick.com/oauth/token", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: params.toString(),
-            });
-
-            if (!res.ok) {
-                throw new Error(`Failed to refresh token: ${res.statusText}`);
-            }
-
-            const data = await res.json();
-            const { access_token, refresh_token, expires_in } = data as any;
-
-            Config.set({
-                kickAccessToken: access_token,
-                kickRefreshToken: refresh_token ?? kickRefreshToken,
-                kickExpiresAt: Date.now() + expires_in * 1000,
-            });
-
-            console.log("Kick access token refreshed");
-            return true;
-        } catch (error) {
-            console.error("Failed to refresh Kick access token", error);
-            return false;
-        }
+        return await refreshKickAccessToken(window);
     }
-
     return true;
 }
 
@@ -160,15 +175,13 @@ function canPlaySongs(badges: string[]): boolean {
 export async function startKickTokenAutoRefresh(
     window?: Electron.BrowserWindow
 ) {
-    // Clear any existing interval
     if (refreshKickTokenInterval) clearInterval(refreshKickTokenInterval);
-    // Check every 60 seconds
+
     refreshKickTokenInterval = setInterval(async () => {
         const kickExpiresAt = Config.get("kickExpiresAt");
         if (!kickExpiresAt) return;
-        // Refresh 2 minutes before expiry
         if (Date.now() >= kickExpiresAt - 2 * 60 * 1000) {
-            await refreshAccessTokenIfNeeded(window);
+            await refreshKickAccessToken(window);
         }
     }, 60 * 1000);
 }
@@ -177,8 +190,6 @@ export function stopKickTokenAutoRefresh() {
     if (refreshKickTokenInterval) clearInterval(refreshKickTokenInterval);
     refreshKickTokenInterval = null;
 }
-
-export { refreshAccessTokenIfNeeded };
 
 export default {
     redirectUri,

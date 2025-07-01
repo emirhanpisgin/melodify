@@ -4,10 +4,10 @@ import { startKickAuthServer, openKickAuthUrl } from "../lib/kickAuthServer";
 import {
     isListening,
     listenToChat,
-    refreshAccessTokenIfNeeded,
     sendKickMessage,
     startKickTokenAutoRefresh,
     stopKickTokenAutoRefresh,
+    checkKickAccessToken,
 } from "../lib/kick";
 
 ipcMain.on("kick:auth", async (event) => {
@@ -29,7 +29,9 @@ ipcMain.handle("kick:getUserData", async (event) => {
 ipcMain.handle("kick:findChatroom", async (event, data) => {
     const { username } = data;
 
-    const response = await fetch(`https://kick.com/api/v1/${username}/chatroom`);
+    const response = await fetch(
+        `https://kick.com/api/v1/${username}/chatroom`
+    );
     const body = await response.json();
 
     if (!response.ok || !body.chatroom.id) {
@@ -56,7 +58,7 @@ ipcMain.handle("kick:checkAuth", async (event) => {
         return { authenticated: false };
     }
 
-    const refreshed = await refreshAccessTokenIfNeeded(window);
+    const refreshed = await checkKickAccessToken(window);
     if (!refreshed) {
         stopKickTokenAutoRefresh();
         return { authenticated: false };
@@ -69,15 +71,20 @@ ipcMain.handle("kick:checkAuth", async (event) => {
     listenToChat(window);
     startKickTokenAutoRefresh(window);
 
-    const channelRequest = await fetch("https://api.kick.com/public/v1/channels", {
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
-    });
+    const channelRequest = await fetch(
+        "https://api.kick.com/public/v1/channels",
+        {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }
+    );
 
     if (!channelRequest.ok) {
-        throw new Error(`Failed to fetch channels: ${channelRequest.statusText}`);
+        throw new Error(
+            `Failed to fetch channels: ${channelRequest.statusText}`
+        );
     }
 
     const { data } = await channelRequest.json();
@@ -89,7 +96,11 @@ ipcMain.handle("kick:checkAuth", async (event) => {
 
 ipcMain.on("kick:logout", (event) => {
     stopKickTokenAutoRefresh();
-    Config.set({ kickAccessToken: undefined, kickRefreshToken: undefined, kickExpiresAt: undefined });
+    Config.set({
+        kickAccessToken: undefined,
+        kickRefreshToken: undefined,
+        kickExpiresAt: undefined,
+    });
 });
 
 ipcMain.handle("kick:hasSecrets", async () => {

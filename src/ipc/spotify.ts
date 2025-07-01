@@ -1,7 +1,12 @@
 import { ipcMain, BrowserWindow, shell } from "electron";
 import psList from "ps-list";
 import Config from "../lib/config";
-import { getSpotifyApi, refreshAccessTokenIfNeeded } from "../lib/spotify";
+import {
+    getSpotifyApi,
+    checkSpotifyAccessToken,
+    startSpotifyTokenRefreshInterval,
+    stopSpotifyTokenAutoRefresh,
+} from "../lib/spotify";
 import { startSpotifyAuthServer } from "../lib/spotifyAuthServer";
 import { exec } from "child_process";
 import { promisify } from "util";
@@ -40,19 +45,23 @@ ipcMain.handle("spotify:getUserData", async () => {
     }
 });
 
-ipcMain.handle("spotify:checkAuth", async () => {
+ipcMain.handle("spotify:checkAuth", async (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender);
     const accessToken = Config.get("spotifyAccessToken");
     const refreshToken = Config.get("spotifyRefreshToken");
     if (!accessToken || !refreshToken) {
+        stopSpotifyTokenAutoRefresh();
         return { authenticated: false };
     }
-    const refreshed = await refreshAccessTokenIfNeeded();
+    const refreshed = await checkSpotifyAccessToken();
     if (!refreshed) {
+        stopSpotifyTokenAutoRefresh();
         return { authenticated: false };
     }
     try {
         const spotifyApi = getSpotifyApi();
         const me = await spotifyApi.getMe();
+        startSpotifyTokenRefreshInterval(window);
         return { authenticated: true, username: me.body.display_name };
     } catch (err) {
         logError(err, "spotify:checkAuth");
@@ -61,8 +70,13 @@ ipcMain.handle("spotify:checkAuth", async () => {
 });
 
 ipcMain.on("spotify:logout", () => {
+    stopSpotifyTokenAutoRefresh();
     const spotifyApi = getSpotifyApi();
-    Config.set({ spotifyAccessToken: undefined, spotifyRefreshToken: undefined, spotifyExpiresAt: undefined });
+    Config.set({
+        spotifyAccessToken: undefined,
+        spotifyRefreshToken: undefined,
+        spotifyExpiresAt: undefined,
+    });
     spotifyApi.setAccessToken("");
     spotifyApi.setRefreshToken("");
 });
@@ -70,7 +84,9 @@ ipcMain.on("spotify:logout", () => {
 ipcMain.handle("spotify:isRunning", async () => {
     try {
         const processes = await psList();
-        return processes.some((proc) => proc.name.toLowerCase().includes("spotify"));
+        return processes.some((proc) =>
+            proc.name.toLowerCase().includes("spotify")
+        );
     } catch (err) {
         console.warn("ps-list failed, falling back to tasklist:", err);
         try {
@@ -109,7 +125,11 @@ ipcMain.handle("spotify:setSecrets", async (event, secrets) => {
         const response = await fetch(tokenUrl, {
             method: "POST",
             headers: {
-                Authorization: "Basic " + Buffer.from(`${spotifyClientId}:${spotifyClientSecret}`).toString("base64"),
+                Authorization:
+                    "Basic " +
+                    Buffer.from(
+                        `${spotifyClientId}:${spotifyClientSecret}`
+                    ).toString("base64"),
                 "Content-Type": "application/x-www-form-urlencoded",
             },
             body: params.toString(),
@@ -130,6 +150,8 @@ ipcMain.handle("spotify:hasSession", async () => {
     const spotifyApi = getSpotifyApi();
     if (!spotifyApi) return false;
     const devices = await spotifyApi.getMyDevices();
-    const hasActiveDevice = devices.body.devices.some((device) => device.is_active);
+    const hasActiveDevice = devices.body.devices.some(
+        (device) => device.is_active
+    );
     return hasActiveDevice;
 });
