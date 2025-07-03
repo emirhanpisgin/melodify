@@ -12,9 +12,6 @@ type StatusProps = {
     className?: string;
 };
 
-/**
- * StatusMessage displays a status icon and message for loading, success, or error states.
- */
 export default function StatusMessage({
     loading,
     completed,

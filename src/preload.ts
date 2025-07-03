@@ -2,11 +2,11 @@ import { contextBridge, ipcRenderer } from "electron";
 
 contextBridge.exposeInMainWorld("electronAPI", {
     send: (channel: string, data: any) => ipcRenderer.send(channel, data),
-    on: (channel: string, func: (event: any, ...args: any[]) => void) => {
-        ipcRenderer.on(channel, func);
+    on: (channel: string, func: (...args: any[]) => void) => {
+        ipcRenderer.on(channel, (_event, ...args) => func(...args));
     },
-    invoke: (channel: string, data: any) => ipcRenderer.invoke(channel, data),
-    removeListener: (channel: string, func: (event: any, ...args: any[]) => void) => {
+    invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args),
+    removeListener: (channel: string, func: (...args: any[]) => void) => {
         ipcRenderer.removeListener(channel, func);
     },
     openExternal: (url: string) => ipcRenderer.send("open-external", url),

@@ -1,8 +1,5 @@
-/**
- * Card component for Kick integration. Handles authentication, secrets, and chat status.
- */
-
 import { useEffect, useState } from "react";
+import { logDebug, logError } from "../rendererLogger";
 import StatusMessage from "./StatusMessage";
 import SecretsSetupModal from "./SecretsSetupModal";
 import { KICK_REDIRECT_URI } from "../../lib/constants";
@@ -23,12 +20,12 @@ export default function KickCard() {
             .then((secrets) => {
                 setHasSecrets(secrets);
             }).catch((error) => {
-                console.error("Error checking Kick secrets:", error);
+                logError(error, "Error checking Kick secrets");
             });
 
         window.electronAPI.on("kick:authenticated", (event, data) => {
             setAuthenticated(true);
-            console.log(data);
+            logDebug("Kick authenticated", { username: data?.username });
             setKickUsername(data.username);
         });
 
@@ -40,7 +37,7 @@ export default function KickCard() {
             .then((isListening) => {
                 setListeningToChat(isListening);
             }).catch((error) => {
-                console.error("Error checking Kick chat listening status:", error);
+                logError(error, "Error checking Kick chat listening status");
             });
 
         window.electronAPI.invoke("kick:checkAuth")
@@ -50,7 +47,7 @@ export default function KickCard() {
                     setKickUsername(result.username);
                 }
             }).catch((error) => {
-                console.error("Error checking Kick authentication:", error);
+                logError(error, "Error checking Kick authentication");
             });
     }, []);
 
@@ -67,7 +64,7 @@ export default function KickCard() {
             });
             setHasSecrets(true);
         } catch (error) {
-            console.error("Error setting Kick secrets:", error);
+            logError(error, "Error setting Kick secrets");
             alert("Failed to save Kick secrets. Please try again.");
         }
     };

@@ -1,3 +1,4 @@
 import "./client/index";
+import { logInfo } from "./client/rendererLogger";
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
+logInfo("Renderer loaded via webpack");

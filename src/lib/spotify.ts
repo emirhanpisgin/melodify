@@ -1,7 +1,8 @@
 import SpotifyWebApi from "spotify-web-api-node";
 import Config from "./config";
 import { sendKickMessage } from "./kick";
-import { logError } from "./logger";
+import { logError, logInfo, logWarn, logDebug } from "./logger";
+import { redactSecrets } from "./logger-utils";
 
 let spotifyApi: SpotifyWebApi | null = null;
 let refreshSpotifyTokenInterval: NodeJS.Timeout | null = null;
@@ -60,6 +61,7 @@ export function saveTokens({
         api.setAccessToken(accessToken);
         api.setRefreshToken(refreshToken);
     }
+    logInfo("Spotify tokens saved", { expiresAt });
 }
 
 export function clearTokens() {
@@ -73,6 +75,7 @@ export function clearTokens() {
         api.setAccessToken("");
         api.setRefreshToken("");
     }
+    logInfo("Spotify tokens cleared");
 }
 
 export async function refreshSpotifyAccessToken(
@@ -91,10 +94,10 @@ export async function refreshSpotifyAccessToken(
             refreshToken: tokens.refreshToken,
             expiresIn: expires_in,
         });
-        console.log("Spotify access token refreshed");
+        logInfo("Spotify access token refreshed");
         return true;
     } catch (error) {
-        console.error("Failed to refresh Spotify access token", error);
+        logError(error, "spotify:refreshSpotifyAccessToken");
         return false;
     }
 }
@@ -114,8 +117,12 @@ export async function playSong(
     songQuery: string,
     username: string
 ): Promise<void> {
+    logDebug("playSong called", redactSecrets({ songQuery, username }));
     const spotifyApi = getSpotifyApi();
-    if (!spotifyApi) return;
+    if (!spotifyApi) {
+        logError("Spotify API not configured", "spotify:playSong");
+        return;
+    }
     let trackUri: string | null = null;
     let track: any = null;
     // Updated regex to handle /intl-xx/ in the URL path and optional query params
@@ -127,20 +134,24 @@ export async function playSong(
         try {
             const trackData = await spotifyApi.getTrack(match[1]);
             track = trackData.body;
-        } catch {}
+        } catch (err) {
+            logError(err, "spotify:playSong:getTrack");
+        }
     } else {
         const tracks = await spotifyApi.searchTracks(songQuery, {
             limit: 1,
-            market: "TR",
         });
-        if (!tracks.body.tracks.total) return;
+        if (!tracks.body.tracks.total) {
+            logWarn("No tracks found for query: " + songQuery, "spotify:playSong");
+            return;
+        }
         track = tracks.body.tracks.items[0];
         trackUri = track.uri;
     }
     if (trackUri) {
+        logDebug("Adding to queue", redactSecrets({ trackUri, track }));
         await spotifyApi.addToQueue(trackUri).catch((err) => {
-            logError(err, "playSong");
-            console.error("Failed to add song to queue:", err);
+            logError(err, "spotify:playSong:addToQueue");
         });
         if (track) {
             const template =
@@ -154,9 +165,9 @@ export async function playSong(
                 )
                 .replace("{user}", username || "user");
 
+            logDebug("Sending Kick message", redactSecrets({ reply }));
             sendKickMessage(reply).catch((err) => {
-                logError(err, "sendKickMessage");
-                console.error("Failed to send Kick message:", err);
+                logError(err, "spotify:playSong:sendKickMessage");
             });
         }
     }
@@ -169,10 +180,15 @@ export async function startSpotifyTokenRefreshInterval(
         clearInterval(refreshSpotifyTokenInterval);
     }
     refreshSpotifyTokenInterval = setInterval(async () => {
-        const spotifyExpiresAt = Config.get("spotifyExpiresAt");
-        if (!spotifyExpiresAt) return;
-        if (Date.now() >= spotifyExpiresAt - 2 * 60 * 1000) {
-            await refreshSpotifyAccessToken(window);
+        try {
+            const valid = await checkSpotifyAccessToken(window);
+            if (!valid) {
+                logWarn("Failed to refresh Spotify access token", "spotify:startSpotifyTokenRefreshInterval");
+                clearInterval(refreshSpotifyTokenInterval!);
+                refreshSpotifyTokenInterval = null;
+            }
+        } catch (err) {
+            logError(err, "spotify:startSpotifyTokenRefreshInterval");
         }
     }, 60 * 1000);
 }

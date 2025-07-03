@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 
-/**
- * Shows a dialog when an update is available or downloaded.
- */
 export default function UpdateDialog() {
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [updateDownloaded, setUpdateDownloaded] = useState(false);

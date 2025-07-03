@@ -7,13 +7,9 @@ import Settings from "./components/Settings";
 import Titlebar from "./components/Titlebar";
 import UpdateDialog from "./components/UpdateDialog";
 
-/**
- * Root application component. Sets up the main layout and theme.
- */
 export default function App() {
     const [settingsOpen, setSettingsOpen] = useState(false);
 
-    // Window controls via preload
     const handleMinimize = () => {
         window.electronAPI?.minimize?.();
     };

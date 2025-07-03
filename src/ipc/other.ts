@@ -1,5 +1,7 @@
 import { app, autoUpdater, BrowserWindow, ipcMain, shell } from "electron";
 import Config from "../lib/config";
+import { logDebug, logError, logInfo, logWarn } from "../lib/logger";
+import { redactSecrets } from "../lib/logger-utils";
 
 ipcMain.on("open-external", (_, url: string) => {
     shell.openExternal(url);
@@ -48,3 +50,17 @@ autoUpdater.on("error", (err: any) =>
 autoUpdater.on("update-downloaded", (info: any) =>
     broadcastUpdateStatus("downloaded", { info })
 );
+
+ipcMain.on("log:info", (_event, { message, meta }) => {
+    logInfo(`[renderer] ${message}`, redactSecrets(meta));
+});
+ipcMain.on("log:warn", (_event, { message, meta }) => {
+    logWarn(`[renderer] ${message}`, redactSecrets(meta));
+});
+ipcMain.on("log:error", (_event, { message }) => {
+    logError(`[renderer] ${message}`);
+});
+ipcMain.on("log:debug", (_event, { message, meta }) => {
+    console.log("new debug log:", message, meta);
+    logDebug(`[renderer] ${message}`, redactSecrets(meta));
+});

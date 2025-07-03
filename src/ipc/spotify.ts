@@ -10,12 +10,14 @@ import {
 import { startSpotifyAuthServer } from "../lib/spotifyAuthServer";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { logError } from "../lib/logger";
+import { logInfo, logError, logWarn, logDebug } from "../lib/logger";
+import { redactSecrets } from "../lib/logger-utils";
 
 const execAsync = promisify(exec);
 
 ipcMain.on("spotify:auth", (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
+    logDebug("IPC spotify:auth", redactSecrets({ sender: !!event.sender }));
     if (!window) return;
 
     startSpotifyAuthServer(window);
@@ -30,6 +32,7 @@ ipcMain.on("spotify:auth", (event) => {
     const spotifyApi = getSpotifyApi();
 
     const authURL = spotifyApi.createAuthorizeURL(scopes, "state");
+    logDebug("Opening Spotify auth URL", redactSecrets({ authURL }));
     shell.openExternal(authURL);
 });
 
@@ -37,10 +40,10 @@ ipcMain.handle("spotify:getUserData", async () => {
     try {
         const spotifyApi = getSpotifyApi();
         const me = await spotifyApi.getMe();
+        logDebug("spotify:getUserData result", redactSecrets(me.body));
         return me.body;
     } catch (err) {
         logError(err, "spotify:getUserData");
-        console.error("Failed to get user data", err);
         return null;
     }
 });
@@ -49,6 +52,13 @@ ipcMain.handle("spotify:checkAuth", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     const accessToken = Config.get("spotifyAccessToken");
     const refreshToken = Config.get("spotifyRefreshToken");
+    logDebug(
+        "spotify:checkAuth called",
+        redactSecrets({
+            hasAccessToken: !!accessToken,
+            hasRefreshToken: !!refreshToken,
+        })
+    );
     if (!accessToken || !refreshToken) {
         stopSpotifyTokenAutoRefresh();
         return { authenticated: false };
@@ -62,6 +72,10 @@ ipcMain.handle("spotify:checkAuth", async (event) => {
         const spotifyApi = getSpotifyApi();
         const me = await spotifyApi.getMe();
         startSpotifyTokenRefreshInterval(window);
+        logDebug(
+            "spotify:checkAuth success",
+            redactSecrets({ username: me.body.display_name })
+        );
         return { authenticated: true, username: me.body.display_name };
     } catch (err) {
         logError(err, "spotify:checkAuth");
@@ -79,6 +93,7 @@ ipcMain.on("spotify:logout", () => {
     });
     spotifyApi.setAccessToken("");
     spotifyApi.setRefreshToken("");
+    logInfo("spotify:logout called");
 });
 
 ipcMain.handle("spotify:isRunning", async () => {

@@ -1,8 +1,5 @@
-/**
- * Card component for Spotify integration. Handles authentication, secrets, and device/session status.
- */
-
 import { useEffect, useState } from "react";
+import { logDebug, logError } from "../rendererLogger";
 import StatusMessage from "./StatusMessage";
 import SecretsSetupModal from "./SecretsSetupModal";
 import { SPOTIFY_REDIRECT_URI } from "../../lib/constants";
@@ -21,11 +18,11 @@ export default function SpotifyCard() {
     useEffect(() => {
         window.electronAPI.invoke("spotify:hasSecrets")
             .then((secrets) => {
-                console.log("Spotify secrets fetched:", secrets);
+                logDebug("Spotify secrets fetched", { hasSecrets: !!secrets });
                 setHasSecrets(secrets);
             })
             .catch((error) => {
-                console.error("Failed to fetch Spotify secrets:", error);
+                logError(error, "Failed to fetch Spotify secrets");
             });
     }, []);
 
@@ -49,7 +46,7 @@ export default function SpotifyCard() {
             })
             .catch((error) => {
                 setAuthenticated(false);
-                console.error("Failed to check Spotify authentication:", error);
+                logError(error, "Failed to check Spotify authentication");
             });
     }, []);
 
@@ -67,7 +64,7 @@ export default function SpotifyCard() {
         function checkSpotifySession() {
             window.electronAPI.invoke("spotify:hasSession")
                 .then((hasSession) => {
-                    console.log("Spotify session check result:", hasSession);
+                    logDebug("Spotify session check result", { hasSession });
                     setSpotifyHasSession(hasSession);
                     if (hasSession && interval) {
                         clearInterval(interval);
@@ -75,7 +72,7 @@ export default function SpotifyCard() {
                     }
                 })
                 .catch((error) => {
-                    console.error("Failed to check Spotify session:", error);
+                    logError(error, "Failed to check Spotify session");
                 });
         }
 

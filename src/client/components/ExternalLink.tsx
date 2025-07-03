@@ -1,9 +1,5 @@
 import { cn } from "../../lib/utils";
 
-/**
- * ExternalLink opens a URL in the user's default browser using Electron's shell API.
- */
-
 interface ExternalLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
     children?: React.ReactNode
 }

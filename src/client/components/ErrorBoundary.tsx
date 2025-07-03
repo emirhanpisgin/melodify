@@ -1,9 +1,6 @@
 import React from "react";
+import { logError } from "../rendererLogger";
 
-/**
- * Global error boundary for catching React rendering errors.
- * Usage: Wrap your app in <ErrorBoundary>...</ErrorBoundary>
- */
 export class ErrorBoundary extends React.Component<{
     children: React.ReactNode;
 }, { hasError: boolean; error: any }> {
@@ -17,8 +14,7 @@ export class ErrorBoundary extends React.Component<{
     }
 
     componentDidCatch(error: any, info: any) {
-        // Optionally log error to a service
-        // console.error(error, info);
+        logError(error, "React ErrorBoundary");
     }
 
     render() {

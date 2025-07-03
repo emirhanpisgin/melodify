@@ -1,6 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { app } from "electron";
+import { logInfo, logError, logWarn, logDebug } from "./logger";
+import { redactSecrets } from "./logger-utils";
+import { z } from "zod";
 
 export interface AppConfig {
     // Kick tokens
@@ -20,6 +23,7 @@ export interface AppConfig {
     chatroomId?: string;
     canAnyonePlaySong?: boolean;
     prefix?: string;
+    rewardTitle?: string;
 
     // API secrets
     spotifyClientId?: string;
@@ -48,39 +52,32 @@ const storePath = path.join(app.getPath("userData"), "config.json");
 
 let cache: AppConfig = { ...defaultConfig };
 
-/**
- * Load configuration from disk into memory cache.
- */
 function load(): void {
     try {
         if (fs.existsSync(storePath)) {
             const raw = fs.readFileSync(storePath, "utf-8");
             cache = { ...defaultConfig, ...JSON.parse(raw) };
+            logInfo("Loaded config from disk", redactSecrets(cache));
         } else {
             save();
         }
     } catch (err) {
-        console.error("[Config] Failed to load config:", err);
+        logError(err, "config:load");
         cache = { ...defaultConfig };
     }
 }
 
-/**
- * Save current memory cache to disk.
- */
 function save(): void {
     try {
         fs.writeFileSync(storePath, JSON.stringify(cache, null, 2), "utf-8");
+        logInfo("Saved config to disk", redactSecrets(cache));
     } catch (err) {
-        console.error("[Config] Failed to save config:", err);
+        logError(err, "config:save");
     }
 }
 
 load();
 
-/**
- * Get a copy of the current config or a specific key.
- */
 function get(): AppConfig;
 function get<K extends keyof AppConfig>(key: K): AppConfig[K];
 function get(key?: keyof AppConfig) {
@@ -89,48 +86,69 @@ function get(key?: keyof AppConfig) {
 
 const Config = {
     get,
-    /**
-     * Get multiple config keys at once.
-     */
     getMany<K extends keyof AppConfig>(keys: K[]): Pick<AppConfig, K> {
-        return keys.reduce((acc, key) => {
+        const result = keys.reduce((acc, key) => {
             acc[key] = cache[key];
             return acc;
         }, {} as Pick<AppConfig, K>);
+        logDebug("Config.getMany called", redactSecrets(result));
+        return result;
     },
-
-    /**
-     * Set multiple config values at once.
-     */
     set(data: Partial<AppConfig>): void {
+        logInfo("Config.set called", redactSecrets(data));
         cache = { ...cache, ...data };
         save();
     },
-
-    /**
-     * Set many config entries from an array of [key, value] pairs.
-     */
     setMany<K extends keyof AppConfig>(entries: [K, AppConfig[K]][]): void {
+        logInfo(
+            "Config.setMany called",
+            redactSecrets(Object.fromEntries(entries))
+        );
         for (const [key, value] of entries) {
             cache[key] = value;
         }
         save();
     },
-
-    /**
-     * Reset config to default values.
-     */
     reset(): void {
+        logInfo("Config.reset called");
         cache = { ...defaultConfig };
         save();
     },
-
-    /**
-     * Get the path to the config file on disk.
-     */
     getPath(): string {
         return storePath;
     },
 };
 
 export default Config;
+
+export const AppConfigSchema = z.object({
+    kickAccessToken: z.string().optional(),
+    kickRefreshToken: z.string().optional(),
+    kickExpiresAt: z.number().optional(),
+    spotifyAccessToken: z.string().optional(),
+    spotifyRefreshToken: z.string().optional(),
+    spotifyExpiresAt: z.number().optional(),
+    codeVerifier: z.string().optional(),
+    username: z.string().optional(),
+    userId: z.string().optional(),
+    chatroomId: z.string().optional(),
+    canAnyonePlaySong: z.boolean().optional(),
+    prefix: z.string().optional(),
+    rewardTitle: z.string().optional(),
+    spotifyClientId: z.string().optional(),
+    spotifyClientSecret: z.string().optional(),
+    kickClientId: z.string().optional(),
+    kickClientSecret: z.string().optional(),
+    songReplyMessage: z.string().optional(),
+    currentSongFormat: z.string().optional(),
+    autoUpdateEnabled: z.boolean().optional(),
+});
+
+export function validateAppConfig(config: any): AppConfig | null {
+    const result = AppConfigSchema.safeParse(config);
+    if (!result.success) {
+        logError("Invalid config: " + JSON.stringify(result.error.format()), "config:validate");
+        return null;
+    }
+    return result.data;
+}

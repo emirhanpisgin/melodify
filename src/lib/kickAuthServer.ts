@@ -4,6 +4,8 @@ import { generateCodeChallenge, generateCodeVerifier } from "./pkceUtils";
 import type { Server } from "http";
 import Config from "./config";
 import { listenToChat } from "./kick";
+import { logInfo, logError, logWarn, logDebug } from "./logger";
+import { redactSecrets } from "./logger-utils";
 
 const redirectUri = "http://localhost:8889/callback";
 const port = 8889;
@@ -12,6 +14,7 @@ const port = 8889;
 let serverInstance: Server | null = null;
 
 export async function startKickAuthServer(window: BrowserWindow): Promise<void> {
+    logDebug("startKickAuthServer called", redactSecrets({ window: !!window }));
     if (serverInstance) return;
 
     const app = express();
@@ -19,6 +22,7 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
     return new Promise((resolve, reject) => {
         app.get("/callback", async (req, res) => {
             const code = req.query.code as string | undefined;
+            logDebug("Kick auth callback hit", redactSecrets({ code }));
 
             if (!code) {
                 res.status(400).send("Missing code parameter");
@@ -36,6 +40,8 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
 
                 const kickClientId = Config.get("kickClientId");
                 const kickClientSecret = Config.get("kickClientSecret");
+                logDebug("Kick client credentials for auth", redactSecrets({ kickClientId, kickClientSecret }));
+
                 if (!kickClientId || !kickClientSecret) {
                     window.webContents.send("toast", {
                         message: "Check settings for Kick client ID and secret.",
@@ -53,6 +59,8 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     code_verifier: codeVerifier,
                 });
 
+                logDebug("Kick token exchange params", redactSecrets(Object.fromEntries(params)));
+
                 const tokenResponse = await fetch("https://id.kick.com/oauth/token", {
                     method: "POST",
                     headers: {
@@ -60,6 +68,8 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     },
                     body: params.toString(),
                 });
+
+                logDebug("Kick token exchange response", { status: tokenResponse.status });
 
                 if (!tokenResponse.ok) {
                     const errorText = await tokenResponse.text();
@@ -74,12 +84,16 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     kickExpiresAt: Date.now() + (tokenData.expires_in * 1000),
                 });
 
+                logInfo("Kick tokens set after auth");
+
                 const channelRequest = await fetch("https://api.kick.com/public/v1/channels", {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${tokenData.access_token}`,
                     },
                 });
+
+                logDebug("Kick channel request response", { status: channelRequest.status });
 
                 if (!channelRequest.ok) {
                     throw new Error(`Failed to fetch channels: ${channelRequest.statusText}`);
@@ -96,6 +110,8 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     },
                 });
 
+                logDebug("Kick chatroom request response", { status: chatroomRequest.status });
+
                 if (!chatroomRequest.ok) {
                     throw new Error(`Failed to fetch chatroom: ${chatroomRequest.statusText}`);
                 }
@@ -108,6 +124,8 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     chatroomId: chatroomData.id,
                 });
 
+                logInfo("Kick user/channel/chatroom set", redactSecrets({ userId: data[0].broadcaster_user_id, username, chatroomId: chatroomData.id }));
+
                 res.send("✅ Kick authentication successful! You can close this window.");
                 window.webContents.send("kick:authenticated", {
                     username: data[0].slug,
@@ -115,7 +133,7 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                 listenToChat(window);
                 resolve();
             } catch (error) {
-                console.error("Kick auth error", error);
+                logError(error, "kickAuthServer:startKickAuthServer");
                 res.status(500).send("❌ Kick authentication failed.");
                 reject(error);
             } finally {
@@ -127,7 +145,7 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
         });
 
         serverInstance = app.listen(port, () => {
-            console.log(`🌐 Kick Auth server running at http://localhost:${port}`);
+            logInfo(`Kick Auth server running at http://localhost:${port}`);
         });
     });
 }

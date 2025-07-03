@@ -16,9 +16,6 @@ interface SecretsSetupModalProps {
     info?: ReactNode;
 }
 
-/**
- * Reusable modal for setting up API secrets for Kick or Spotify.
- */
 export default function SecretsSetupModal({
     service,
     redirectUri,

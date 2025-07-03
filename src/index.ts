@@ -1,31 +1,25 @@
-// Electron main process entry point
 import { app, BrowserWindow, ipcMain } from "electron";
 import "./ipc/index";
-import { logError } from "./lib/logger";
 import { updateElectronApp, UpdateSourceType } from "update-electron-app";
 import fs from "fs";
 import { getSpotifyApi } from "./lib/spotify";
 import path from "path";
 import Config from "./lib/config";
+import { logDebug, logError, logInfo } from "./lib/logger";
 
-// Constants for window configuration
 const WINDOW_WIDTH = 700;
 const WINDOW_HEIGHT = 450;
 const IS_MAC = process.platform === "darwin";
 
-// Webpack entry points (provided by electron-forge/webpack)
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
-// Handle Squirrel.Windows startup events
 if (require("electron-squirrel-startup")) {
     app.quit();
 }
 
-/**
- * Creates the main application window.
- */
 const createMainWindow = (): void => {
+    logInfo("Creating main application window");
     try {
         const mainWindow = new BrowserWindow({
             width: WINDOW_WIDTH,
@@ -33,27 +27,28 @@ const createMainWindow = (): void => {
             fullscreenable: false,
             resizable: false,
             autoHideMenuBar: true,
-            frame: false, // Remove native titlebar for custom
+            frame: false,
             webPreferences: {
                 preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-                // contextIsolation: true, // Uncomment if using context isolation
-                // nodeIntegration: false, // Uncomment if needed for security
+                contextIsolation: true,
+                nodeIntegration: false,
             },
         });
 
         mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
         mainWindow.setMenu(null);
 
-        // Open DevTools in a separate window in development mode only
         if (process.env.NODE_ENV === "development") {
             mainWindow.webContents.openDevTools({ mode: "detach" });
+            logDebug("DevTools opened in development mode");
         }
 
-        // IPC for window controls
         ipcMain.on("window:minimize", () => {
+            logInfo("Window minimize requested");
             mainWindow.minimize();
         });
         ipcMain.on("window:close", () => {
+            logInfo("Window close requested");
             mainWindow.close();
         });
 
@@ -64,56 +59,65 @@ const createMainWindow = (): void => {
             },
             updateInterval: "1 hour",
         });
+        logInfo("Main window created and updateElectronApp initialized");
     } catch (error) {
         logError(error, "main:createMainWindow");
-        // eslint-disable-next-line no-console
-        console.error("Failed to create main window:", error);
     }
 };
 
-// Check current Spotify song every 10 seconds and save title to song.txt
 setInterval(async () => {
     try {
         const spotifyApi = getSpotifyApi();
-        if (!spotifyApi) return;
+        if (!spotifyApi) {
+            logDebug("Spotify API not available");
+            return;
+        }
         const playback = await spotifyApi.getMyCurrentPlaybackState();
         const track = playback.body?.item;
         if (track && track.type === "track") {
             const title = track.name;
             const artist = track.artists.map((a) => a.name).join(", ");
             const songPath = path.join(app.getPath("userData"), "song.txt");
-            const currentSongText = Config.get("currentSongFormat")
+            const currentSongFormat =
+                Config.get("currentSongFormat") || "{title} - {artist}";
+            const currentSongText = currentSongFormat
                 .replace("{title}", title)
                 .replace("{artist}", artist);
             fs.writeFileSync(songPath, currentSongText, "utf-8");
+            logDebug("Wrote current song to file", { title, artist, songPath });
         }
     } catch (err) {
         logError(err, "main:checkSpotifySong");
     }
 }, 10000);
 
-
 // App lifecycle events
+
 app.on("ready", () => {
+    logInfo("App ready event");
     createMainWindow();
 });
 
 app.on("window-all-closed", () => {
+    logInfo("All windows closed");
     if (!IS_MAC) {
+        logInfo("Quitting app (not macOS)");
         app.quit();
     }
 });
 
 app.on("activate", () => {
+    logInfo("App activate event");
     if (BrowserWindow.getAllWindows().length === 0) {
+        logInfo("No windows open, creating main window");
         createMainWindow();
     }
 });
 
 // Error handling
+
 process.on("uncaughtException", (err) => {
     logError(err, "main:uncaughtException");
-    // Optionally, show a dialog or notification to the user
 });
 
 process.on("unhandledRejection", (reason) => {
@@ -121,6 +125,7 @@ process.on("unhandledRejection", (reason) => {
 });
 
 ipcMain.on("app:restart", () => {
+    logInfo("IPC app:restart called");
     app.relaunch();
     app.exit(0);
 });

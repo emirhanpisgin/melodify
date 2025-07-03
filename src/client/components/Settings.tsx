@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, use } from "react";
 
 const TABS = [
     { key: "general", label: "General" },
     { key: "secrets", label: "Secrets" },
+    { key: "logs", label: "Logs" },
 ];
 
 const secretFields = [
@@ -26,18 +27,18 @@ export default function Settings({ onClose }: { onClose: () => void }) {
     const [config, setConfig] = useState<Config>({});
     const [saveMessage, setSaveMessage] = useState<string>("");
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [logs, setLogs] = useState<any[]>([]);
+    const logsEndRef = useRef<HTMLDivElement>(null);
 
-    // IPC: get config on mount
     useEffect(() => {
         window.electronAPI.invoke("config:get").then(setConfig);
     }, []);
 
-    // IPC: save config
     const handleSave = () => {
         window.electronAPI.send("config:set", config);
         setSaveMessage("Settings have been saved successfully.");
         setHasUnsavedChanges(false);
-        setTimeout(() => setSaveMessage(""), 3000); // Clear message after 3 seconds
+        setTimeout(() => setSaveMessage(""), 3000);
     };
 
     const handleInput = (key: string, value: string | boolean | string[]) => {
@@ -51,6 +52,28 @@ export default function Settings({ onClose }: { onClose: () => void }) {
     const handleManualCheck = () => {
         window.electronAPI.checkForUpdates();
     };
+
+    useEffect(() => {
+        if (tab === "logs") {
+            window.electronAPI.invoke("log:getAll").then((allLogs) => setLogs(allLogs || []));
+        }
+    }, [tab]);
+
+    useEffect(() => {
+        if (tab !== "logs") return;
+        const handler = (entry: any) => {
+            console.log("New log entry:", entry);
+            setLogs((prev) => [...prev.slice(-999), entry])
+        };
+        window.electronAPI.on("log:entry", handler);
+        return () => window.electronAPI.removeListener("log:entry", handler);
+    }, [tab]);
+
+    useEffect(() => {
+        if (tab === "logs" && logsEndRef.current) {
+            logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [logs, tab]);
 
     const renderTabContent = () => {
         switch (tab) {
@@ -133,6 +156,45 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                         ))}
                     </div>
                 );
+            case "logs":
+                return (
+                    <div className="flex flex-col h-full w-full">
+                        <div className="flex-1 overflow-y-auto bg-zinc-900 border border-zinc-800 rounded p-2 text-xs font-mono text-left" style={{ minHeight: 300, maxHeight: 400 }}>
+                            {logs.length === 0 && <div className="text-zinc-500">No logs yet.</div>}
+                            {logs.map((log, i) => {
+                                const level = log?.level ?? "info";
+                                const timestamp = log?.timestamp ?? Date.now();
+                                const message = log?.message ?? JSON.stringify(log);
+
+                                if (!log || typeof log.level !== "string" || typeof log.message !== "string") {
+                                    return (
+                                        <div key={i} className="text-zinc-500">
+                                            [INVALID LOG] {JSON.stringify(log)}
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div
+                                        key={i}
+                                        className={
+                                            level === "error"
+                                                ? "text-red-400"
+                                                : level === "warn"
+                                                    ? "text-yellow-300"
+                                                    : level === "debug"
+                                                        ? "text-purple-300"
+                                                        : "text-cyan-300"
+                                        }
+                                    >
+                                        [{level.toUpperCase()}] [{new Date(timestamp).toLocaleTimeString()}] {message}
+                                    </div>
+                                );
+                            })}
+                            <div ref={logsEndRef} />
+                        </div>
+                    </div>
+                );
             default:
                 return null;
         }
@@ -140,7 +202,6 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed bottom-0 left-0 h-screen w-screen z-50 flex bg-zinc-900">
-            {/* Tabs */}
             <div className="w-40 border-r border-zinc-800 flex flex-col overflow-y-auto max-h-screen">
                 {TABS.map((t) => (
                     <div
@@ -152,12 +213,10 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                     </div>
                 ))}
             </div>
-            {/* Content */}
             <div className="flex-1 flex flex-col min-h-0">
                 <div className="flex-1 overflow-y-auto p-6 py-4 relative max-h-full min-h-0">
                     {renderTabContent()}
                 </div>
-                {/* Footer */}
                 <div className="bg-zinc-800 p-2 flex justify-between items-center">
                     <div className="text-sm text-white ml-4">
                         {saveMessage ? (
