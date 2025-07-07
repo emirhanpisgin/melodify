@@ -10,6 +10,7 @@ declare global {
                 channel: string,
                 func: (...args: any[]) => void
             ) => void;
+            removeAllListeners: (channel: string) => void;
             openExternal: (url: string) => void;
             getSpotifySecrets: () => Promise<Record<string, string>>;
             setSpotifySecrets: (secrets: Record<string, string>) => void;
@@ -21,6 +22,9 @@ declare global {
             onUpdateStatus: (callback: (event: any, data: any) => void) => void;
             checkForUpdates: () => void;
             getAppVersion: () => Promise<string>;
+            selectSongFilePath: () => Promise<string | null>;
+            getStartupStatus: () => Promise<boolean>;
+            setStartupStatus: (enabled: boolean) => void;
         };
     }
 }

@@ -40,7 +40,6 @@ function sendLogToRenderers(entry: LogEntry) {
     if (!app || !BrowserWindow.getAllWindows) return;
     BrowserWindow.getAllWindows().forEach((win) => {
         win.webContents.send("log:entry", entry);
-        console.log("Log sent to renderer:", entry);
     });
 }
 
