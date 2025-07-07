@@ -2,16 +2,35 @@
 // Main process entry point for the Electron application.
 // Handles app lifecycle, window management, tray creation, and IPC setup.
 
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from "electron";
-import { autoUpdater } from "electron-updater";
+import {
+    app,
+    BrowserWindow,
+    ipcMain,
+    Tray,
+    Menu,
+    nativeImage,
+    autoUpdater,
+} from "electron";
 import { logInfo, logDebug, logError } from "../core/logging";
 import Config from "../core/config";
 import path from "path";
+import fs from "fs";
 
 // Import IPC handlers for different features
 import "../core/ipc";
 import "../features/kick/ipc/handlers";
 import "../features/spotify/ipc/handlers";
+
+// Import feature initialization functions
+import {
+    listenToChat,
+    startKickTokenAutoRefresh,
+    stopKickTokenAutoRefresh,
+} from "../features/kick/chat/listener";
+import {
+    startSpotifyTokenRefreshInterval,
+    stopSpotifyTokenAutoRefresh,
+} from "../features/spotify/playback/player";
 
 // Window dimensions and platform detection
 const WINDOW_WIDTH = 700;
@@ -21,6 +40,11 @@ const IS_MAC = process.platform === "darwin";
 // Webpack entry points (declared by webpack)
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+
+// Handle Windows installer squirrel events
+if (require("electron-squirrel-startup")) {
+    app.quit();
+}
 
 // Global variables for window and tray management
 let mainWindow: BrowserWindow | null = null;
@@ -65,28 +89,14 @@ const createTray = () => {
         return;
     }
 
-    // Build context menu for tray
+    // Create context menu for the tray
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: "Show Songülfy",
+            label: "Open",
             click: () => {
-                if (mainWindow) {
-                    mainWindow.show();
-                    mainWindow.focus();
-                }
+                mainWindow?.show();
             },
         },
-        {
-            label: "Settings",
-            click: () => {
-                if (mainWindow) {
-                    mainWindow.show();
-                    mainWindow.focus();
-                    mainWindow.webContents.send("open-settings");
-                }
-            },
-        },
-        { type: "separator" },
         {
             label: "Quit",
             click: () => {
@@ -96,16 +106,12 @@ const createTray = () => {
         },
     ]);
 
+    tray.setToolTip("Songulfy");
     tray.setContextMenu(contextMenu);
-    tray.setToolTip("Songülfy");
-
-    // Handle double-click to show window
-    tray.on("double-click", () => {
-        if (mainWindow) {
-            mainWindow.show();
-            mainWindow.focus();
-        }
+    tray.on("click", () => {
+        mainWindow?.show();
     });
+    logDebug("Tray setup complete", "createTray");
 };
 
 /**
@@ -173,90 +179,48 @@ const createMainWindow = (): void => {
             mainWindow?.close();
         });
 
-        logInfo("Main window created");
+        // Initialize auto-updater
+        autoUpdater.checkForUpdates();
+        logInfo("Main window created and autoUpdater initialized");
     } catch (error) {
         logError(error, "main:createMainWindow");
     }
 };
 
-// App lifecycle event handlers
-
-/**
- * Handles the 'ready' event when the app is ready to create windows.
- */
 app.on("ready", () => {
     logInfo("App ready event");
     createMainWindow();
-    autoUpdater.checkForUpdatesAndNotify();
 
     // Create tray if minimize-to-tray is enabled
-    const minimizeToTray = Config.get("minimizeToTray");
-    if (minimizeToTray) {
+    if (Config.get("minimizeToTray")) {
         createTray();
-    }
-
-    // Start minimized if both minimizeToTray and startOnStartup are enabled
-    const startOnStartup = Config.get("startOnStartup");
-    if (minimizeToTray && startOnStartup && mainWindow) {
-        mainWindow.hide();
     }
 });
 
-/**
- * Handles the 'window-all-closed' event.
- * On macOS, keeps the app running even when all windows are closed.
- */
 app.on("window-all-closed", () => {
-    logInfo("All windows closed");
+    stopKickTokenAutoRefresh();
+    stopSpotifyTokenAutoRefresh();
     if (!IS_MAC) {
-        logInfo("Quitting app (not macOS)");
         app.quit();
     }
 });
 
-/**
- * Handles the 'activate' event (macOS).
- * Creates a new window if none exist when the app is activated.
- */
 app.on("activate", () => {
-    logInfo("App activate event");
     if (BrowserWindow.getAllWindows().length === 0) {
-        logInfo("No windows open, creating main window");
         createMainWindow();
     }
 });
 
-// Error handling
-
-/**
- * Handles uncaught exceptions.
- */
-process.on("uncaughtException", (err) => {
-    logError(err, "main:uncaughtException");
-});
-
-/**
- * Handles unhandled promise rejections.
- */
-process.on("unhandledRejection", (reason) => {
-    logError(reason, "main:unhandledRejection");
-});
-
-/**
- * Handles app restart request from renderer.
- */
 ipcMain.on("app:restart", () => {
-    logInfo("IPC app:restart called");
-    app.relaunch();
-    app.exit(0);
+    app.relaunch({ args: process.argv.slice(1).concat(["--relaunch"]) });
+    app.quit();
 });
 
-/**
- * Cleans up tray when app is quitting.
- */
-app.on("before-quit", () => {
-    if (tray) {
-        tray.destroy();
-        tray = null;
-    }
-});
+// Start listening to Kick chat
+listenToChat();
+
+// Start token auto-refresh mechanisms
+startKickTokenAutoRefresh();
+startSpotifyTokenRefreshInterval(mainWindow);
+
+logInfo("Main process setup complete", "main:setup");
