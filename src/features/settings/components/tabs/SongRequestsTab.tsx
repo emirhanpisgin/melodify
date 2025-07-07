@@ -1,6 +1,5 @@
 import Toggle from "../../../../ui/components/Toggle";
 import Input from "../../../../ui/components/Input";
-import MultipleInput from "../../../../ui/components/MultipleInput";
 
 interface SongRequestsTabProps {
     config: any;

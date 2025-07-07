@@ -11,7 +11,7 @@ import {
 import { startSpotifyAuthServer } from "../auth/server";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
+import { logInfo, logError, logDebug } from "../../../core/logging";
 import { redactSecrets } from "../../../core/logging/utils";
 
 const execAsync = promisify(exec);

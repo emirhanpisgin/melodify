@@ -7,32 +7,14 @@ import {
     nativeImage,
     autoUpdater,
 } from "electron";
-import { updateElectronApp, UpdateSourceType } from "update-electron-app";
 import { logInfo, logDebug, logError } from "../core/logging";
 import Config from "../core/config";
 import path from "path";
-import fs from "fs";
 
 // Import IPC handlers
 import "../core/ipc";
 import "../features/kick/ipc/handlers";
 import "../features/spotify/ipc/handlers";
-
-import { redactSecrets } from "../core/logging/utils";
-
-// Import features
-import {
-    listenToChat,
-    startKickTokenAutoRefresh,
-    stopKickTokenAutoRefresh,
-} from "../features/kick/chat/listener";
-import {
-    startSpotifyTokenRefreshInterval,
-    stopSpotifyTokenAutoRefresh,
-} from "../features/spotify/playback/player";
-
-// Import shared utilities
-import { SPOTIFY_REDIRECT_URI, KICK_REDIRECT_URI } from "../shared/constants";
 
 const WINDOW_WIDTH = 700;
 const WINDOW_HEIGHT = 450;

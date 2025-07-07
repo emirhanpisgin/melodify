@@ -1,5 +1,4 @@
 // components/Status.tsx
-import { ReactNode } from "react";// or your custom icons
 import { cn } from "../../shared/utils";
 import { CheckIcon, LoaderCircleIcon, XIcon } from "lucide-react";
 
@@ -20,7 +19,7 @@ export default function StatusMessage({
     notCompletedMessage = "Not completed.",
     className = "",
 }: StatusProps) {
-    let icon: ReactNode;
+    let icon: React.ReactNode;
     let message: string;
 
     if (loading) {
