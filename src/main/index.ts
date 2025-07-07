@@ -225,6 +225,12 @@ app.on("ready", () => {
     if (minimizeToTray) {
         createTray();
     }
+
+    // Start minimized if both minimizeToTray and startOnStartup are enabled
+    const startOnStartup = Config.get("startOnStartup");
+    if (minimizeToTray && startOnStartup && mainWindow) {
+        mainWindow.hide();
+    }
 });
 
 /**

@@ -154,7 +154,7 @@ export default function MultipleInput({
             )}
 
             {/* Input field */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full">
                 <Input
                     ref={inputRef}
                     value={inputValue}
@@ -165,33 +165,28 @@ export default function MultipleInput({
                     helperText={error}
                     maxLength={maxLength}
                     disabled={values.length >= maxItems}
+                    className="w-full"
                 />
-                <button
-                    onClick={addItem}
-                    disabled={!inputValue.trim() || values.length >= maxItems}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-600 disabled:cursor-not-allowed text-white rounded transition-colors"
-                >
-                    Add
-                </button>
             </div>
 
-            {/* Display current items */}
+            {/* Display current items as compact tags */}
             {values.length > 0 && (
-                <div className="mt-3 space-y-2">
+                <div className="mt-2 flex flex-wrap gap-2 w-full">
                     {values.map((value, index) => (
-                        <div
+                        <span
                             key={`${value}-${index}`}
-                            className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded"
+                            className="flex items-center bg-zinc-700 text-white text-sm rounded-md px-2 py-1"
                         >
-                            <span className="text-white">{value}</span>
+                            {value}
                             <button
                                 onClick={() => removeItem(index)}
-                                className="text-zinc-400 hover:text-red-400 transition-colors"
+                                className="text-zinc-400 hover:text-red-400 transition-colors ml-1"
                                 title="Remove item"
+                                style={{ lineHeight: 0 }}
                             >
                                 <XIcon className="w-4 h-4" />
                             </button>
-                        </div>
+                        </span>
                     ))}
                 </div>
             )}

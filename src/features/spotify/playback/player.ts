@@ -73,22 +73,6 @@ export function saveTokens({
     logInfo("Spotify tokens saved", { expiresAt });
 }
 
-export function clearTokens() {
-    Config.set({
-        spotifyAccessToken: undefined,
-        spotifyRefreshToken: undefined,
-        spotifyExpiresAt: undefined,
-    });
-    const api = getSpotifyApi();
-    if (api) {
-        api.setAccessToken("");
-        api.setRefreshToken("");
-    }
-    // Stop song saving when tokens are cleared (user logged out)
-    stopSongFileSaving();
-    logInfo("Spotify tokens cleared");
-}
-
 export async function refreshSpotifyAccessToken(
     window?: Electron.BrowserWindow
 ): Promise<boolean> {

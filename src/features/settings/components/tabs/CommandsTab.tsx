@@ -14,14 +14,14 @@ interface CommandsTabProps {
     setTab: (tab: string) => void;
 }
 
-export default function CommandsTab({ 
-    commands, 
-    config, 
-    onInput, 
-    onToggleCommand, 
-    validationErrors, 
-    aliasInputs, 
-    setAliasInputs, 
+export default function CommandsTab({
+    commands,
+    config,
+    onInput,
+    onToggleCommand,
+    validationErrors,
+    aliasInputs,
+    setAliasInputs,
     autoSave,
     setTab
 }: CommandsTabProps) {
@@ -29,7 +29,7 @@ export default function CommandsTab({
         <div className="space-y-6">
             <div>
                 <h2 className="text-lg font-semibold text-white mb-4">Command Settings</h2>
-                
+
                 <div className="space-y-6">
                     <div>
                         <Input

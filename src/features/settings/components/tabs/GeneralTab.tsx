@@ -44,7 +44,6 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
                                     onChange={handleStartupToggle}
                                     label="Start on startup"
                                     labelClassName="text-white font-medium"
-                                    variant="success"
                                 />
                                 <p className="text-sm text-zinc-400 mt-1">
                                     Automatically start the app when Windows boots up
@@ -57,7 +56,6 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
                                     onChange={(checked) => onInput("minimizeToTray", checked)}
                                     label="Minimize to tray"
                                     labelClassName="text-white font-medium"
-                                    variant="success"
                                 />
                                 <p className="text-sm text-zinc-400 mt-1">
                                     Minimize the app to the system tray instead of the taskbar
@@ -70,7 +68,6 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
                                     onChange={(checked) => onInput("autoUpdateEnabled", checked)}
                                     label="Auto-update"
                                     labelClassName="text-white font-medium"
-                                    variant="success"
                                 />
                                 <p className="text-sm text-zinc-400 mt-1">
                                     Automatically check for and install updates

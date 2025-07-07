@@ -14,11 +14,12 @@ export default function SpotifyCard() {
     const [spotifyRunning, setSpotifyRunning] = useState<boolean | null>(null);
     const [spotifyHasSession, setSpotifyHasSession] = useState<boolean | null>(false);
     const [openConfigure, setOpenConfigure] = useState(false);
+    const [spotifyRedirectUri, setSpotifyRedirectUri] = useState<string>(SPOTIFY_REDIRECT_URI);
 
     useEffect(() => {
         window.electronAPI.invoke("spotify:hasSecrets")
             .then((secrets) => {
-                logDebug("Spotify secrets fetched", { hasSecrets: !!secrets });
+                logDebug(`Spotify secrets fetched: ${!!secrets}`);
                 setHasSecrets(secrets);
             })
             .catch((error) => {
@@ -84,7 +85,7 @@ export default function SpotifyCard() {
         function checkSpotifySession() {
             window.electronAPI.invoke("spotify:hasSession")
                 .then((hasSession) => {
-                    logDebug("Spotify session check result", { hasSession });
+                    logDebug(`Spotify session check result: ${hasSession}`);
                     setSpotifyHasSession(hasSession);
                     if (hasSession && interval) {
                         clearInterval(interval);
@@ -104,6 +105,14 @@ export default function SpotifyCard() {
             if (interval) clearInterval(interval);
         };
     }, [authenticated]);
+
+    useEffect(() => {
+        window.electronAPI.invoke("config:get").then((cfg) => {
+            if (cfg && cfg.spotifyRedirectUri) {
+                setSpotifyRedirectUri(cfg.spotifyRedirectUri);
+            }
+        });
+    }, []);
 
     const handleSecretsSubmit = async () => {
         if (!spotifyClientId || !spotifyClientSecret) {
@@ -190,7 +199,7 @@ export default function SpotifyCard() {
                 {openConfigure && (
                     <SecretsSetupModal
                         service="Spotify"
-                        redirectUri={SPOTIFY_REDIRECT_URI}
+                        redirectUri={spotifyRedirectUri}
                         dashboardUrl="https://developer.spotify.com/dashboard"
                         clientId={spotifyClientId}
                         clientSecret={spotifyClientSecret}

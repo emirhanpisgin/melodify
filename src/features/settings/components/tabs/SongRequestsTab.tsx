@@ -24,7 +24,6 @@ export default function SongRequestsTab({ config, onInput, validationErrors }: S
                                     onChange={(checked) => onInput("canAnyonePlaySong", checked)}
                                     label="Anyone can request songs"
                                     labelClassName="text-white font-medium"
-                                    variant="success"
                                 />
                                 <p className="text-sm text-zinc-400 mt-1">
                                     Allow all users to request songs, not just subscribers/VIPs
@@ -54,22 +53,33 @@ export default function SongRequestsTab({ config, onInput, validationErrors }: S
                                                 }}
                                                 label={badge.charAt(0).toUpperCase() + badge.slice(1)}
                                                 labelClassName="text-white font-medium"
-                                                variant="success"
                                             />
                                         );
                                     })}
                                 </div>
                             </div>
 
+                            {/* Reward Title Toggle */}
                             <div>
-                                <Input
-                                    label="Reward Title"
-                                    value={config.rewardTitle || ""}
-                                    onChange={(e) => onInput("rewardTitle", e.target.value)}
-                                    placeholder="Song Request"
-                                    helperText="Title of the channel reward for song requests (leave empty to disable)"
+                                <Toggle
+                                    checked={config.rewardEnabled ?? true}
+                                    onChange={(checked) => onInput("rewardEnabled", checked)}
+                                    label="Enable Song Request Reward"
+                                    labelClassName="text-white font-medium"
                                 />
                             </div>
+                            {/* Reward Title Input */}
+                            {config.rewardEnabled !== false && (
+                                <div>
+                                    <Input
+                                        label="Reward Title"
+                                        value={config.rewardTitle ?? "Song Request"}
+                                        onChange={(e) => onInput("rewardTitle", e.target.value)}
+                                        placeholder="Song Request"
+                                        helperText="Title of the channel reward for song requests (leave empty to disable)"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -83,7 +93,6 @@ export default function SongRequestsTab({ config, onInput, validationErrors }: S
                                     onChange={(checked) => onInput("globalCooldownEnabled", checked)}
                                     label="Enable global cooldown"
                                     labelClassName="text-white font-medium"
-                                    variant="success"
                                 />
                                 <p className="text-sm text-zinc-400 mt-1">
                                     Prevent song requests for a set time after any song is requested
@@ -113,7 +122,6 @@ export default function SongRequestsTab({ config, onInput, validationErrors }: S
                                     onChange={(checked) => onInput("perUserCooldownEnabled", checked)}
                                     label="Enable per-user cooldown"
                                     labelClassName="text-white font-medium"
-                                    variant="success"
                                 />
                                 <p className="text-sm text-zinc-400 mt-1">
                                     Prevent individual users from requesting songs too frequently

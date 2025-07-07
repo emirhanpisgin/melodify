@@ -15,8 +15,6 @@ interface CommandConfigProps {
     setTab: (tab: string) => void;
 }
 
-const KICK_ROLES = ["vip", "og", "subscriber"]; // Excluding broadcaster and moderator since they can do anything
-
 const REPLY_CONFIGS = [
     {
         key: "songRequest",
@@ -67,8 +65,6 @@ export default function CommandConfig({
                             checked={cmd.enabled}
                             onChange={(checked) => onToggleCommand(cmd.name, checked)}
                             label="Enabled"
-                            size="sm"
-                            variant="success"
                             labelClassName="text-sm"
                         />
                     </div>
@@ -154,7 +150,6 @@ export default function CommandConfig({
                                     checked={!!config.replyOnCooldown}
                                     onChange={(checked) => onInput("replyOnCooldown", checked)}
                                     label="Reply on cooldown"
-                                    variant="success"
                                 />
                                 <Input
                                     value={typeof config.cooldownMessageTemplate === "string" && config.cooldownMessageTemplate !== ""
@@ -191,7 +186,6 @@ export default function CommandConfig({
                                         checked={!!config[replyCfg.replyToggle]}
                                         onChange={(checked) => onInput(replyCfg.replyToggle, checked)}
                                         label={replyCfg.successLabel || "Reply on success"}
-                                        variant="success"
                                     />
                                     <Input
                                         value={replyValue}
@@ -202,20 +196,23 @@ export default function CommandConfig({
                                         showCharacterCount={true}
                                         error={!!validationErrors[replyCfg.replyTemplate]}
                                     />
-                                    <Toggle
-                                        checked={!!config[replyCfg.errorToggle]}
-                                        onChange={(checked) => onInput(replyCfg.errorToggle, checked)}
-                                        label={replyCfg.errorLabel || "Reply on error"}
-                                        variant="danger"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <Toggle
+                                            checked={!!config[replyCfg.errorToggle]}
+                                            onChange={(checked) => onInput(replyCfg.errorToggle, checked)}
+                                            label={replyCfg.errorLabel || "Reply on error"}
+                                            labelClassName="text-white"
+                                        />
+                                    </div>
                                     <Input
-                                        value={errorValue}
+                                        value={config[replyCfg.errorTemplate] || "Something went wrong, please try again."}
                                         onChange={e => onInput(replyCfg.errorTemplate, e.target.value)}
-                                        placeholder="Error message to send in chat"
-                                        helperText="Available variables: {error}"
-                                        maxLength={500}
+                                        placeholder="Something went wrong, please try again."
+                                        helperText="This message will be sent to chat on error."
+                                        maxLength={200}
                                         showCharacterCount={true}
                                         error={!!validationErrors[replyCfg.errorTemplate]}
+                                        disabled={!config[replyCfg.errorToggle]}
                                     />
                                 </div>
                             );
@@ -228,7 +225,6 @@ export default function CommandConfig({
                                     checked={!!config.replyOnVolumeGet}
                                     onChange={(checked) => onInput("replyOnVolumeGet", checked)}
                                     label="Enable volume checking feature"
-                                    variant="success"
                                 />
                                 <div className="text-xs text-zinc-400 mb-2">
                                     When enabled, users can type <code className="bg-zinc-700 px-1 rounded">{config.prefix || "!"}volume</code> without arguments to get the current Spotify volume.

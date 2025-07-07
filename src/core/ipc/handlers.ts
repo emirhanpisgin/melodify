@@ -10,12 +10,18 @@ import Config from "../config";
 import { logDebug, logError, logInfo, logWarn } from "../logging";
 import { redactSecrets } from "../logging/utils";
 import { CommandManager } from "../commands/manager";
-import { startSongFileSaving, stopSongFileSaving } from "../../features/spotify/playback/player";
-import fs from "fs";
+import {
+    startSongFileSaving,
+    stopSongFileSaving,
+} from "../../features/spotify/playback/player";
 import path from "path";
+import { registerAllCommands } from "../commands/registry";
 
 // Create command manager instance
 const commandManager = new CommandManager();
+registerAllCommands(commandManager);
+
+export { commandManager };
 
 ipcMain.on("open-external", (_, url: string) => {
     shell.openExternal(url);
@@ -78,7 +84,9 @@ ipcMain.on("config:set", (event, newConfig) => {
             JSON.stringify(newAliases.sort())
         ) {
             logDebug(
-                `Updating aliases for command '${commandName}': ${oldAliases.join(", ")} -> ${newAliases.join(", ")}`,
+                `Updating aliases for command '${commandName}': ${oldAliases.join(
+                    ", "
+                )} -> ${newAliases.join(", ")}`,
                 "config:set"
             );
             commandManager.updateCommandAliases(commandName, newAliases);
@@ -194,12 +202,16 @@ ipcMain.on("commands:updateAliases", (_event, { name, aliases }) => {
         commandsConfig[name].aliases = aliases;
         Config.set({ commandsConfig });
         logInfo(
-            `Updated aliases for command '${name}' via IPC: ${aliases.join(", ")}`,
+            `Updated aliases for command '${name}' via IPC: ${aliases.join(
+                ", "
+            )}`,
             "commands:updateAliases"
         );
     } else {
         logError(
-            `Failed to update aliases for command '${name}': ${aliases.join(", ")}`,
+            `Failed to update aliases for command '${name}': ${aliases.join(
+                ", "
+            )}`,
             "commands:updateAliases"
         );
     }

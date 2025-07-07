@@ -101,15 +101,3 @@ export function logDebug(message: string, meta?: any) {
 if (ipcMain) {
     ipcMain.handle("log:getAll", () => logs);
 }
-
-export function getAllLogs() {
-    return logs;
-}
-
-export function exportAllLogsAsString(): string {
-    try {
-        return fs.readFileSync(LOG_FILE, "utf-8");
-    } catch {
-        return logs.map(formatLog).join("\n");
-    }
-}

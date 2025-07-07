@@ -1,6 +1,6 @@
 // Command system for Kick chat
 
-import Config, { CommandConfig } from "../config";
+import Config from "../config";
 import { logError, logWarn, logDebug, logInfo } from "../logging";
 
 export interface CommandContext {
@@ -17,13 +17,17 @@ export interface Command {
     enabled: boolean;
     modOnly?: boolean;
     aliases?: string[];
-    handler: (ctx: CommandContext, args: string[], commandManager?: CommandManager) => Promise<void>;
+    handler: (
+        ctx: CommandContext,
+        args: string[],
+        commandManager?: CommandManager
+    ) => Promise<void>;
 }
 
 export class CommandManager {
     private commands: Map<string, Command> = new Map();
     private aliasMap: Map<string, string> = new Map(); // alias -> commandName
-    
+
     // Cooldown tracking
     private globalCooldownEnd: number = 0;
     private userCooldowns: Map<string, number> = new Map(); // username -> cooldown end time
@@ -32,13 +36,19 @@ export class CommandManager {
         // Validate command structure
         const validationError = this.validateCommand(command);
         if (validationError) {
-            logError(`Failed to register command ${command.name}: ${validationError}`, "CommandManager");
+            logError(
+                `Failed to register command ${command.name}: ${validationError}`,
+                "CommandManager"
+            );
             return false;
         }
 
         // Check for duplicate command names
         if (this.commands.has(command.name)) {
-            logWarn(`Command ${command.name} already exists, overwriting`, "CommandManager");
+            logWarn(
+                `Command ${command.name} already exists, overwriting`,
+                "CommandManager"
+            );
         }
 
         // Check for duplicate aliases across all commands
@@ -46,7 +56,10 @@ export class CommandManager {
             for (const alias of command.aliases) {
                 if (this.aliasMap.has(alias)) {
                     const existingCommand = this.aliasMap.get(alias);
-                    logWarn(`Alias '${alias}' already exists for command '${existingCommand}', cannot use for '${command.name}'`, "CommandManager");
+                    logWarn(
+                        `Alias '${alias}' already exists for command '${existingCommand}', cannot use for '${command.name}'`,
+                        "CommandManager"
+                    );
                     return false;
                 }
             }
@@ -55,9 +68,12 @@ export class CommandManager {
         // Load enabled state and aliases from config
         const commandsConfig = Config.get("commandsConfig") || {};
         const savedConfig = commandsConfig[command.name] || {};
-        const enabled = savedConfig.enabled !== undefined ? savedConfig.enabled : command.enabled;
+        const enabled =
+            savedConfig.enabled !== undefined
+                ? savedConfig.enabled
+                : command.enabled;
         const savedAliases = savedConfig.aliases || command.aliases || [];
-        
+
         // Update command with saved state
         command.enabled = enabled;
         command.aliases = savedAliases;
@@ -70,7 +86,12 @@ export class CommandManager {
             }
         }
 
-        logDebug(`Registered command: ${command.name} (enabled: ${enabled}, aliases: ${savedAliases.join(', ')})`, "CommandManager");
+        logDebug(
+            `Registered command: ${
+                command.name
+            } (enabled: ${enabled}, aliases: ${savedAliases.join(", ")})`,
+            "CommandManager"
+        );
         return true;
     }
 
@@ -150,7 +171,10 @@ export class CommandManager {
                 }
 
                 const existingCommandForAlias = this.aliasMap.get(alias);
-                if (existingCommandForAlias && existingCommandForAlias !== command.name) {
+                if (
+                    existingCommandForAlias &&
+                    existingCommandForAlias !== command.name
+                ) {
                     return `Alias '${alias}' is already used by command '${existingCommandForAlias}'`;
                 }
             }
@@ -160,7 +184,7 @@ export class CommandManager {
     }
 
     getAllSerializable() {
-        return Array.from(this.commands.values()).map(cmd => ({
+        return Array.from(this.commands.values()).map((cmd) => ({
             name: cmd.name,
             description: cmd.description,
             usage: cmd.usage,
@@ -175,14 +199,17 @@ export class CommandManager {
     }
 
     get(name: string) {
-        return this.commands.get(name) || this.commands.get(this.aliasMap.get(name) || "");
+        return (
+            this.commands.get(name) ||
+            this.commands.get(this.aliasMap.get(name) || "")
+        );
     }
 
     setEnabled(name: string, enabled: boolean) {
         const command = this.commands.get(name);
         if (command) {
             command.enabled = enabled;
-            
+
             // Save the command state to config
             const commandsConfig = Config.get("commandsConfig") || {};
             if (!commandsConfig[name]) {
@@ -190,10 +217,16 @@ export class CommandManager {
             }
             commandsConfig[name].enabled = enabled;
             Config.set({ commandsConfig });
-            
-            logDebug(`Command ${name} ${enabled ? "enabled" : "disabled"}`, "CommandManager");
+
+            logDebug(
+                `Command ${name} ${enabled ? "enabled" : "disabled"}`,
+                "CommandManager"
+            );
         } else {
-            logWarn(`Attempted to set enabled state for non-existent command: ${name}`, "CommandManager");
+            logWarn(
+                `Attempted to set enabled state for non-existent command: ${name}`,
+                "CommandManager"
+            );
         }
     }
 
@@ -218,7 +251,10 @@ export class CommandManager {
         }
 
         if (command.modOnly && !isModerator(ctx.badges, ctx.username)) {
-            logDebug(`User ${ctx.username} attempted to use mod-only command: ${commandName}`, "CommandManager");
+            logDebug(
+                `User ${ctx.username} attempted to use mod-only command: ${commandName}`,
+                "CommandManager"
+            );
             return;
         }
 
@@ -233,18 +269,26 @@ export class CommandManager {
     updateCommandAliases(commandName: string, newAliases: string[]): boolean {
         const command = this.commands.get(commandName);
         if (!command) {
-            logWarn(`Attempted to update aliases for non-existent command: ${commandName}`);
+            logWarn(
+                `Attempted to update aliases for non-existent command: ${commandName}`
+            );
             return false;
         }
 
         // Validate new aliases
         if (!Array.isArray(newAliases)) {
-            logError("New aliases must be an array", "commandManager:updateAliases");
+            logError(
+                "New aliases must be an array",
+                "commandManager:updateAliases"
+            );
             return false;
         }
 
         if (newAliases.length > 10) {
-            logError("Too many aliases (max 10)", "commandManager:updateAliases");
+            logError(
+                "Too many aliases (max 10)",
+                "commandManager:updateAliases"
+            );
             return false;
         }
 
@@ -252,41 +296,65 @@ export class CommandManager {
         const seenAliases = new Set<string>();
         for (const alias of newAliases) {
             if (!alias || alias.trim() === "") {
-                logError("Alias cannot be empty", "commandManager:updateAliases");
+                logError(
+                    "Alias cannot be empty",
+                    "commandManager:updateAliases"
+                );
                 return false;
             }
 
             if (alias.length > 20) {
-                logError("Alias too long (max 20 characters)", "commandManager:updateAliases");
+                logError(
+                    "Alias too long (max 20 characters)",
+                    "commandManager:updateAliases"
+                );
                 return false;
             }
 
             if (!/^[a-zA-Z0-9_-]+$/.test(alias)) {
-                logError("Alias can only contain letters, numbers, hyphens, and underscores", "commandManager:updateAliases");
+                logError(
+                    "Alias can only contain letters, numbers, hyphens, and underscores",
+                    "commandManager:updateAliases"
+                );
                 return false;
             }
 
             if (alias === commandName) {
-                logError("Alias cannot be the same as the command name", "commandManager:updateAliases");
+                logError(
+                    "Alias cannot be the same as the command name",
+                    "commandManager:updateAliases"
+                );
                 return false;
             }
 
             if (seenAliases.has(alias)) {
-                logError(`Duplicate alias: ${alias}`, "commandManager:updateAliases");
+                logError(
+                    `Duplicate alias: ${alias}`,
+                    "commandManager:updateAliases"
+                );
                 return false;
             }
             seenAliases.add(alias);
 
             // Check if this alias conflicts with any existing command
             if (this.commands.has(alias)) {
-                logError(`Alias '${alias}' conflicts with existing command '${alias}'`, "commandManager:updateAliases");
+                logError(
+                    `Alias '${alias}' conflicts with existing command '${alias}'`,
+                    "commandManager:updateAliases"
+                );
                 return false;
             }
 
             // Check if this alias is already used by another command
             const existingCommandForAlias = this.aliasMap.get(alias);
-            if (existingCommandForAlias && existingCommandForAlias !== commandName) {
-                logError(`Alias '${alias}' is already used by command '${existingCommandForAlias}'`, "commandManager:updateAliases");
+            if (
+                existingCommandForAlias &&
+                existingCommandForAlias !== commandName
+            ) {
+                logError(
+                    `Alias '${alias}' is already used by command '${existingCommandForAlias}'`,
+                    "commandManager:updateAliases"
+                );
                 return false;
             }
         }
@@ -306,21 +374,34 @@ export class CommandManager {
             this.aliasMap.set(alias, commandName);
         }
 
-        logInfo(`Updated aliases for command '${commandName}': ${newAliases.join(', ')}`, "commandManager:updateAliases");
+        logInfo(
+            `Updated aliases for command '${commandName}': ${newAliases.join(
+                ", "
+            )}`,
+            "commandManager:updateAliases"
+        );
         return true;
     }
 
     // Method to reload all command aliases from config
     reloadCommandAliasesFromConfig(): void {
         const commandsConfig = Config.get("commandsConfig") || {};
-        
+
         for (const [commandName, command] of this.commands.entries()) {
             const savedConfig = commandsConfig[commandName] || {};
             const savedAliases = savedConfig.aliases || [];
-            
+
             // Only update if aliases have actually changed
-            if (JSON.stringify(command.aliases?.sort()) !== JSON.stringify(savedAliases.sort())) {
-                logDebug(`Reloading aliases for command '${commandName}' from config: ${savedAliases.join(', ')}`, "CommandManager");
+            if (
+                JSON.stringify(command.aliases?.sort()) !==
+                JSON.stringify(savedAliases.sort())
+            ) {
+                logDebug(
+                    `Reloading aliases for command '${commandName}' from config: ${savedAliases.join(
+                        ", "
+                    )}`,
+                    "CommandManager"
+                );
                 this.updateCommandAliases(commandName, savedAliases);
             }
         }
@@ -330,7 +411,7 @@ export class CommandManager {
     public checkGlobalCooldown(): boolean {
         const globalCooldownEnabled = Config.get("globalCooldownEnabled");
         if (!globalCooldownEnabled) return false;
-        
+
         const now = Date.now();
         if (now < this.globalCooldownEnd) {
             return true; // Still in cooldown
@@ -341,10 +422,10 @@ export class CommandManager {
     public checkUserCooldown(username: string): boolean {
         const perUserCooldownEnabled = Config.get("perUserCooldownEnabled");
         if (!perUserCooldownEnabled) return false;
-        
+
         const now = Date.now();
         const userCooldownEnd = this.userCooldowns.get(username.toLowerCase());
-        
+
         if (userCooldownEnd && now < userCooldownEnd) {
             return true; // Still in cooldown
         }
@@ -354,19 +435,32 @@ export class CommandManager {
     public setGlobalCooldown(): void {
         const globalCooldownEnabled = Config.get("globalCooldownEnabled");
         if (!globalCooldownEnabled) return;
-        
-        const cooldownSeconds = parseInt(Config.get("globalCooldownSeconds") || "30");
-        this.globalCooldownEnd = Date.now() + (cooldownSeconds * 1000);
-        logDebug(`Global cooldown set for ${cooldownSeconds} seconds`, "CommandManager");
+
+        const cooldownSeconds = parseInt(
+            Config.get("globalCooldownSeconds") || "30"
+        );
+        this.globalCooldownEnd = Date.now() + cooldownSeconds * 1000;
+        logDebug(
+            `Global cooldown set for ${cooldownSeconds} seconds`,
+            "CommandManager"
+        );
     }
 
     public setUserCooldown(username: string): void {
         const perUserCooldownEnabled = Config.get("perUserCooldownEnabled");
         if (!perUserCooldownEnabled) return;
-        
-        const cooldownSeconds = parseInt(Config.get("perUserCooldownSeconds") || "60");
-        this.userCooldowns.set(username.toLowerCase(), Date.now() + (cooldownSeconds * 1000));
-        logDebug(`User cooldown set for ${username} for ${cooldownSeconds} seconds`, "CommandManager");
+
+        const cooldownSeconds = parseInt(
+            Config.get("perUserCooldownSeconds") || "60"
+        );
+        this.userCooldowns.set(
+            username.toLowerCase(),
+            Date.now() + cooldownSeconds * 1000
+        );
+        logDebug(
+            `User cooldown set for ${username} for ${cooldownSeconds} seconds`,
+            "CommandManager"
+        );
     }
 
     public getRemainingCooldownTime(endTime: number): number {
@@ -388,8 +482,8 @@ function isModerator(badges: string[], username: string) {
     if (badges.includes("broadcaster") || badges.includes("moderator")) {
         return true;
     }
-    
+
     // Check if user is in custom moderators list
     const customModerators = Config.get("customModerators") || [];
     return customModerators.includes(username.toLowerCase());
-} 
+}

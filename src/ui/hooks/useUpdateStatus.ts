@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 /**
  * Update status types for the application.
  */
-export type UpdateStatus =
+type UpdateStatus =
     | "idle"
     | "checking"
     | "available"
@@ -35,18 +35,20 @@ interface UseUpdateStatusReturn {
 /**
  * Custom hook for managing application update status.
  * Listens for update events from the main process and provides current status and progress.
- * 
+ *
  * @returns Object containing current update status and progress information.
  */
 export function useUpdateStatus(): UseUpdateStatusReturn {
     const [status, setStatus] = useState<UpdateStatus>("idle");
-    const [progress, setProgress] = useState<UpdateProgress | undefined>(undefined);
+    const [progress, setProgress] = useState<UpdateProgress | undefined>(
+        undefined
+    );
 
     useEffect(() => {
         // Listen for update status events from the main process
         const handleUpdateStatus = (event: any, data: any) => {
             setStatus(data.status);
-            
+
             // Update progress if provided
             if (data.progress) {
                 setProgress(data.progress);
@@ -60,7 +62,10 @@ export function useUpdateStatus(): UseUpdateStatusReturn {
 
         // Cleanup event listener on unmount
         return () => {
-            window.electronAPI?.removeListener?.("update:status", handleUpdateStatus);
+            window.electronAPI?.removeListener?.(
+                "update:status",
+                handleUpdateStatus
+            );
         };
     }, []);
 

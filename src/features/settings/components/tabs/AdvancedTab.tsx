@@ -44,7 +44,6 @@ export default function AdvancedTab({ config, onInput, validationErrors }: Advan
                             <div>
                                 <Toggle
                                     checked={config.saveCurrentSongToFile ?? false}
-                                    variant="success"
                                     onChange={(checked) => onInput("saveCurrentSongToFile", checked)}
                                     label="Save current song to file"
                                     labelClassName="text-white font-medium"

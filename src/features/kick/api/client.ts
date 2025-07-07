@@ -3,25 +3,25 @@ import Config from "../../../core/config";
 import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
 import { redactSecrets } from "../../../core/logging/utils";
 
-export interface KickTokens {
+interface KickTokens {
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
 }
 
-export interface KickUser {
+interface KickUser {
     id: number;
     username: string;
     slug: string;
     broadcaster_user_id: number;
 }
 
-export interface KickChatroom {
+interface KickChatroom {
     id: string;
     channel_id: number;
 }
 
-export interface KickChannel {
+interface KickChannel {
     id: number;
     slug: string;
     broadcaster_user_id: number;
@@ -53,7 +53,7 @@ interface KickChannelResponse {
     slug: string;
 }
 
-export class KickClient {
+class KickClient {
     private baseUrl = "https://api.kick.com";
     private authUrl = "https://id.kick.com/oauth/token";
     private accessToken: string | null = null;
@@ -141,7 +141,10 @@ export class KickClient {
      */
     public async refreshAccessToken(): Promise<boolean> {
         if (!this.refreshToken) {
-            logError("No refresh token available", "KickClient:refreshAccessToken");
+            logError(
+                "No refresh token available",
+                "KickClient:refreshAccessToken"
+            );
             return false;
         }
 
@@ -150,7 +153,10 @@ export class KickClient {
             const clientSecret = Config.get("kickClientSecret");
 
             if (!clientId || !clientSecret) {
-                logError("Missing Kick client credentials", "KickClient:refreshAccessToken");
+                logError(
+                    "Missing Kick client credentials",
+                    "KickClient:refreshAccessToken"
+                );
                 return false;
             }
 
@@ -161,7 +167,10 @@ export class KickClient {
                 client_secret: clientSecret,
             });
 
-            logDebug("Refreshing Kick token", redactSecrets(Object.fromEntries(params)));
+            logDebug(
+                "Refreshing Kick token",
+                redactSecrets(Object.fromEntries(params))
+            );
 
             const response = await fetch(this.authUrl, {
                 method: "POST",
@@ -172,10 +181,12 @@ export class KickClient {
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to refresh token: ${response.statusText}`);
+                throw new Error(
+                    `Failed to refresh token: ${response.statusText}`
+                );
             }
 
-            const data = await response.json() as KickTokenResponse;
+            const data = (await response.json()) as KickTokenResponse;
             const { access_token, refresh_token, expires_in } = data;
 
             this.saveTokens({
@@ -195,11 +206,16 @@ export class KickClient {
     /**
      * Exchange authorization code for tokens
      */
-    public async exchangeCodeForTokens(code: string, codeVerifier: string): Promise<boolean> {
+    public async exchangeCodeForTokens(
+        code: string,
+        codeVerifier: string
+    ): Promise<boolean> {
         try {
             const clientId = Config.get("kickClientId");
             const clientSecret = Config.get("kickClientSecret");
-            const redirectUri = Config.get("kickRedirectUri") || "http://127.0.0.1:8889/callback";
+            const redirectUri =
+                Config.get("kickRedirectUri") ||
+                "http://127.0.0.1:8889/callback";
 
             if (!clientId || !clientSecret) {
                 throw new Error("Missing Kick client credentials");
@@ -214,7 +230,10 @@ export class KickClient {
                 code_verifier: codeVerifier,
             });
 
-            logDebug("Exchanging code for tokens", redactSecrets(Object.fromEntries(params)));
+            logDebug(
+                "Exchanging code for tokens",
+                redactSecrets(Object.fromEntries(params))
+            );
 
             const response = await fetch(this.authUrl, {
                 method: "POST",
@@ -226,10 +245,12 @@ export class KickClient {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
+                throw new Error(
+                    `Token exchange failed: ${response.status} ${errorText}`
+                );
             }
 
-            const data = await response.json() as KickTokenResponse;
+            const data = (await response.json()) as KickTokenResponse;
             const { access_token, refresh_token, expires_in } = data;
 
             this.saveTokens({
@@ -266,7 +287,7 @@ export class KickClient {
             throw new Error(`Failed to fetch channels: ${response.statusText}`);
         }
 
-        const { data } = await response.json() as KickChannelsResponse;
+        const { data } = (await response.json()) as KickChannelsResponse;
         return data;
     }
 
@@ -279,27 +300,34 @@ export class KickClient {
             throw new Error("No valid access token available");
         }
 
-        const response = await fetch(`${this.baseUrl}/public/v1/channels/${username}/chatroom`, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        });
+        const response = await fetch(
+            `${this.baseUrl}/public/v1/channels/${username}/chatroom`,
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
 
         if (!response.ok) {
             throw new Error(`Failed to fetch chatroom: ${response.statusText}`);
         }
 
-        return await response.json() as KickChatroom;
+        return (await response.json()) as KickChatroom;
     }
 
     /**
      * Find chatroom by username (public API)
      */
-    public async findChatroom(username: string): Promise<{ chatroomId: string; userId: number } | null> {
+    public async findChatroom(
+        username: string
+    ): Promise<{ chatroomId: string; userId: number } | null> {
         try {
-            const response = await fetch(`https://kick.com/api/v1/${username}/chatroom`);
-            const data = await response.json() as KickChatroomResponse;
+            const response = await fetch(
+                `https://kick.com/api/v1/${username}/chatroom`
+            );
+            const data = (await response.json()) as KickChatroomResponse;
 
             if (!response.ok || !data.chatroom?.id) {
                 return null;
@@ -318,7 +346,10 @@ export class KickClient {
     /**
      * Send a message to chat
      */
-    public async sendMessage(message: string, broadcasterUserId: number): Promise<void> {
+    public async sendMessage(
+        message: string,
+        broadcasterUserId: number
+    ): Promise<void> {
         const accessToken = await this.getValidAccessToken();
         if (!accessToken) {
             throw new Error("No valid access token available");
@@ -347,13 +378,15 @@ export class KickClient {
      */
     public async getUserProfile(username: string): Promise<KickUser | null> {
         try {
-            const response = await fetch(`https://kick.com/api/v1/channels/${username}`);
-            
+            const response = await fetch(
+                `https://kick.com/api/v1/channels/${username}`
+            );
+
             if (!response.ok) {
                 return null;
             }
 
-            const data = await response.json() as KickChannelResponse;
+            const data = (await response.json()) as KickChannelResponse;
             return {
                 id: data.id,
                 username: data.user.username,
@@ -369,7 +402,10 @@ export class KickClient {
     /**
      * Validate client credentials
      */
-    public async validateCredentials(clientId: string, clientSecret: string): Promise<boolean> {
+    public async validateCredentials(
+        clientId: string,
+        clientSecret: string
+    ): Promise<boolean> {
         try {
             const params = new URLSearchParams({
                 grant_type: "client_credentials",
@@ -378,7 +414,9 @@ export class KickClient {
             const response = await fetch(this.authUrl, {
                 method: "POST",
                 headers: {
-                    Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
+                    Authorization: `Basic ${Buffer.from(
+                        `${clientId}:${clientSecret}`
+                    ).toString("base64")}`,
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
                 body: params.toString(),
@@ -393,4 +431,4 @@ export class KickClient {
 }
 
 // Export a singleton instance
-export const kickClient = new KickClient(); 
+export const kickClient = new KickClient();

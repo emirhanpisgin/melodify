@@ -12,22 +12,29 @@ contextBridge.exposeInMainWorld("electronAPI", {
     // Window control functions
     minimize: () => ipcRenderer.send("window:minimize"),
     close: () => ipcRenderer.send("window:close"),
-    
+
     // App information
     getAppVersion: () => ipcRenderer.invoke("app:getVersion"),
-    
+
     // IPC communication
     send: (channel: string, data?: any) => ipcRenderer.send(channel, data),
     on: (channel: string, func: (...args: any[]) => void) => {
-        if (typeof func !== 'function') {
-            console.error('Invalid function provided to electronAPI.on for channel:', channel);
+        if (typeof func !== "function") {
+            console.error(
+                "Invalid function provided to electronAPI.on for channel:",
+                channel
+            );
             return;
         }
         return ipcRenderer.on(channel, (_event, ...args) => {
             try {
                 func(...args);
             } catch (error) {
-                console.error('Error in event listener for channel:', channel, error);
+                console.error(
+                    "Error in event listener for channel:",
+                    channel,
+                    error
+                );
             }
         });
     },
@@ -35,19 +42,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
         ipcRenderer.removeListener(channel, func),
     invoke: (channel: string, ...args: any[]) =>
         ipcRenderer.invoke(channel, ...args),
-    removeAllListeners: (channel: string) => ipcRenderer.removeAllListeners(channel),
-    
+    removeAllListeners: (channel: string) =>
+        ipcRenderer.removeAllListeners(channel),
+
     // External link handling
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
-    
+
     // File system operations
     selectSongFilePath: () => ipcRenderer.invoke("file:selectSongFilePath"),
-    
+
     // Startup management
     getStartupStatus: () => ipcRenderer.invoke("startup:getStatus"),
     setStartupStatus: (enabled: boolean) =>
         ipcRenderer.send("startup:setStatus", enabled),
-    
+
     // Update management
     checkForUpdates: () => ipcRenderer.send("update:check"),
     setAutoUpdate: (enabled: boolean) =>

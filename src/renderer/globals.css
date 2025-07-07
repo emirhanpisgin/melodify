@@ -6,7 +6,8 @@ body {
     @apply m-0 flex flex-col;
 }
 
-html, body {
+html,
+body {
     @apply h-full w-full;
 }
 
@@ -24,4 +25,15 @@ html, body {
 }
 ::-webkit-scrollbar-corner {
     background: #18181b;
+}
+
+/* Hide number input spinners for all browsers */
+.hide-number-spin::-webkit-outer-spin-button,
+.hide-number-spin::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.hide-number-spin[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
 }

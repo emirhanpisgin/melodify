@@ -6,6 +6,7 @@ import AdvancedTab from "./tabs/AdvancedTab";
 import LogsTab from "./tabs/LogsTab";
 import CommandsTab from "./tabs/CommandsTab";
 import SaveStatus from "./tabs/SaveStatus";
+import DebugTab from "./tabs/DebugTab";
 import { validateField, validateUrl, validateClientId, validateClientSecret, validateTemplate, validateCommandAlias } from "./validation";
 
 const TABS = [
@@ -15,6 +16,7 @@ const TABS = [
     { key: "secrets", label: "Secrets" },
     { key: "advanced", label: "Advanced" },
     { key: "logs", label: "Logs" },
+    ...(process.env.NODE_ENV === "development" ? [{ key: "debug", label: "Debug" }] : []),
 ];
 
 type Config = {
@@ -47,6 +49,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
     const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         window.electronAPI.invoke("config:get").then(setConfig);
@@ -428,7 +431,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 }
 
                 setValidationErrors(errors);
-                
+
                 if (Object.keys(errors).length === 0) {
                     window.electronAPI.send("config:set", newConfig);
                     setSaveStatus('saved');
@@ -490,6 +493,12 @@ export default function Settings({ onClose }: { onClose: () => void }) {
         return () => window.electronAPI.removeListener("log:entry", handler);
     }, [tab]);
 
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = 0;
+        }
+    }, [tab]);
+
     const handleToggleCommand = (name: string, enabled: boolean) => {
         window.electronAPI.send("commands:setEnabled", { name, enabled });
         setCommands((prev) => prev.map(cmd => cmd.name === name ? { ...cmd, enabled } : cmd));
@@ -521,6 +530,11 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                         setTab={setTab}
                     />
                 );
+            case "debug":
+                if (process.env.NODE_ENV === "development") {
+                    return <DebugTab />;
+                }
+                return null;
             default:
                 return null;
         }
@@ -540,7 +554,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 ))}
             </div>
             <div className="flex-1 flex flex-col min-h-0 min-w-0">
-                <div className="flex-1 overflow-y-auto p-6 py-4 relative max-h-full min-h-0 min-w-0">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 py-4 relative max-h-full min-h-0 min-w-0">
                     {renderTabContent()}
                 </div>
                 {/* Save Status Indicator */}

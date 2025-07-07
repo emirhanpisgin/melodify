@@ -16,7 +16,7 @@ const secretFields = [
 export default function SecretsTab({ config, onInput, validationErrors }: SecretsTabProps) {
     return (
         <div className="flex flex-col gap-4">
-            <div className="font-bold text-base mb-1">API Credentials</div>
+            <div className="font-bold text-base mb-1 text-white">API Credentials</div>
             {secretFields.map((field) => (
                 <Input
                     key={field.key}

@@ -14,6 +14,7 @@ export default function KickCard() {
     const [authenticated, setAuthenticated] = useState(false);
     const [listeningToChat, setListeningToChat] = useState(false);
     const [openConfigure, setOpenConfigure] = useState(false);
+    const [kickRedirectUri, setKickRedirectUri] = useState<string>(KICK_REDIRECT_URI);
 
     useEffect(() => {
         window.electronAPI.invoke("kick:hasSecrets")
@@ -25,7 +26,7 @@ export default function KickCard() {
 
         window.electronAPI.on("kick:authenticated", (event, data) => {
             setAuthenticated(true);
-            logDebug("Kick authenticated", { username: data?.username });
+            logDebug(`Kick authenticated: ${data?.username}`);
             setKickUsername(data.username);
         });
 
@@ -49,6 +50,12 @@ export default function KickCard() {
             }).catch((error) => {
                 logError(error, "Error checking Kick authentication");
             });
+
+        window.electronAPI.invoke("config:get").then((cfg) => {
+            if (cfg && cfg.kickRedirectUri) {
+                setKickRedirectUri(cfg.kickRedirectUri);
+            }
+        });
     }, []);
 
     const handleSecretsSubmit = async () => {
@@ -116,7 +123,7 @@ export default function KickCard() {
                 {openConfigure && (
                     <SecretsSetupModal
                         service="Kick"
-                        redirectUri={KICK_REDIRECT_URI}
+                        redirectUri={kickRedirectUri}
                         dashboardUrl="https://kick.com/settings/developer?action=create"
                         clientId={kickClientId}
                         clientSecret={kickClientSecret}

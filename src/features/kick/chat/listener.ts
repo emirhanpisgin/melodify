@@ -4,16 +4,12 @@ import Pusher from "pusher-js";
 import { playSong } from "../../spotify/playback/player";
 import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
 import { redactSecrets } from "../../../core/logging/utils";
-import { CommandManager, CommandContext } from "../../../core/commands/manager";
-import { SongRequestCommand, VolumeCommand } from "../../../core/commands/registry";
+import { CommandContext } from "../../../core/commands/manager";
+import { commandManager } from "../../../core/ipc/handlers";
 import { kickClient } from "../api/client";
 
 export let isListening = false;
 let refreshKickTokenInterval: NodeJS.Timeout | null = null;
-
-const commandManager = new CommandManager();
-commandManager.register(SongRequestCommand);
-commandManager.register(VolumeCommand);
 
 export async function refreshKickAccessToken(
     window?: Electron.BrowserWindow
@@ -21,16 +17,9 @@ export async function refreshKickAccessToken(
     return await kickClient.refreshAccessToken();
 }
 
-export async function checkKickAccessToken(
-    window?: Electron.BrowserWindow
-): Promise<boolean> {
-    const accessToken = await kickClient.getValidAccessToken();
-    return !!accessToken;
-}
-
 export async function sendKickMessage(message: string): Promise<void> {
     logDebug("sendKickMessage called", redactSecrets({ message }));
-    
+
     const userId = Config.get("userId");
     if (!userId) {
         logError("Missing Kick userId", "kick:sendKickMessage");
@@ -126,5 +115,3 @@ export function stopKickTokenAutoRefresh() {
     if (refreshKickTokenInterval) clearInterval(refreshKickTokenInterval);
     refreshKickTokenInterval = null;
 }
-
-export { commandManager };
