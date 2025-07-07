@@ -23,10 +23,6 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
         onInput("startOnStartup", enabled);
     };
 
-    const handleManualCheck = () => {
-        window.electronAPI.checkForUpdates();
-    };
-
     return (
         <div className="space-y-6">
             <div>
@@ -44,7 +40,7 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
             {/* This is a placeholder for other settings that might exist */}
             <div>
                 <h2 className="text-lg font-semibold text-white mb-4">Advanced</h2>
-                <button onClick={handleManualCheck}>Check for Updates</button>
+                
             </div>
         </div>
     );

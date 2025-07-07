@@ -11,7 +11,10 @@
         "outDir": "dist",
         "moduleResolution": "node",
         "resolveJsonModule": true,
-        "jsx": "react-jsx"
+        "jsx": "react-jsx",
+        "paths": {
+            "@/*": ["./src/*"]
+        }
     },
     "include": ["src/**/*"],
     "exclude": ["src/renderer/index.ts"]

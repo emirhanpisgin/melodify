@@ -7,6 +7,7 @@ import LogsTab from "./tabs/LogsTab";
 import CommandsTab from "./tabs/CommandsTab";
 import SaveStatus from "./tabs/SaveStatus";
 import DebugTab from "./tabs/DebugTab";
+import UpdateTab from "./tabs/UpdateTab";
 import { validateField, validateUrl, validateClientId, validateClientSecret, validateTemplate, validateCommandAlias } from "./validation";
 
 const TABS = [
@@ -16,6 +17,7 @@ const TABS = [
     { key: "secrets", label: "Secrets" },
     { key: "advanced", label: "Advanced" },
     { key: "logs", label: "Logs" },
+    { key: "updates", label: "Updates" },
     ...(process.env.NODE_ENV === "development" ? [{ key: "debug", label: "Debug" }] : []),
 ];
 
@@ -530,6 +532,8 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                         setTab={setTab}
                     />
                 );
+            case "updates":
+                return <UpdateTab />;
             case "debug":
                 if (process.env.NODE_ENV === "development") {
                     return <DebugTab />;

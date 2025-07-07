@@ -4,7 +4,6 @@ import {
     ipcMain,
     shell,
     dialog,
-    autoUpdater,
 } from "electron";
 import Config from "../config";
 import { logDebug, logError, logInfo, logWarn } from "../logging";
@@ -16,6 +15,7 @@ import {
 } from "../../features/spotify/playback/player";
 import path from "path";
 import { registerAllCommands } from "../commands/registry";
+import { checkForUpdates, downloadUpdate, installUpdate } from "../updater";
 
 // Create command manager instance
 const commandManager = new CommandManager();
@@ -97,23 +97,26 @@ ipcMain.on("config:set", (event, newConfig) => {
     commandManager.reloadCommandAliasesFromConfig();
 });
 
-// Auto-update integration
+// Update integration
+ipcMain.on("update:check", () => {
+    checkForUpdates();
+});
+
+ipcMain.on("update:download", (_event, manifest) => {
+    downloadUpdate(manifest);
+});
+
+ipcMain.on("update:install", () => {
+    installUpdate();
+});
+
 let autoUpdateEnabled = (Config.get("autoUpdateEnabled") as boolean) ?? true;
 
-function broadcastUpdateStatus(status: string, data?: any) {
-    BrowserWindow.getAllWindows().forEach((win) =>
-        win.webContents.send("update:status", { status, ...data })
-    );
-}
-
-ipcMain.on("update:check", () => {
-    broadcastUpdateStatus("checking");
-    autoUpdater.checkForUpdates();
-});
 ipcMain.on("update:setAuto", (_event, enabled: boolean) => {
     autoUpdateEnabled = enabled;
     Config.set({ autoUpdateEnabled: enabled });
 });
+
 ipcMain.handle("update:getAuto", () => autoUpdateEnabled);
 ipcMain.handle("app:getVersion", () => app.getVersion());
 
@@ -140,7 +143,9 @@ ipcMain.on("startup:setStatus", (_event, enabled: boolean) => {
 });
 
 app.on("ready", () => {
-    autoUpdater.checkForUpdates();
+    if (autoUpdateEnabled) {
+        checkForUpdates();
+    }
 
     // Initialize song file saving if enabled
     if (Config.get("saveCurrentSongToFile")) {
@@ -157,18 +162,6 @@ app.on("ready", () => {
         logInfo("App configured to start on startup", "app:ready");
     }
 });
-
-autoUpdater.on("checking-for-update", () => broadcastUpdateStatus("checking"));
-autoUpdater.on("update-available", () => broadcastUpdateStatus("available"));
-autoUpdater.on("update-not-available", () =>
-    broadcastUpdateStatus("not-available")
-);
-autoUpdater.on("error", (err: any) =>
-    broadcastUpdateStatus("error", { error: err.message })
-);
-autoUpdater.on("update-downloaded", (info: any) =>
-    broadcastUpdateStatus("downloaded", { info })
-);
 
 ipcMain.on("log:info", (_event, { message, meta }) => {
     logInfo(`[renderer] ${message}`, redactSecrets(meta));

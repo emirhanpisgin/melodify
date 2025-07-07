@@ -1,0 +1,14 @@
+{
+  "version": "0.0.0",
+  "platforms": {
+    "win32-x64": {
+      "url": "https://github.com/emirhanpisgin/songulfy/releases/download/v0.0.0/Songulfy.Setup.0.0.0.exe"
+    },
+    "darwin-x64": {
+      "url": "https://github.com/emirhanpisgin/songulfy/releases/download/v0.0.0/Songulfy-0.0.0.zip"
+    },
+    "darwin-arm64": {
+      "url": "https://github.com/emirhanpisgin/songulfy/releases/download/v0.0.0/Songulfy-0.0.0-arm64.zip"
+    }
+  }
+} 

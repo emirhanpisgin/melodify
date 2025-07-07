@@ -20,8 +20,7 @@ type UpdateStatus =
  */
 interface UpdateProgress {
     percent: number;
-    speed: number;
-    eta: number;
+    // Add other properties from electron-dl if needed
 }
 
 /**
@@ -30,30 +29,31 @@ interface UpdateProgress {
 interface UseUpdateStatusReturn {
     status: UpdateStatus;
     progress?: UpdateProgress;
+    manifest?: any;
 }
 
 /**
  * Custom hook for managing application update status.
  * Listens for update events from the main process and provides current status and progress.
  *
- * @returns Object containing current update status and progress information.
+ * @returns Object containing current update status, progress information, and the update manifest.
  */
 export function useUpdateStatus(): UseUpdateStatusReturn {
     const [status, setStatus] = useState<UpdateStatus>("idle");
-    const [progress, setProgress] = useState<UpdateProgress | undefined>(
-        undefined
-    );
+    const [progress, setProgress] = useState<UpdateProgress | null>(null);
+    const [manifest, setManifest] = useState<any | null>(null);
 
     useEffect(() => {
         // Listen for update status events from the main process
-        const handleUpdateStatus = (event: any, data: any) => {
-            setStatus(data.status);
-
-            // Update progress if provided
-            if (data.progress) {
-                setProgress(data.progress);
+        const handleUpdateStatus = (_event: any, status: UpdateStatus, data: any) => {
+            setStatus(status);
+            if (status === "available") {
+                setManifest(data);
+                setProgress(null);
+            } else if (status === "downloading") {
+                setProgress(data);
             } else {
-                setProgress(undefined);
+                setProgress(null);
             }
         };
 
@@ -69,5 +69,5 @@ export function useUpdateStatus(): UseUpdateStatusReturn {
         };
     }, []);
 
-    return { status, progress };
+    return { status, progress, manifest };
 }

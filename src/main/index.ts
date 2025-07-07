@@ -9,7 +9,6 @@ import {
     Tray,
     Menu,
     nativeImage,
-    autoUpdater,
 } from "electron";
 import { logInfo, logDebug, logError } from "../core/logging";
 import Config from "../core/config";
@@ -179,9 +178,7 @@ const createMainWindow = (): void => {
             mainWindow?.close();
         });
 
-        // Initialize auto-updater
-        autoUpdater.checkForUpdates();
-        logInfo("Main window created and autoUpdater initialized");
+        logInfo("Main window created");
     } catch (error) {
         logError(error, "main:createMainWindow");
     }

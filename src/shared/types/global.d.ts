@@ -25,6 +25,10 @@ declare global {
             selectSongFilePath: () => Promise<string | null>;
             getStartupStatus: () => Promise<boolean>;
             setStartupStatus: (enabled: boolean) => void;
+            getAutoUpdate: () => Promise<boolean>;
+            setAutoUpdate: (enabled: boolean) => void;
+            downloadUpdate: (manifest: any) => void;
+            installUpdate: () => void;
         };
     }
 }
