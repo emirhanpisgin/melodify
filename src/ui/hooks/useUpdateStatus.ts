@@ -1,5 +1,11 @@
+// useUpdateStatus.ts
+// Custom React hook for managing application update status and progress.
+
 import { useEffect, useState } from "react";
 
+/**
+ * Update status types for the application.
+ */
 export type UpdateStatus =
     | "idle"
     | "checking"
@@ -9,20 +15,54 @@ export type UpdateStatus =
     | "downloaded"
     | "error";
 
-export function useUpdateStatus() {
+/**
+ * Update progress information.
+ */
+interface UpdateProgress {
+    percent: number;
+    speed: number;
+    eta: number;
+}
+
+/**
+ * Return type for the useUpdateStatus hook.
+ */
+interface UseUpdateStatusReturn {
+    status: UpdateStatus;
+    progress?: UpdateProgress;
+}
+
+/**
+ * Custom hook for managing application update status.
+ * Listens for update events from the main process and provides current status and progress.
+ * 
+ * @returns Object containing current update status and progress information.
+ */
+export function useUpdateStatus(): UseUpdateStatusReturn {
     const [status, setStatus] = useState<UpdateStatus>("idle");
-    const [progress, setProgress] = useState<number | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [progress, setProgress] = useState<UpdateProgress | undefined>(undefined);
 
     useEffect(() => {
-        window.electronAPI?.onUpdateStatus?.((_event, data) => {
+        // Listen for update status events from the main process
+        const handleUpdateStatus = (event: any, data: any) => {
             setStatus(data.status);
-            if (data.status === "downloading") setProgress(data.percent);
-            else setProgress(null);
-            if (data.status === "error") setError(data.error);
-            else setError(null);
-        });
+            
+            // Update progress if provided
+            if (data.progress) {
+                setProgress(data.progress);
+            } else {
+                setProgress(undefined);
+            }
+        };
+
+        // Set up event listener
+        window.electronAPI?.on?.("update:status", handleUpdateStatus);
+
+        // Cleanup event listener on unmount
+        return () => {
+            window.electronAPI?.removeListener?.("update:status", handleUpdateStatus);
+        };
     }, []);
 
-    return { status, progress, error };
+    return { status, progress };
 }

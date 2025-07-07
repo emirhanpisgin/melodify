@@ -1,3 +1,6 @@
+// index.tsx
+// Entry point for the renderer process React application.
+
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";

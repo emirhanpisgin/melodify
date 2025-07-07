@@ -1,6 +1,22 @@
+// preload.ts
+// Preload script for the Electron renderer process.
+// Exposes safe APIs to the renderer process through contextBridge.
+
 import { contextBridge, ipcRenderer } from "electron";
 
+/**
+ * Exposes Electron APIs to the renderer process through contextBridge.
+ * Provides a secure way for the renderer to communicate with the main process.
+ */
 contextBridge.exposeInMainWorld("electronAPI", {
+    // Window control functions
+    minimize: () => ipcRenderer.send("window:minimize"),
+    close: () => ipcRenderer.send("window:close"),
+    
+    // App information
+    getAppVersion: () => ipcRenderer.invoke("app:getVersion"),
+    
+    // IPC communication
     send: (channel: string, data?: any) => ipcRenderer.send(channel, data),
     on: (channel: string, func: (...args: any[]) => void) => {
         if (typeof func !== 'function') {
@@ -15,30 +31,35 @@ contextBridge.exposeInMainWorld("electronAPI", {
             }
         });
     },
-    invoke: (channel: string, ...args: any[]) =>
-        ipcRenderer.invoke(channel, ...args),
     removeListener: (channel: string, func: (...args: any[]) => void) =>
         ipcRenderer.removeListener(channel, func),
+    invoke: (channel: string, ...args: any[]) =>
+        ipcRenderer.invoke(channel, ...args),
     removeAllListeners: (channel: string) => ipcRenderer.removeAllListeners(channel),
+    
+    // External link handling
     openExternal: (url: string) => ipcRenderer.send("open-external", url),
+    
+    // File system operations
+    selectSongFilePath: () => ipcRenderer.invoke("file:selectSongFilePath"),
+    
+    // Startup management
+    getStartupStatus: () => ipcRenderer.invoke("startup:getStatus"),
+    setStartupStatus: (enabled: boolean) =>
+        ipcRenderer.send("startup:setStatus", enabled),
+    
+    // Update management
+    checkForUpdates: () => ipcRenderer.send("update:check"),
+    setAutoUpdate: (enabled: boolean) =>
+        ipcRenderer.send("update:setAuto", enabled),
+    getAutoUpdate: () => ipcRenderer.invoke("update:getAuto"),
+    onUpdateStatus: (callback: (event: any, data: any) => void) =>
+        ipcRenderer.on("update:status", callback),
     getSpotifySecrets: () => ipcRenderer.invoke("spotify:getSecrets"),
     setSpotifySecrets: (secrets: Record<string, string>) =>
         ipcRenderer.send("spotify:setSecrets", secrets),
     getKickSecrets: () => ipcRenderer.invoke("kick:getSecrets"),
     setKickSecrets: (secrets: Record<string, string>) =>
         ipcRenderer.send("kick:setSecrets", secrets),
-    minimize: () => ipcRenderer.send("window:minimize"),
-    close: () => ipcRenderer.send("window:close"),
     restart: () => ipcRenderer.send("app:restart"),
-    onUpdateStatus: (callback: (event: any, data: any) => void) =>
-        ipcRenderer.on("update:status", callback),
-    checkForUpdates: () => ipcRenderer.send("update:check"),
-    setAutoUpdate: (enabled: boolean) =>
-        ipcRenderer.send("update:setAuto", enabled),
-    getAutoUpdate: () => ipcRenderer.invoke("update:getAuto"),
-    getAppVersion: () => ipcRenderer.invoke("app:getVersion"),
-    selectSongFilePath: () => ipcRenderer.invoke("file:selectSongFilePath"),
-    getStartupStatus: () => ipcRenderer.invoke("startup:getStatus"),
-    setStartupStatus: (enabled: boolean) =>
-        ipcRenderer.send("startup:setStatus", enabled),
 });

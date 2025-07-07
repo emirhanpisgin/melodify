@@ -1,6 +1,5 @@
 import SpotifyWebApi from "spotify-web-api-node";
 import Config from "../../../core/config";
-import { sendKickMessage } from "../../kick/chat/listener";
 import { logError, logInfo, logWarn, logDebug } from "../../../core/logging";
 import { redactSecrets } from "../../../core/logging/utils";
 import fs from "fs";
@@ -25,7 +24,9 @@ export function getSpotifyApi(): SpotifyWebApi | null {
     spotifyApi = new SpotifyWebApi({
         clientId: spotifyClientId,
         clientSecret: spotifyClientSecret,
-        redirectUri: Config.get("spotifyRedirectUri") || "http://127.0.0.1:8888/callback",
+        redirectUri:
+            Config.get("spotifyRedirectUri") ||
+            "http://127.0.0.1:8888/callback",
     });
     const accessToken = Config.get("spotifyAccessToken");
     const refreshToken = Config.get("spotifyRefreshToken");
@@ -152,7 +153,10 @@ export async function playSong(
             limit: 1,
         });
         if (!tracks.body.tracks.total) {
-            logWarn("No tracks found for query: " + songQuery, "spotify:playSong");
+            logWarn(
+                "No tracks found for query: " + songQuery,
+                "spotify:playSong"
+            );
             return null;
         }
         track = tracks.body.tracks.items[0];
@@ -163,13 +167,13 @@ export async function playSong(
         await spotifyApi.addToQueue(trackUri).catch((err) => {
             logError(err, "spotify:playSong:addToQueue");
         });
-        
+
         return {
             title: track.name,
-            artist: track.artists.map((a: any) => a.name).join(", ")
+            artist: track.artists.map((a: any) => a.name).join(", "),
         };
     }
-    
+
     return null;
 }
 
@@ -183,7 +187,10 @@ export async function startSpotifyTokenRefreshInterval(
         try {
             const valid = await checkSpotifyAccessToken(window);
             if (!valid) {
-                logWarn("Failed to refresh Spotify access token", "spotify:startSpotifyTokenRefreshInterval");
+                logWarn(
+                    "Failed to refresh Spotify access token",
+                    "spotify:startSpotifyTokenRefreshInterval"
+                );
                 clearInterval(refreshSpotifyTokenInterval!);
                 refreshSpotifyTokenInterval = null;
             }
@@ -220,19 +227,21 @@ async function saveCurrentSongToFile() {
         }
 
         const item = playbackState.body.item;
-        if (item.type !== 'track') {
+        if (item.type !== "track") {
             return; // Only handle tracks, not episodes
         }
 
         const currentSong = {
             title: item.name,
-            artist: item.artists[0]?.name || "Unknown Artist"
+            artist: item.artists[0]?.name || "Unknown Artist",
         };
 
         // Check if song has changed
-        if (lastSavedSong && 
-            lastSavedSong.title === currentSong.title && 
-            lastSavedSong.artist === currentSong.artist) {
+        if (
+            lastSavedSong &&
+            lastSavedSong.title === currentSong.title &&
+            lastSavedSong.artist === currentSong.artist
+        ) {
             return; // Song hasn't changed, don't save
         }
 
@@ -243,12 +252,18 @@ async function saveCurrentSongToFile() {
         // Schedule next check based on song duration
         const songDuration = item.duration_ms;
         const nextCheckDelay = Math.min(songDuration + 5000, 300000); // Max 5 minutes
-        logDebug(`Song changed, next check in ${Math.round(nextCheckDelay / 1000)}s`, "saveCurrentSongToFile");
-        
+        logDebug(
+            `Song changed, next check in ${Math.round(nextCheckDelay / 1000)}s`,
+            "saveCurrentSongToFile"
+        );
+
         if (songFileSavingInterval) {
             clearTimeout(songFileSavingInterval);
         }
-        songFileSavingInterval = setTimeout(saveCurrentSongToFile, nextCheckDelay);
+        songFileSavingInterval = setTimeout(
+            saveCurrentSongToFile,
+            nextCheckDelay
+        );
     } catch (error) {
         logError(error, "saveCurrentSongToFile");
     }
@@ -260,32 +275,34 @@ async function saveSongToFile(songInfo: { title: string; artist: string }) {
         logDebug("saveSongToFile called", { songInfo });
         const saveToFile = Config.get("saveCurrentSongToFile");
         const filePath = Config.get("currentSongFilePath");
-        
+
         logDebug("Song file saving config", { saveToFile, filePath });
-        
+
         if (!saveToFile || !filePath) {
             logDebug("Song file saving disabled or no file path configured");
             return;
         }
-        
+
         // Handle empty song info (no song playing)
         let songText = "";
         if (songInfo.title && songInfo.artist) {
-            const currentSongFormat = Config.get("currentSongFormat") || "{title} - {artist}";
+            const currentSongFormat =
+                Config.get("currentSongFormat") || "{title} - {artist}";
             songText = currentSongFormat
                 .replace("{title}", songInfo.title)
                 .replace("{artist}", songInfo.artist);
         }
-        
+
         // Ensure directory exists
         const dir = path.dirname(filePath);
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        
+
         fs.writeFileSync(filePath, songText, "utf-8");
-        logDebug(`Current song saved to file: ${filePath}`, { songText: songText || "No song playing" });
-        
+        logDebug(`Current song saved to file: ${filePath}`, {
+            songText: songText || "No song playing",
+        });
     } catch (error) {
         logError(error, "spotify:saveSongToFile");
     }
@@ -300,14 +317,14 @@ export function startSongFileSaving() {
     if (nextSaveTimeout) {
         clearTimeout(nextSaveTimeout);
     }
-    
+
     // Reset current song info
     currentSongInfo = null;
-    
+
     // Start the first check immediately
     saveCurrentSongToFile();
     logInfo("Started saving current song to file");
-    
+
     // Also set up a periodic check every 30 seconds as a fallback
     saveSongInterval = setInterval(() => {
         saveCurrentSongToFile();
@@ -323,7 +340,7 @@ export function stopSongFileSaving() {
         clearTimeout(nextSaveTimeout);
         nextSaveTimeout = null;
     }
-    
+
     // Clear current song info
     currentSongInfo = null;
     logInfo("Stopped saving current song to file");

@@ -1,7 +1,18 @@
-// components/Status.tsx
+// StatusMessage.tsx
+// Component for displaying status messages with loading, success, and error states.
+
 import { cn } from "../../shared/utils";
 import { CheckIcon, LoaderCircleIcon, XIcon } from "lucide-react";
 
+/**
+ * Props for the StatusMessage component.
+ * @property loading - Whether the status is in a loading state.
+ * @property completed - Whether the operation has completed successfully.
+ * @property loadingMessage - Message to display during loading.
+ * @property completedMessage - Message to display when completed successfully.
+ * @property notCompletedMessage - Message to display when not completed.
+ * @property className - Additional CSS classes.
+ */
 type StatusProps = {
     loading: boolean;
     completed?: boolean;
@@ -11,6 +22,10 @@ type StatusProps = {
     className?: string;
 };
 
+/**
+ * StatusMessage component displays different states with appropriate icons and messages.
+ * Shows loading spinner, success checkmark, or error X icon based on the current state.
+ */
 export default function StatusMessage({
     loading,
     completed,
@@ -22,6 +37,7 @@ export default function StatusMessage({
     let icon: React.ReactNode;
     let message: string;
 
+    // Determine which icon and message to show based on state
     if (loading) {
         icon = <LoaderCircleIcon className="size-4 animate-spin" />;
         message = loadingMessage;

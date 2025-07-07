@@ -1,7 +1,24 @@
+// MultipleInput.tsx
+// Component for managing multiple input values with add/remove functionality and validation.
+
 import { XIcon } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import Input from "./Input";
 
+/**
+ * Props for the MultipleInput component.
+ * @property values - Array of current input values.
+ * @property onChange - Function called when values change.
+ * @property placeholder - Placeholder text for the input field.
+ * @property label - Label text for the component.
+ * @property maxItems - Maximum number of items allowed.
+ * @property minLength - Minimum length for each item.
+ * @property maxLength - Maximum length for each item.
+ * @property allowDuplicates - Whether duplicate values are allowed.
+ * @property allExistingValues - Array of all existing values for duplicate checking.
+ * @property validateItem - Function to validate individual items.
+ * @property className - Additional CSS classes.
+ */
 interface MultipleInputProps {
     values: string[];
     onChange: (values: string[]) => void;
@@ -11,109 +28,177 @@ interface MultipleInputProps {
     minLength?: number;
     maxLength?: number;
     allowDuplicates?: boolean;
-    validateItem?: (item: string, allValues: string[]) => string | null;
-    allExistingValues?: string[]; // For cross-command alias validation
+    allExistingValues?: string[];
+    validateItem?: (item: string, currentItems: string[]) => string | null;
+    className?: string;
 }
 
-export default function MultipleInput({ 
-    values, 
-    onChange, 
-    placeholder = "Add item and press Enter", 
+/**
+ * MultipleInput component for managing a list of string values.
+ * Supports adding, removing, and validating individual items.
+ */
+export default function MultipleInput({
+    values,
+    onChange,
+    placeholder = "Type and press Enter",
     label,
-    maxItems = 50,
+    maxItems = 10,
     minLength = 1,
-    maxLength = 100,
-    allowDuplicates = false,
+    maxLength = 50,
+    allowDuplicates = true,
+    allExistingValues = [],
     validateItem,
-    allExistingValues = []
+    className,
 }: MultipleInputProps) {
-    const [input, setInput] = useState("");
+    const [inputValue, setInputValue] = useState("");
     const [error, setError] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const validateInput = (value: string): string | null => {
-        if (!value.trim()) {
-            return "Item cannot be empty";
+    /**
+     * Validates a single item and returns an error message if invalid.
+     */
+    const validateSingleItem = (item: string): string | null => {
+        // Check minimum length
+        if (item.length < minLength) {
+            return `Item must be at least ${minLength} character${minLength === 1 ? '' : 's'} long`;
         }
-        if (value.trim().length < minLength) {
-            return `Item must be at least ${minLength} character${minLength > 1 ? 's' : ''}`;
+
+        // Check maximum length
+        if (item.length > maxLength) {
+            return `Item must be no more than ${maxLength} character${maxLength === 1 ? '' : 's'} long`;
         }
-        if (value.trim().length > maxLength) {
-            return `Item must be no more than ${maxLength} characters`;
+
+        // Check for duplicates if not allowed
+        if (!allowDuplicates) {
+            const allValues = [...values, ...allExistingValues];
+            if (allValues.some(existing => existing.toLowerCase() === item.toLowerCase())) {
+                return "This item already exists";
+            }
         }
-        if (!allowDuplicates && values.includes(value.trim())) {
-            return "This item already exists";
-        }
-        if (!allowDuplicates && allExistingValues.includes(value.trim())) {
-            return "This item already exists in another command";
-        }
-        if (values.length >= maxItems) {
-            return `Maximum ${maxItems} items allowed`;
-        }
+
+        // Custom validation if provided
         if (validateItem) {
-            return validateItem(value.trim(), values);
+            return validateItem(item, values);
         }
+
         return null;
     };
 
-    // Real-time validation on input change
-    useEffect(() => {
-        if (input.trim()) {
-            const validationError = validateInput(input.trim());
-            setError(validationError || "");
-        } else {
-            setError("");
-        }
-    }, [input, values, allExistingValues]);
+    /**
+     * Adds a new item to the list if valid.
+     */
+    const addItem = () => {
+        const trimmedValue = inputValue.trim();
+        if (!trimmedValue) return;
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter" && input.trim()) {
-            const validationError = validateInput(input.trim());
-            if (validationError) {
-                setError(validationError);
-                return;
-            }
-            
-            onChange([...values, input.trim()]);
-            setInput("");
+        // Validate the item
+        const validationError = validateSingleItem(trimmedValue);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        // Check if we've reached the maximum number of items
+        if (values.length >= maxItems) {
+            setError(`Maximum ${maxItems} items allowed`);
+            return;
+        }
+
+        // Add the item and clear the input
+        onChange([...values, trimmedValue]);
+        setInputValue("");
+        setError("");
+    };
+
+    /**
+     * Removes an item from the list by index.
+     */
+    const removeItem = (index: number) => {
+        const newValues = values.filter((_, i) => i !== index);
+        onChange(newValues);
+        setError("");
+    };
+
+    /**
+     * Handles key press events in the input field.
+     */
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
             e.preventDefault();
-        } else if (e.key === "Backspace" && !input && values.length > 0) {
-            onChange(values.slice(0, -1));
+            addItem();
         }
     };
 
-    const handleRemove = (item: string) => {
-        onChange(values.filter(a => a !== item));
+    /**
+     * Handles input change events.
+     */
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputValue(e.target.value);
+        if (error) setError(""); // Clear error when user starts typing
     };
+
+    // Focus input when component mounts
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, []);
 
     return (
-        <div className="flex flex-col gap-2 w-full">
-            <Input
-                ref={inputRef}
-                label={label}
-                value={input}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setInput(e.target.value);
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder={placeholder}
-                error={!!error}
-                helperText={error || `${values.length}/${maxItems} items`}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-                {values.map((item, idx) => (
-                    <span key={`${item}-${idx}`} className="flex items-center bg-white/10 px-2 py-0.5 text-white text-sm rounded border border-zinc-600">
-                        {item}
-                        <button
-                            type="button"
-                            className="ml-1 text-zinc-400 hover:text-red-400 focus:outline-none transition-colors"
-                            onClick={() => handleRemove(item)}
-                            tabIndex={-1}
+        <div className={className}>
+            {/* Label */}
+            {label && (
+                <label className="block text-sm font-medium text-white mb-2">
+                    {label}
+                </label>
+            )}
+
+            {/* Input field */}
+            <div className="flex gap-2">
+                <Input
+                    ref={inputRef}
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onKeyPress={handleKeyPress}
+                    placeholder={placeholder}
+                    error={!!error}
+                    helperText={error}
+                    maxLength={maxLength}
+                    disabled={values.length >= maxItems}
+                />
+                <button
+                    onClick={addItem}
+                    disabled={!inputValue.trim() || values.length >= maxItems}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+                >
+                    Add
+                </button>
+            </div>
+
+            {/* Display current items */}
+            {values.length > 0 && (
+                <div className="mt-3 space-y-2">
+                    {values.map((value, index) => (
+                        <div
+                            key={`${value}-${index}`}
+                            className="flex items-center justify-between bg-zinc-800 px-3 py-2 rounded"
                         >
-                            <XIcon className="size-4" />
-                        </button>
-                    </span>
-                ))}
+                            <span className="text-white">{value}</span>
+                            <button
+                                onClick={() => removeItem(index)}
+                                className="text-zinc-400 hover:text-red-400 transition-colors"
+                                title="Remove item"
+                            >
+                                <XIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Item count */}
+            <div className="text-xs text-zinc-500 mt-2">
+                {values.length} / {maxItems} items
             </div>
         </div>
     );

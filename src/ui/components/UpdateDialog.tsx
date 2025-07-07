@@ -1,14 +1,23 @@
+// UpdateDialog.tsx
+// Displays a dialog for update status in the Electron app, including restart prompt when an update is downloaded.
+
 import { useEffect, useState } from "react";
 
+/**
+ * UpdateDialog component displays update status and restart prompt.
+ * Listens for update events from the main process.
+ */
 export default function UpdateDialog() {
     const [updateAvailable, setUpdateAvailable] = useState(false);
     const [updateDownloaded, setUpdateDownloaded] = useState(false);
 
     useEffect(() => {
+        // Listen for update events from the main process
         window.electronAPI?.on?.("update-available", () => setUpdateAvailable(true));
         window.electronAPI?.on?.("update-downloaded", () => setUpdateDownloaded(true));
     }, []);
 
+    // Hide dialog if no update is available or downloaded
     if (!updateAvailable && !updateDownloaded) return null;
 
     return (

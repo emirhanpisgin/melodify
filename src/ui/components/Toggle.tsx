@@ -1,94 +1,112 @@
+// Toggle.tsx
+// Reusable toggle/switch component with different variants and customizable styling.
+
 import React from "react";
 import { cn } from "../../shared/utils";
 
+/**
+ * Props for the Toggle component.
+ * @property checked - Whether the toggle is in the "on" state.
+ * @property onChange - Function called when the toggle state changes.
+ * @property label - Label text for the toggle.
+ * @property labelClassName - CSS classes for the label.
+ * @property variant - Visual variant of the toggle.
+ * @property size - Size of the toggle.
+ * @property disabled - Whether the toggle is disabled.
+ * @property className - Additional CSS classes.
+ */
 interface ToggleProps {
     checked: boolean;
     onChange: (checked: boolean) => void;
-    disabled?: boolean;
-    size?: "sm" | "md" | "lg";
-    variant?: "default" | "success" | "danger";
-    className?: string;
     label?: string;
     labelClassName?: string;
+    variant?: "default" | "success" | "warning" | "danger";
+    size?: "sm" | "md" | "lg";
+    disabled?: boolean;
+    className?: string;
 }
 
+/**
+ * Toggle component with different variants and sizes.
+ * Provides a switch-like interface for boolean state changes.
+ */
 export default function Toggle({
     checked,
     onChange,
-    disabled = false,
-    size = "md",
-    variant = "default",
-    className,
     label,
-    labelClassName
+    labelClassName,
+    variant = "default",
+    size = "md",
+    disabled = false,
+    className,
 }: ToggleProps) {
+    // Define variant-specific colors
+    const variantColors = {
+        default: "bg-zinc-600",
+        success: "bg-green-600",
+        warning: "bg-yellow-600",
+        danger: "bg-red-600",
+    };
+
+    // Define size-specific dimensions
     const sizeClasses = {
-        xs: {
-            container: "w-8 h-5",
-            thumb: "w-4 h-4",
-            translate: "translate-x-3",
-        },
-        sm: {
-            container: "w-9 h-[1.375rem]",
-            thumb: "w-[1.125rem] h-[1.125rem]",
-            translate: "translate-x-3.5",
-        },
-        md: {
-            container: "w-10 h-6",
-            thumb: "w-5 h-5",
-            translate: "translate-x-4",
-        },
-        lg: {
-            container: "w-12 h-7",
-            thumb: "w-6 h-6",
-            translate: "translate-x-5",
-        }
+        sm: "w-8 h-4",
+        md: "w-12 h-6",
+        lg: "w-16 h-8",
     };
 
-    const variantClasses = {
-        default: {
-            unchecked: "bg-zinc-700",
-            checked: "bg-blue-500"
-        },
-        success: {
-            unchecked: "bg-zinc-700",
-            checked: "bg-green-500"
-        },
-        danger: {
-            unchecked: "bg-zinc-700",
-            checked: "bg-red-500"
-        }
+    const thumbSizeClasses = {
+        sm: "w-3 h-3",
+        md: "w-5 h-5",
+        lg: "w-7 h-7",
     };
 
-    const currentSize = sizeClasses[size];
-    const currentVariant = variantClasses[variant];
+    const thumbTranslateClasses = {
+        sm: checked ? "translate-x-4" : "translate-x-0.5",
+        md: checked ? "translate-x-6" : "translate-x-0.5",
+        lg: checked ? "translate-x-8" : "translate-x-0.5",
+    };
 
     return (
-        <label className={cn("flex items-center gap-3 cursor-pointer", disabled && "cursor-not-allowed opacity-50", className)}>
-            <span className={cn("relative inline-block align-middle select-none", currentSize.container)}>
-                <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={e => onChange(e.target.checked)}
-                    disabled={disabled}
-                    className="peer opacity-0 absolute inset-0 w-full h-full cursor-pointer disabled:cursor-not-allowed"
+        <div className={cn("flex items-center gap-3", className)}>
+            {/* Toggle switch */}
+            <button
+                type="button"
+                role="switch"
+                aria-checked={checked}
+                disabled={disabled}
+                onClick={() => !disabled && onChange(!checked)}
+                className={cn(
+                    "relative inline-flex items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-zinc-900",
+                    sizeClasses[size],
+                    checked ? variantColors[variant] : "bg-zinc-700",
+                    disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                    "focus:ring-blue-500"
+                )}
+            >
+                {/* Toggle thumb */}
+                <span
+                    className={cn(
+                        "inline-block bg-white rounded-full transition-transform duration-200 ease-in-out",
+                        thumbSizeClasses[size],
+                        thumbTranslateClasses[size]
+                    )}
                 />
-                <span className={cn(
-                    "block rounded-full transition-colors",
-                    currentSize.container,
-                    checked ? currentVariant.checked : currentVariant.unchecked
-                )}></span>
-                <span className={cn(
-                    "absolute bg-white rounded-full shadow-md transition-transform left-0.5 top-0.5",
-                    currentSize.thumb,
-                    checked ? currentSize.translate : "translate-x-0"
-                )}></span>
-            </span>
+            </button>
+
+            {/* Label */}
             {label && (
-                <span className={cn("text-base font-medium", labelClassName)}>
+                <label
+                    className={cn(
+                        "text-sm cursor-pointer select-none",
+                        disabled ? "opacity-50 cursor-not-allowed" : "",
+                        labelClassName
+                    )}
+                    onClick={() => !disabled && onChange(!checked)}
+                >
                     {label}
-                </span>
+                </label>
             )}
-        </label>
+        </div>
     );
 } 

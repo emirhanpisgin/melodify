@@ -3,7 +3,11 @@
 @tailwind utilities;
 
 body {
-    @apply m-0;
+    @apply m-0 flex flex-col;
+}
+
+html, body {
+    @apply h-full w-full;
 }
 
 ::-webkit-scrollbar {
