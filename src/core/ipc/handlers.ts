@@ -1,11 +1,11 @@
 import {
     app,
-    autoUpdater,
     BrowserWindow,
     ipcMain,
     shell,
     dialog,
 } from "electron";
+import { autoUpdater, ProgressInfo, UpdateInfo } from "electron-updater";
 import Config from "../config";
 import { logDebug, logError, logInfo, logWarn } from "../logging";
 import { redactSecrets } from "../logging/utils";
@@ -98,6 +98,9 @@ ipcMain.on("config:set", (event, newConfig) => {
 });
 
 // Auto-update integration
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+
 let autoUpdateEnabled = (Config.get("autoUpdateEnabled") as boolean) ?? true;
 
 function broadcastUpdateStatus(status: string, data?: any) {
@@ -108,7 +111,7 @@ function broadcastUpdateStatus(status: string, data?: any) {
 
 ipcMain.on("update:check", () => {
     broadcastUpdateStatus("checking");
-    autoUpdater.checkForUpdates();
+    autoUpdater.checkForUpdatesAndNotify();
 });
 ipcMain.on("update:setAuto", (_event, enabled: boolean) => {
     autoUpdateEnabled = enabled;
@@ -158,17 +161,29 @@ app.on("ready", () => {
     }
 });
 
-autoUpdater.on("checking-for-update", () => broadcastUpdateStatus("checking"));
-autoUpdater.on("update-available", () => broadcastUpdateStatus("available"));
-autoUpdater.on("update-not-available", () =>
-    broadcastUpdateStatus("not-available")
-);
-autoUpdater.on("error", (err: any) =>
-    broadcastUpdateStatus("error", { error: err.message })
-);
-autoUpdater.on("update-downloaded", (info: any) =>
-    broadcastUpdateStatus("downloaded", { info })
-);
+autoUpdater.on("checking-for-update", () => {
+    broadcastUpdateStatus("checking");
+});
+
+autoUpdater.on("update-available", (info: UpdateInfo) => {
+    broadcastUpdateStatus("available", { info });
+});
+
+autoUpdater.on("update-not-available", (info: UpdateInfo) => {
+    broadcastUpdateStatus("not-available", { info });
+});
+
+autoUpdater.on("error", (err: Error) => {
+    broadcastUpdateStatus("error", { error: err.message });
+});
+
+autoUpdater.on("download-progress", (progress: ProgressInfo) => {
+    broadcastUpdateStatus("downloading", { progress });
+});
+
+autoUpdater.on("update-downloaded", (info: UpdateInfo) => {
+    broadcastUpdateStatus("downloaded", { info });
+});
 
 ipcMain.on("log:info", (_event, { message, meta }) => {
     logInfo(`[renderer] ${message}`, redactSecrets(meta));

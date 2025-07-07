@@ -2,41 +2,16 @@
 // Main process entry point for the Electron application.
 // Handles app lifecycle, window management, tray creation, and IPC setup.
 
-import {
-    app,
-    BrowserWindow,
-    ipcMain,
-    Tray,
-    Menu,
-    nativeImage,
-    autoUpdater,
-} from "electron";
-import { updateElectronApp } from "update-electron-app";
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from "electron";
+import { autoUpdater } from "electron-updater";
 import { logInfo, logDebug, logError } from "../core/logging";
 import Config from "../core/config";
 import path from "path";
-import fs from "fs";
 
 // Import IPC handlers for different features
 import "../core/ipc";
 import "../features/kick/ipc/handlers";
 import "../features/spotify/ipc/handlers";
-
-import { redactSecrets } from "../core/logging/utils";
-
-// Import feature initialization functions
-import {
-    listenToChat,
-    startKickTokenAutoRefresh,
-    stopKickTokenAutoRefresh,
-} from "../features/kick/chat/listener";
-import {
-    startSpotifyTokenRefreshInterval,
-    stopSpotifyTokenAutoRefresh,
-} from "../features/spotify/playback/player";
-
-// Import shared constants
-import { SPOTIFY_REDIRECT_URI, KICK_REDIRECT_URI } from "../shared/constants";
 
 // Window dimensions and platform detection
 const WINDOW_WIDTH = 700;
@@ -46,11 +21,6 @@ const IS_MAC = process.platform === "darwin";
 // Webpack entry points (declared by webpack)
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
-
-// Handle Windows installer squirrel events
-if (require("electron-squirrel-startup")) {
-    app.quit();
-}
 
 // Global variables for window and tray management
 let mainWindow: BrowserWindow | null = null;
@@ -203,9 +173,7 @@ const createMainWindow = (): void => {
             mainWindow?.close();
         });
 
-        // Initialize auto-updater
-        autoUpdater.checkForUpdates();
-        logInfo("Main window created and autoUpdater initialized");
+        logInfo("Main window created");
     } catch (error) {
         logError(error, "main:createMainWindow");
     }
@@ -219,6 +187,7 @@ const createMainWindow = (): void => {
 app.on("ready", () => {
     logInfo("App ready event");
     createMainWindow();
+    autoUpdater.checkForUpdatesAndNotify();
 
     // Create tray if minimize-to-tray is enabled
     const minimizeToTray = Config.get("minimizeToTray");
