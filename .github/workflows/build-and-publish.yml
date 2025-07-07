@@ -34,22 +34,27 @@ jobs:
               id: get_version
               run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $env:GITHUB_ENV
 
-            - name: Update Manifest File
-              run: |
-                  $manifest = Get-Content -Path update.json -Raw | ConvertFrom-Json
-                  $manifest.version = "${{ env.VERSION }}"
-                  $manifest.platforms."win32-x64".url = "https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/Songulfy.Setup.${{ env.VERSION }}.exe"
-                  $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path update.json
+            - name: Update and Commit Manifest
               shell: pwsh
-
-            - name: Commit and Push Manifest
               run: |
-                  git config --global user.name "github-actions[bot]"
-                  git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                  git add update.json
+                git config --global user.name 'github-actions[bot]'
+                git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+                git checkout main
+
+                $manifestPath = "update.json"
+                $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json
+                $manifest.version = "${{ env.VERSION }}"
+                $manifest.platforms."win32-x64".url = "https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/Songulfy.Setup.${{ env.VERSION }}.exe"
+                $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath
+
+                git add $manifestPath
+                git diff --staged --quiet
+                if ($LASTEXITCODE -ne 0) {
                   git commit -m "ci: Update manifest for v${{ env.VERSION }}"
                   git push
-              shell: bash
+                } else {
+                  Write-Host "No changes to manifest, skipping commit."
+                }
 
             - name: Create GitHub Release
               id: create_release
