@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import Input from "../../../../ui/components/Input";
 import Toggle from "../../../../ui/components/Toggle";
-import MultipleInput from "../../../../ui/components/MultipleInput";
 import { Button } from "../../../../ui/components/Button";
 import { useUpdateStatus } from "../../../../ui/hooks/useUpdateStatus";
 
@@ -20,10 +18,10 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
     useEffect(() => {
         // Get the current startup status from the system
         window.electronAPI.getStartupStatus().then(setStartupStatus);
-        
+
         // Get the current auto-update setting
         window.electronAPI.getAutoUpdate().then(setAutoUpdateEnabled);
-        
+
         // Get the current app version
         window.electronAPI.getAppVersion().then(setCurrentVersion);
     }, []);
@@ -60,7 +58,7 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
         <div className="space-y-6">
             <div>
                 <h2 className="text-lg font-semibold text-white mb-4">Application Settings</h2>
-                
+
                 <div className="space-y-2">
                     <div className="flex items-center justify-between py-2">
                         <div>
@@ -82,7 +80,7 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
 
             <div>
                 <h2 className="text-lg font-semibold text-white mb-4">Updates</h2>
-                
+
                 <div className="space-y-4">
                     <div className="flex items-center justify-between py-2">
                         <div>
@@ -117,8 +115,8 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
                     )}
 
                     <div className="flex space-x-2">
-                        <Button 
-                            onClick={handleCheck} 
+                        <Button
+                            onClick={handleCheck}
                             disabled={status === 'checking' || status === 'downloading'}
                             className="text-sm"
                         >
@@ -126,7 +124,7 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
                         </Button>
 
                         {status === 'available' && (
-                            <Button 
+                            <Button
                                 onClick={handleDownload}
                                 className="text-sm"
                             >
@@ -135,19 +133,19 @@ export default function GeneralTab({ config, onInput, validationErrors }: Genera
                         )}
 
                         {status === 'downloaded' && (
-                            <Button 
-                                onClick={handleInstall} 
+                            <Button
+                                onClick={handleInstall}
                                 className="bg-green-600 hover:bg-green-700 text-sm"
                             >
                                 Restart & Install
                             </Button>
                         )}
                     </div>
-                    
+
                     {status === 'error' && (
                         <p className="text-red-400 text-sm">An error occurred while checking for updates. Please try again later.</p>
                     )}
-                    
+
                     {status === 'not-available' && (
                         <p className="text-green-400 text-sm">You are running the latest version.</p>
                     )}
