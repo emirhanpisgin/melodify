@@ -11,7 +11,6 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
     const app = express();
     const port = 8888;
 
-    //@ts-ignore
     let authServer: null | Server = null;
 
     app.get("/callback", async (req, res) => {

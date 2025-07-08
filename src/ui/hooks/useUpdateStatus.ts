@@ -24,12 +24,22 @@ interface UpdateProgress {
 }
 
 /**
+ * Update manifest information.
+ */
+interface UpdateManifest {
+    version: string;
+    releaseNotes?: string;
+    releaseName?: string;
+    releaseDate?: string;
+}
+
+/**
  * Return type for the useUpdateStatus hook.
  */
 interface UseUpdateStatusReturn {
     status: UpdateStatus;
-    progress?: UpdateProgress;
-    manifest?: any;
+    progress?: UpdateProgress | null;
+    manifest?: UpdateManifest | null;
 }
 
 /**
@@ -41,11 +51,15 @@ interface UseUpdateStatusReturn {
 export function useUpdateStatus(): UseUpdateStatusReturn {
     const [status, setStatus] = useState<UpdateStatus>("idle");
     const [progress, setProgress] = useState<UpdateProgress | null>(null);
-    const [manifest, setManifest] = useState<any | null>(null);
+    const [manifest, setManifest] = useState<UpdateManifest | null>(null);
 
     useEffect(() => {
         // Listen for update status events from the main process
-        const handleUpdateStatus = (_event: any, status: UpdateStatus, data: any) => {
+        const handleUpdateStatus = (
+            _event: any,
+            status: UpdateStatus,
+            data: any
+        ) => {
             setStatus(status);
             if (status === "available") {
                 setManifest(data);

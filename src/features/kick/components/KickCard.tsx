@@ -136,12 +136,12 @@ export default function KickCard() {
                     />
                 )}
             </div>
-            <div className="flex flex-col gap-2 w-full items-center mb-4 text-black">
+            <div className="flex flex-col gap-2 w-full items-center mb-4">
                 <div className="flex gap-2">
                     {(hasSecrets === false) && (
                         <div
                             onClick={() => setOpenConfigure(true)}
-                            className="bg-kick-green hover:bg-kick-green-dark active:bg-kick-green-darker transition-colors cursor-pointer px-4 py-2 rounded text-sm font-semibold"
+                            className="bg-kick-green hover:bg-kick-green-dark active:bg-kick-green-darker transition-colors cursor-pointer px-4 py-2 rounded text-sm font-semibold text-black"
                         >
                             Setup Kick
                         </div>
@@ -149,7 +149,7 @@ export default function KickCard() {
                     {authenticated ? (
                         <div
                             onClick={handleLogout}
-                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 px-4 py-2 rounded text-sm font-semibold transition-all cursor-pointer"
+                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 px-4 py-2 rounded text-sm font-semibold transition-all cursor-pointer text-white"
                         >
                             Logout from Kick
                         </div>
@@ -157,7 +157,7 @@ export default function KickCard() {
                         <div className="relative">
                             <div
                                 onClick={() => handleLogin()}
-                                className={`bg-kick-green cursor-pointer hover:bg-kick-green-dark active:bg-kick-green-darker px-4 py-2 rounded text-sm font-semibold transition-all ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
+                                className={`bg-kick-green cursor-pointer hover:bg-kick-green-dark active:bg-kick-green-darker px-4 py-2 rounded text-sm font-semibold transition-all text-black ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
                             >
                                 <span className="flex items-center gap-2 justify-center">
                                     <KickIcon className="size-5" />
@@ -165,7 +165,7 @@ export default function KickCard() {
                                 </span>
                             </div>
                             {hasSecrets === false && (
-                                <span className="absolute text-center cursor-not-allowed inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none">
+                                <span className="absolute text-center cursor-not-allowed inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none text-black">
                                     Configure API credentials<br />to connect
                                 </span>
                             )}

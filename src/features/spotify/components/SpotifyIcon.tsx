@@ -1,4 +1,6 @@
-interface SpotifyIconProps extends React.HTMLAttributes<HTMLOrSVGElement> { }
+interface SpotifyIconProps extends React.HTMLAttributes<HTMLOrSVGElement> {
+    className?: string;
+}
 
 export default function SpotifyIcon({ className, ...props }: SpotifyIconProps) {
     return (

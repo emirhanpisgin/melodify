@@ -8,9 +8,8 @@ import path from "path";
 let spotifyApi: SpotifyWebApi | null = null;
 let refreshSpotifyTokenInterval: NodeJS.Timeout | null = null;
 let saveSongInterval: NodeJS.Timeout | null = null;
-let currentSongInfo: { title: string; artist: string } | null = null;
 let nextSaveTimeout: NodeJS.Timeout | null = null;
-let songFileSavingEnabled = true;
+const songFileSavingEnabled = true;
 let lastSavedSong: { title: string; artist: string } | null = null;
 let songFileSavingInterval: NodeJS.Timeout | null = null;
 
@@ -73,9 +72,7 @@ export function saveTokens({
     logInfo("Spotify tokens saved", { expiresAt });
 }
 
-export async function refreshSpotifyAccessToken(
-    window?: Electron.BrowserWindow
-): Promise<boolean> {
+export async function refreshSpotifyAccessToken(): Promise<boolean> {
     const tokens = loadTokens();
     if (!tokens) return false;
     try {
@@ -103,7 +100,7 @@ export async function checkSpotifyAccessToken(
     const tokens = loadTokens();
     if (!tokens) return false;
     if (Date.now() >= tokens.expiresAt) {
-        return await refreshSpotifyAccessToken(window);
+        return await refreshSpotifyAccessToken();
     }
     return true;
 }
@@ -302,9 +299,6 @@ export function startSongFileSaving() {
         clearTimeout(nextSaveTimeout);
     }
 
-    // Reset current song info
-    currentSongInfo = null;
-
     // Start the first check immediately
     saveCurrentSongToFile();
     logInfo("Started saving current song to file");
@@ -325,7 +319,5 @@ export function stopSongFileSaving() {
         nextSaveTimeout = null;
     }
 
-    // Clear current song info
-    currentSongInfo = null;
     logInfo("Stopped saving current song to file");
 }

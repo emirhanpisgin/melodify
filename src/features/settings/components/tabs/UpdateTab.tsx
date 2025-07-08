@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/ui/components/Button";
-import { useUpdateStatus } from "@/ui/hooks/useUpdateStatus";
+import { Button } from "../../../../ui/components/Button";
+import { useUpdateStatus } from "../../../../ui/hooks/useUpdateStatus";
 
 export default function UpdateTab() {
     const { status, progress, manifest } = useUpdateStatus();
@@ -15,13 +15,11 @@ export default function UpdateTab() {
     };
 
     const handleDownload = () => {
-        if (manifest) {
-            window.electronAPI.downloadUpdate(manifest);
-        }
+        window.electronAPI.send("update:download", manifest);
     };
 
     const handleInstall = () => {
-        window.electronAPI.installUpdate();
+        window.electronAPI.send("update:install");
     };
 
     return (

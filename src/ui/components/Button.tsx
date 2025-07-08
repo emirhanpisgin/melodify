@@ -2,7 +2,10 @@ import { forwardRef, ButtonHTMLAttributes } from "react";
 import { twMerge } from "tailwind-merge";
 import { clsx } from "clsx";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {}
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+    className?: string;
+    children?: React.ReactNode;
+}
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, children, ...props }, ref) => {

@@ -1,6 +1,5 @@
 import {
     app,
-    BrowserWindow,
     ipcMain,
     shell,
     dialog,
@@ -15,7 +14,6 @@ import {
 } from "../../features/spotify/playback/player";
 import path from "path";
 import { registerAllCommands } from "../commands/registry";
-import { checkForUpdates, downloadUpdate, installUpdate } from "../updater";
 
 // Create command manager instance
 const commandManager = new CommandManager();
@@ -97,27 +95,16 @@ ipcMain.on("config:set", (event, newConfig) => {
     commandManager.reloadCommandAliasesFromConfig();
 });
 
-// Update integration
-ipcMain.on("update:check", () => {
-    checkForUpdates();
-});
-
-ipcMain.on("update:download", (_event, manifest) => {
-    downloadUpdate(manifest);
-});
-
-ipcMain.on("update:install", () => {
-    installUpdate();
-});
-
-let autoUpdateEnabled = (Config.get("autoUpdateEnabled") as boolean) ?? true;
-
+// Auto-update setting handlers
 ipcMain.on("update:setAuto", (_event, enabled: boolean) => {
-    autoUpdateEnabled = enabled;
     Config.set({ autoUpdateEnabled: enabled });
+    logDebug(`Auto-update preference set to: ${enabled}`, "ipc:update:setAuto");
 });
 
-ipcMain.handle("update:getAuto", () => autoUpdateEnabled);
+ipcMain.handle("update:getAuto", () => {
+    const enabled = (Config.get("autoUpdateEnabled") as boolean) ?? true;
+    return enabled;
+});
 ipcMain.handle("app:getVersion", () => app.getVersion());
 
 // Startup setting handlers
@@ -143,10 +130,6 @@ ipcMain.on("startup:setStatus", (_event, enabled: boolean) => {
 });
 
 app.on("ready", () => {
-    if (autoUpdateEnabled) {
-        checkForUpdates();
-    }
-
     // Initialize song file saving if enabled
     if (Config.get("saveCurrentSongToFile")) {
         startSongFileSaving();

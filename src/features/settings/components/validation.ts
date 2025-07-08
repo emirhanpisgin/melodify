@@ -59,7 +59,7 @@ export const validateField = (key: string, value: any): string | null => {
             if (typeof value === "string") {
                 if (!value || value.length < 1) return "Prefix cannot be empty";
                 if (value.length > 10) return "Prefix too long (max 10 characters)";
-                if (!/^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(value)) {
+                if (!/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(value)) {
                     return "Prefix should be a special character (e.g., !, @, #, $)";
                 }
             }

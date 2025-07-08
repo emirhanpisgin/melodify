@@ -216,7 +216,7 @@ export default function SpotifyCard() {
                     {(hasSecrets === false) && (
                         <div
                             onClick={() => setOpenConfigure(true)}
-                            className="bg-spotify-green hover:bg-spotify-green-dark active:bg-spotify-green-darker cursor-pointer px-4 py-2 rounded text-sm font-semibold"
+                            className="bg-spotify-green hover:bg-spotify-green-dark active:bg-spotify-green-darker cursor-pointer px-4 py-2 rounded text-sm font-semibold text-black"
                         >
                             Setup Spotify
                         </div>
@@ -224,7 +224,7 @@ export default function SpotifyCard() {
                     {authenticated ? (
                         <div
                             onClick={handleLogout}
-                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 px-4 py-2 rounded text-sm font-semibold transition-all cursor-pointer"
+                            className="bg-red-600 hover:bg-red-700 active:bg-red-800 px-4 py-2 rounded text-sm font-semibold transition-all cursor-pointer text-white"
                         >
                             Logout from Spotify
                         </div>
@@ -232,7 +232,7 @@ export default function SpotifyCard() {
                         <div className="relative">
                             <div
                                 onClick={() => handleLogin()}
-                                className={`bg-spotify-green cursor-pointer hover:bg-spotify-green-dark active:bg-spotify-green-darker px-4 py-2 rounded text-sm font-semibold transition-all ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
+                                className={`bg-spotify-green cursor-pointer hover:bg-spotify-green-dark active:bg-spotify-green-darker px-4 py-2 rounded text-sm font-semibold transition-all text-black ${hasSecrets === false ? "opacity-50 cursor-not-allowed blur-sm" : ""}`}
                             >
                                 <span className="flex items-center gap-2 justify-center">
                                     <SpotifyIcon className="size-5" />
@@ -240,7 +240,7 @@ export default function SpotifyCard() {
                                 </span>
                             </div>
                             {hasSecrets === false && (
-                                <span className="absolute text-center inset-0 flex items-center justify-center text-xs text-white font-semibold pointer-events-none">
+                                <span className="absolute text-center inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none text-black">
                                     Configure API credentials<br />to connect
                                 </span>
                             )}

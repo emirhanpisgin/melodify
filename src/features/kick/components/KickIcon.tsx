@@ -1,6 +1,8 @@
 import { cn } from "../../../shared/utils";
 
-interface KickIconProps extends React.HTMLAttributes<HTMLOrSVGElement> { }
+interface KickIconProps extends React.HTMLAttributes<HTMLOrSVGElement> {
+    className?: string;
+}
 
 export default function KickIcon({ className, ...props }: KickIconProps) {
     return (

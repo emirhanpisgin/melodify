@@ -29,7 +29,7 @@ export class CommandManager {
     private aliasMap: Map<string, string> = new Map(); // alias -> commandName
 
     // Cooldown tracking
-    private globalCooldownEnd: number = 0;
+    private globalCooldownEnd = 0;
     private userCooldowns: Map<string, number> = new Map(); // username -> cooldown end time
 
     register(command: Command) {
