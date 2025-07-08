@@ -1,4 +1,3 @@
-import fetch from "node-fetch";
 import Config from "../../../core/config";
 import Pusher from "pusher-js";
 import { playSong } from "../../spotify/playback/player";
@@ -11,9 +10,7 @@ import { kickClient } from "../api/client";
 export let isListening = false;
 let refreshKickTokenInterval: NodeJS.Timeout | null = null;
 
-export async function refreshKickAccessToken(
-    window?: Electron.BrowserWindow
-): Promise<boolean> {
+export async function refreshKickAccessToken(): Promise<boolean> {
     return await kickClient.refreshAccessToken();
 }
 
@@ -106,7 +103,7 @@ export async function startKickTokenAutoRefresh(
         const kickExpiresAt = Config.get("kickExpiresAt");
         if (!kickExpiresAt) return;
         if (Date.now() >= kickExpiresAt - 2 * 60 * 1000) {
-            await refreshKickAccessToken(window);
+            await refreshKickAccessToken();
         }
     }, 60 * 1000);
 }
