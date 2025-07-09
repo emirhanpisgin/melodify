@@ -55,7 +55,7 @@ export default function UpdateTab() {
                             </p>
                             <div className="w-full bg-gray-600 rounded-full h-2.5">
                                 <div
-                                    className="bg-blue-600 h-2.5 rounded-full"
+                                    className="bg-melodify-primary h-2.5 rounded-full"
                                     style={{
                                         width: `${progress?.percent?.toFixed(0) ?? 0}%`,
                                     }}

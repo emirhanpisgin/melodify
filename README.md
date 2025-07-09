@@ -1,8 +1,8 @@
-# Songülfy
+# Melodify
 
 **The Ultimate Spotify + Kick Chat Song Request App for Streamers**
 
-Songülfy is a next-generation desktop app that lets your viewers control the music on your stream—directly from your Kick chat! Instantly turn your Kick channel into a live, interactive jukebox powered by Spotify. Delight your community, boost engagement, and keep your stream's vibe fresh—all with a beautiful, modern UI.
+Melodify is a next-generation desktop app that lets your viewers control the music on your stream—directly from your Kick chat! Instantly turn your Kick channel into a live, interactive jukebox powered by Spotify. Delight your community, boost engagement, and keep your stream's vibe fresh—all with a beautiful, modern UI.
 
 ---
 
@@ -16,7 +16,7 @@ Songülfy is a next-generation desktop app that lets your viewers control the mu
 
 - **Effortless Song Requests from Chat**
     - Viewers request songs in Kick chat using a simple command (e.g., `!sr <song name>`)
-    - Songülfy searches Spotify and queues the requested track on your device
+    - Melodify searches Spotify and queues the requested track on your device
     - Customizable feedback and status messages sent to chat
 
 - **Modern, Streamer-Friendly UI**
@@ -45,8 +45,8 @@ Songülfy is a next-generation desktop app that lets your viewers control the mu
 
 1. **Clone the repository:**
     ```sh
-    git clone https://github.com/yourusername/songulfy.git
-    cd songulfy
+    git clone https://github.com/yourusername/melodify.git
+    cd melodify
     ```
 2. **Install dependencies:**
     ```sh
@@ -76,7 +76,7 @@ npm run make
 1. **Connect your Spotify and Kick accounts** in the app settings.
 2. **Start your Kick stream and open chat.**
 3. **Viewers request songs** by typing `!sr <song name/url>` in Kick chat (prefix is customizable).
-4. Songülfy searches Spotify and plays the requested song on your connected device.
+4. Melodify searches Spotify and plays the requested song on your connected device.
 5. The app sends a customizable reply message to chat, confirming the song request.
 
 ---
@@ -104,4 +104,4 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 
 **Not affiliated with Kick or Spotify. Use at your own risk.**
 
-> **Songülfy: Let your community DJ your stream!**
+> **Melodify: Let your community DJ your stream!**

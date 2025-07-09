@@ -25,7 +25,7 @@ const logs: LogEntry[] = [];
 const MAX_LOGS = 1000;
 
 const LOG_DIR = app ? app.getPath("userData") : process.cwd();
-const LOG_FILE = path.join(LOG_DIR, "songulfy.log");
+const LOG_FILE = path.join(LOG_DIR, "melodify.log");
 const MAX_LOG_SIZE = 1024 * 1024; // 1MB
 const MAX_LOG_FILES = 3;
 

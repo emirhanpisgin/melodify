@@ -2,13 +2,13 @@
     "version": "0.0.0",
     "platforms": {
         "win32-x64": {
-            "url": "https://github.com/emirhanpisgin/songulfy/releases/download/v0.0.0/Songulfy.Setup.0.0.0.exe"
+            "url": "https://github.com/emirhanpisgin/melodify/releases/download/v0.0.0/Melodify.Setup.0.0.0.exe"
         },
         "darwin-x64": {
-            "url": "https://github.com/emirhanpisgin/songulfy/releases/download/v0.0.0/Songulfy-0.0.0.zip"
+            "url": "https://github.com/emirhanpisgin/melodify/releases/download/v0.0.0/Melodify-0.0.0.zip"
         },
         "darwin-arm64": {
-            "url": "https://github.com/emirhanpisgin/songulfy/releases/download/v0.0.0/Songulfy-0.0.0-arm64.zip"
+            "url": "https://github.com/emirhanpisgin/melodify/releases/download/v0.0.0/Melodify-0.0.0-arm64.zip"
         }
     }
 }

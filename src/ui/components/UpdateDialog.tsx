@@ -44,7 +44,7 @@ export default function UpdateDialog() {
     };
 
     return (
-        <div className="fixed bottom-8 right-8 bg-blue-700 text-white px-4 py-3 rounded shadow z-50 max-w-sm">
+        <div className="fixed bottom-8 right-8 bg-melodify-primary text-white px-4 py-3 rounded shadow z-50 max-w-sm">
             {status === "downloaded" ? (
                 <div>
                     <div className="font-bold mb-1">Update Ready!</div>
@@ -54,13 +54,13 @@ export default function UpdateDialog() {
                     </div>
                     <div className="flex gap-2">
                         <Button
-                            className="bg-white text-blue-700 hover:bg-gray-100"
+                            className="bg-white text-melodify-primary hover:bg-gray-100"
                             onClick={handleInstall}
                         >
                             Install Now
                         </Button>
                         <Button
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-melodify-secondary hover:bg-melodify-secondary-dark"
                             onClick={handleDismiss}
                         >
                             Later
@@ -76,7 +76,7 @@ export default function UpdateDialog() {
                             : "Preparing download..."}
                     </div>
                     {progress?.percent && (
-                        <div className="w-full bg-blue-800 rounded-full h-2">
+                        <div className="w-full bg-melodify-primary-darker rounded-full h-2">
                             <div
                                 className="bg-white h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${progress.percent}%` }}
@@ -93,13 +93,13 @@ export default function UpdateDialog() {
                     </div>
                     <div className="flex gap-2">
                         <Button
-                            className="bg-white text-blue-700 hover:bg-gray-100"
+                            className="bg-white text-melodify-primary hover:bg-gray-100"
                             onClick={handleDownload}
                         >
                             Download
                         </Button>
                         <Button
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-melodify-secondary hover:bg-melodify-secondary-dark"
                             onClick={handleDismiss}
                         >
                             Skip
@@ -117,7 +117,7 @@ export default function UpdateDialog() {
                     </div>
                     <div className="flex gap-2">
                         <Button
-                            className="bg-white text-blue-700 hover:bg-gray-100"
+                            className="bg-white text-melodify-primary hover:bg-gray-100"
                             onClick={() =>
                                 window.electronAPI?.send?.("update:check")
                             }
@@ -125,7 +125,7 @@ export default function UpdateDialog() {
                             Retry
                         </Button>
                         <Button
-                            className="bg-blue-600 hover:bg-blue-700"
+                            className="bg-melodify-secondary hover:bg-melodify-secondary-dark"
                             onClick={handleDismiss}
                         >
                             Dismiss

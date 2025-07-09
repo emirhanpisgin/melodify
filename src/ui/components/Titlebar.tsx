@@ -45,7 +45,7 @@ export default function Titlebar({
     let tooltip = "";
     if (status === "checking" || status === "downloading") {
         updateIcon = (
-            <LoaderCircleIcon className="text-green-500 animate-spin" />
+            <LoaderCircleIcon className="text-melodify-primary animate-spin" />
         );
         if (status === "checking") {
             tooltip = "Checking for updates...";
@@ -53,10 +53,10 @@ export default function Titlebar({
             tooltip = `Downloading update... ${progress?.percent ? Math.round(progress.percent) : 0}%`;
         }
     } else if (status === "available") {
-        updateIcon = <InfoIcon className="text-green-500" />;
+        updateIcon = <InfoIcon className="text-melodify-primary" />;
         tooltip = "Update available!";
     } else if (status === "downloaded") {
-        updateIcon = <RotateCcwIcon className="text-orange-500" />;
+        updateIcon = <RotateCcwIcon className="text-melodify-accent" />;
         tooltip = "Update downloaded! Restart to apply.";
     } else if (status === "error") {
         updateIcon = <InfoIcon className="text-red-500" />;
@@ -73,8 +73,8 @@ export default function Titlebar({
         >
             {/* App name */}
             <div className="flex items-center pl-4 font-bold text-lg text-white">
-                <span className="text-spotify-green">Song</span>
-                <span className="text-kick-green">ülfy</span>
+                <span className="text-melodify-primary">Melo</span>
+                <span className="text-melodify-secondary">dify</span>
             </div>
             {/* Version and update status */}
             <div className="flex items-center gap-2 font-bold text-lg text-gray-600">

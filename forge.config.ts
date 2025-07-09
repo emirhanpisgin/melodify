@@ -15,18 +15,18 @@ const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
         icon: "./assets/icon",
-        name: "Songulfy",
-        executableName: "Songulfy",
-        appBundleId: "com.emirhanpisgin.songulfy",
+        name: "Melodify",
+        executableName: "Melodify",
+        appBundleId: "com.emirhanpisgin.melodify",
     },
     rebuildConfig: {},
     makers: [
         new MakerSquirrel({
             authors: "Emirhan Pisgin",
-            description: "Songülfy - Listen with your viewers!",
-            setupExe: "Songulfy.Setup.exe",
-            name: "Songulfy",
-            exe: "Songulfy.exe",
+            description: "Melodify - Listen with your viewers!",
+            setupExe: "Melodify.Setup.exe",
+            name: "Melodify",
+            exe: "Melodify.exe",
         }),
         new MakerZIP({}, ["darwin"]),
         new MakerRpm({}),
@@ -68,7 +68,7 @@ const config: ForgeConfig = {
             config: {
                 repository: {
                     owner: "emirhanpisgin",
-                    name: "songulfy",
+                    name: "melodify",
                 },
                 prerelease: false,
                 draft: true,

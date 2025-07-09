@@ -47,7 +47,7 @@ let isQuiting = false;
 let updater: any = null;
 try {
     updater = new Updater({
-        repo: "emirhanpisgin/songulfy", // Your GitHub repository
+        repo: "emirhanpisgin/melodify", // Your GitHub repository
         autoDownload: false, // Don't auto-download, let user choose
         allowPrerelease: false, // Only stable releases
         debug: false, // Enable debug in dev
@@ -251,7 +251,7 @@ const createTray = () => {
         },
     ]);
 
-    tray.setToolTip("Songulfy");
+    tray.setToolTip("Melodify");
     tray.setContextMenu(contextMenu);
     tray.on("click", () => {
         mainWindow?.show();

@@ -34,7 +34,7 @@ export default function Toggle({
     disabled = false,
     className,
 }: ToggleProps) {
-    const color = checked ? "bg-green-500" : "bg-zinc-500";
+    const color = checked ? "bg-melodify-primary" : "bg-zinc-500";
     const translate = checked ? "translate-x-[1.125rem]" : "translate-x-0.5";
 
     return (
@@ -52,7 +52,7 @@ export default function Toggle({
                     disabled
                         ? "opacity-50 cursor-not-allowed"
                         : "cursor-pointer",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 active:scale-95"
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-melodify-primary focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 active:scale-95"
                 )}
             >
                 <span

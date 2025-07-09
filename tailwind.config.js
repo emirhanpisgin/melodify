@@ -4,6 +4,17 @@ module.exports = {
     theme: {
         extend: {
             colors: {
+                // Melodify brand colors - musical and modern
+                "melodify-primary": "#8B5FBF", // Deep purple
+                "melodify-primary-dark": "#7A4FAE",
+                "melodify-primary-darker": "#693F9D",
+                "melodify-secondary": "#5F8BBF", // Complementary blue
+                "melodify-secondary-dark": "#4F7AAE",
+                "melodify-secondary-darker": "#3F699D",
+                "melodify-accent": "#BF8B5F", // Warm accent (golden)
+                "melodify-accent-dark": "#AE7A4F",
+                "melodify-accent-darker": "#9D693F",
+                // Keep Spotify and Kick colors for service-specific elements only
                 "spotify-green": "#1DB954",
                 "spotify-green-dark": "#1AA34A",
                 "spotify-green-darker": "#168F3D",

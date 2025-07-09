@@ -8,7 +8,7 @@ export default function SaveStatus({ status }: SaveStatusProps) {
     switch (status) {
         case "saving":
             return (
-                <div className="flex items-center gap-2 text-blue-400 bg-blue-400/10 px-3 py-2 rounded-lg border border-blue-400/20 animate-fade-in-slide-right">
+                <div className="flex items-center gap-2 text-melodify-primary bg-melodify-primary/10 px-3 py-2 rounded-lg border border-melodify-primary/20 animate-fade-in-slide-right">
                     <Loader2Icon className="size-4 animate-spin" />
                     <span className="text-sm font-medium">Saving...</span>
                 </div>
