@@ -13,7 +13,7 @@ module.exports = {
             },
             height: {
                 // Override h-screen to be 2.25rem shorter than 100vh
-                screen: 'calc(100vh - 2.25rem)',
+                screen: "calc(100vh - 2.25rem)",
             },
             keyframes: {
                 "fade-in": {
@@ -43,7 +43,8 @@ module.exports = {
                 "zoom-in": "zoom-in 0.2s ease-out",
                 "fade-out": "fade-out 0.3s ease-out",
                 "slide-out-to-right": "slide-out-to-right 0.3s ease-out",
-                "fade-in-slide-right": "fade-in 0.3s ease-out, slide-in-from-right 0.3s ease-out",
+                "fade-in-slide-right":
+                    "fade-in 0.3s ease-out, slide-in-from-right 0.3s ease-out",
             },
         },
     },

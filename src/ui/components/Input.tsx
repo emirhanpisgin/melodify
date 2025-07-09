@@ -28,9 +28,23 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
  * Forwards ref to the underlying input element.
  */
 const Input = forwardRef<HTMLInputElement, InputProps>(
-    ({ label, error, helperText, showCharacterCount, maxLength, className, ...props }, ref) => {
+    (
+        {
+            label,
+            error,
+            helperText,
+            showCharacterCount,
+            maxLength,
+            className,
+            ...props
+        },
+        ref
+    ) => {
         // Calculate character count if enabled
-        const charCount = showCharacterCount && maxLength ? (props.value as string)?.length || 0 : null;
+        const charCount =
+            showCharacterCount && maxLength
+                ? (props.value as string)?.length || 0
+                : null;
 
         return (
             <div className="flex flex-col gap-1 w-full">
@@ -74,4 +88,4 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
 Input.displayName = "Input";
 
-export default Input; 
+export default Input;

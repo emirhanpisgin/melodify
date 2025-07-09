@@ -14,13 +14,16 @@ export default function KickCard() {
     const [authenticated, setAuthenticated] = useState(false);
     const [listeningToChat, setListeningToChat] = useState(false);
     const [openConfigure, setOpenConfigure] = useState(false);
-    const [kickRedirectUri, setKickRedirectUri] = useState<string>(KICK_REDIRECT_URI);
+    const [kickRedirectUri, setKickRedirectUri] =
+        useState<string>(KICK_REDIRECT_URI);
 
     useEffect(() => {
-        window.electronAPI.invoke("kick:hasSecrets")
+        window.electronAPI
+            .invoke("kick:hasSecrets")
             .then((secrets) => {
                 setHasSecrets(secrets);
-            }).catch((error) => {
+            })
+            .catch((error) => {
                 logError(error, "Error checking Kick secrets");
             });
 
@@ -34,20 +37,24 @@ export default function KickCard() {
             setListeningToChat(true);
         });
 
-        window.electronAPI.invoke("kick:isListeningToChat")
+        window.electronAPI
+            .invoke("kick:isListeningToChat")
             .then((isListening) => {
                 setListeningToChat(isListening);
-            }).catch((error) => {
+            })
+            .catch((error) => {
                 logError(error, "Error checking Kick chat listening status");
             });
 
-        window.electronAPI.invoke("kick:checkAuth")
+        window.electronAPI
+            .invoke("kick:checkAuth")
             .then((result) => {
                 setAuthenticated(result.authenticated);
                 if (result.authenticated) {
                     setKickUsername(result.username);
                 }
-            }).catch((error) => {
+            })
+            .catch((error) => {
                 logError(error, "Error checking Kick authentication");
             });
 
@@ -92,9 +99,7 @@ export default function KickCard() {
     return (
         <div className="w-[50vw] flex flex-col justify-center items-center gap-3 h-full">
             <div className="flex-1 flex flex-col justify-center items-center gap-3 w-full">
-                <div className="text-2xl font-bold text-kick-green">
-                    Kick
-                </div>
+                <div className="text-2xl font-bold text-kick-green">Kick</div>
                 <StatusMessage
                     loading={hasSecrets === null}
                     completed={hasSecrets}
@@ -104,7 +109,8 @@ export default function KickCard() {
                 />
                 {hasSecrets === false && (
                     <div className="text-xs text-zinc-400 text-center max-w-[80%]">
-                        Configure your Kick API credentials to enable chat integration
+                        Configure your Kick API credentials to enable chat
+                        integration
                     </div>
                 )}
                 <StatusMessage
@@ -132,13 +138,19 @@ export default function KickCard() {
                         onSave={handleSecretsSubmit}
                         onClose={() => setOpenConfigure(false)}
                         hasSecrets={hasSecrets}
-                        info={<span className="text-blue-400 flex items-center gap-1 text-xs"><InfoIcon className="size-5" /> After you save your app, you need to edit it again and create a bot for that app.</span>}
+                        info={
+                            <span className="text-blue-400 flex items-center gap-1 text-xs">
+                                <InfoIcon className="size-5" /> After you save
+                                your app, you need to edit it again and create a
+                                bot for that app.
+                            </span>
+                        }
                     />
                 )}
             </div>
             <div className="flex flex-col gap-2 w-full items-center mb-4">
                 <div className="flex gap-2">
-                    {(hasSecrets === false) && (
+                    {hasSecrets === false && (
                         <div
                             onClick={() => setOpenConfigure(true)}
                             className="bg-kick-green hover:bg-kick-green-dark active:bg-kick-green-darker transition-colors cursor-pointer px-4 py-2 rounded text-sm font-semibold text-black"
@@ -166,7 +178,9 @@ export default function KickCard() {
                             </div>
                             {hasSecrets === false && (
                                 <span className="absolute text-center cursor-not-allowed inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none text-black">
-                                    Configure API credentials<br />to connect
+                                    Configure API credentials
+                                    <br />
+                                    to connect
                                 </span>
                             )}
                         </div>

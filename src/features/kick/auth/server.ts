@@ -1,6 +1,9 @@
 import express from "express";
 import { BrowserWindow, shell } from "electron";
-import { generateCodeChallenge, generateCodeVerifier } from "../../../shared/utils/pkce";
+import {
+    generateCodeChallenge,
+    generateCodeVerifier,
+} from "../../../shared/utils/pkce";
 import type { Server } from "http";
 import Config from "../../../core/config";
 import { listenToChat } from "../chat/listener";
@@ -8,12 +11,16 @@ import { logInfo, logError, logDebug } from "../../../core/logging";
 import { redactSecrets } from "../../../core/logging/utils";
 import { kickClient } from "../api/client";
 
-const redirectUri = Config.get("kickRedirectUri") || "http://localhost:8889/callback";
+const redirectUri =
+    Config.get("kickRedirectUri") || "http://localhost:8889/callback";
 const port = 8889;
 
+//@ts-ignore
 let serverInstance: Server | null = null;
 
-export async function startKickAuthServer(window: BrowserWindow): Promise<void> {
+export async function startKickAuthServer(
+    window: BrowserWindow
+): Promise<void> {
     logDebug("startKickAuthServer called", redactSecrets({ window: !!window }));
     if (serverInstance) return;
 
@@ -39,7 +46,8 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                 }
 
                 // Exchange code for tokens using KickClient
-                const tokenExchangeSuccess = await kickClient.exchangeCodeForTokens(code, codeVerifier);
+                const tokenExchangeSuccess =
+                    await kickClient.exchangeCodeForTokens(code, codeVerifier);
                 if (!tokenExchangeSuccess) {
                     throw new Error("Failed to exchange code for tokens");
                 }
@@ -63,13 +71,18 @@ export async function startKickAuthServer(window: BrowserWindow): Promise<void> 
                     chatroomId: chatroom.id,
                 });
 
-                logInfo("Kick user/channel/chatroom set", redactSecrets({ 
-                    userId: channels[0].broadcaster_user_id, 
-                    username, 
-                    chatroomId: chatroom.id 
-                }));
+                logInfo(
+                    "Kick user/channel/chatroom set",
+                    redactSecrets({
+                        userId: channels[0].broadcaster_user_id,
+                        username,
+                        chatroomId: chatroom.id,
+                    })
+                );
 
-                res.send("✅ Kick authentication successful! You can close this window.");
+                res.send(
+                    "✅ Kick authentication successful! You can close this window."
+                );
                 window.webContents.send("kick:authenticated", {
                     username: channels[0].slug,
                 });

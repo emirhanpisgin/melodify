@@ -50,7 +50,7 @@ try {
         repo: "emirhanpisgin/songulfy", // Your GitHub repository
         autoDownload: false, // Don't auto-download, let user choose
         allowPrerelease: false, // Only stable releases
-        debug: process.env.NODE_ENV === "development", // Enable debug in dev
+        debug: false, // Enable debug in dev
     });
     logInfo("Updater initialized successfully", "updater:init");
 } catch (error: any) {
@@ -62,10 +62,13 @@ function broadcast(channel: string, ...args: any[]) {
     try {
         const windows = BrowserWindow.getAllWindows();
         if (windows.length === 0) {
-            logDebug(`No windows available for broadcast to channel: ${channel}`, "broadcast");
+            logDebug(
+                `No windows available for broadcast to channel: ${channel}`,
+                "broadcast"
+            );
             return;
         }
-        
+
         windows.forEach((win) => {
             if (win && !win.isDestroyed() && win.webContents) {
                 try {
@@ -109,55 +112,83 @@ if (updater) {
 
     updater.on("error", (error: any) => {
         logError(error, "updater");
-        broadcast("update:status", "error", error.message || "Unknown update error");
+        broadcast(
+            "update:status",
+            "error",
+            error.message || "Unknown update error"
+        );
     });
 } else {
-    logWarn("Updater not available - update functionality disabled", "updater:setup");
+    logWarn(
+        "Updater not available - update functionality disabled",
+        "updater:setup"
+    );
 }
 
 async function checkForUpdates() {
     if (!updater) {
-        logWarn("Updater not available - cannot check for updates", "updater:checkForUpdates");
+        logWarn(
+            "Updater not available - cannot check for updates",
+            "updater:checkForUpdates"
+        );
         broadcast("update:status", "error", "Updater not available");
         return;
     }
-    
+
     try {
         await updater.checkForUpdates();
     } catch (error: any) {
         logError(error, "updater:checkForUpdates");
-        broadcast("update:status", "error", error?.message || "Failed to check for updates");
+        broadcast(
+            "update:status",
+            "error",
+            error?.message || "Failed to check for updates"
+        );
     }
 }
 
 async function downloadUpdate() {
     if (!updater) {
-        logWarn("Updater not available - cannot download update", "updater:downloadUpdate");
+        logWarn(
+            "Updater not available - cannot download update",
+            "updater:downloadUpdate"
+        );
         broadcast("update:status", "error", "Updater not available");
         return;
     }
-    
+
     try {
         await updater.downloadUpdate();
     } catch (error: any) {
         logError(error, "updater:downloadUpdate");
-        broadcast("update:status", "error", error?.message || "Failed to download update");
+        broadcast(
+            "update:status",
+            "error",
+            error?.message || "Failed to download update"
+        );
     }
 }
 
 function installUpdate() {
     if (!updater) {
-        logWarn("Updater not available - cannot install update", "updater:installUpdate");
+        logWarn(
+            "Updater not available - cannot install update",
+            "updater:installUpdate"
+        );
         broadcast("update:status", "error", "Updater not available");
         return;
     }
-    
+
     try {
         updater.applyUpdate();
         // The updater will handle app quit automatically
     } catch (error: any) {
         logError(error, "updater:installUpdate");
-        broadcast("update:status", "error", error?.message || "Failed to install update");
+        broadcast(
+            "update:status",
+            "error",
+            error?.message || "Failed to install update"
+        );
     }
 }
 
@@ -294,12 +325,15 @@ app.on("ready", () => {
 
         // Start token auto-refresh mechanisms
         startKickTokenAutoRefresh();
-        
+
         // Only start Spotify token refresh if mainWindow is available
         if (mainWindow) {
             startSpotifyTokenRefreshInterval(mainWindow);
         } else {
-            logWarn("Main window not available for Spotify token refresh", "main:features");
+            logWarn(
+                "Main window not available for Spotify token refresh",
+                "main:features"
+            );
         }
 
         logInfo("Features initialized successfully", "main:features");
@@ -376,14 +410,20 @@ const checkAutoUpdate = () => {
     try {
         const autoUpdateEnabled = Config.get("autoUpdateEnabled") ?? true;
         if (autoUpdateEnabled && updater) {
-            logInfo("Auto-update is enabled, checking for updates in 5 seconds", "main:autoUpdate");
+            logInfo(
+                "Auto-update is enabled, checking for updates in 5 seconds",
+                "main:autoUpdate"
+            );
             setTimeout(() => {
                 checkForUpdates().catch((error) => {
                     logError(error, "main:autoUpdateCheck");
                 });
             }, 5000); // Wait 5 seconds after app start
         } else if (!updater) {
-            logWarn("Auto-update requested but updater is not available", "main:autoUpdate");
+            logWarn(
+                "Auto-update requested but updater is not available",
+                "main:autoUpdate"
+            );
         } else {
             logDebug("Auto-update is disabled", "main:autoUpdate");
         }

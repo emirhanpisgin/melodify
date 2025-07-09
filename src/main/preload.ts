@@ -63,7 +63,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     getAutoUpdate: () => ipcRenderer.invoke("update:getAuto"),
     onUpdateStatus: (callback: (event: any, ...args: any[]) => void) =>
         ipcRenderer.on("update:status", callback),
-    downloadUpdate: (manifest: any) => ipcRenderer.send("update:download", manifest),
+    downloadUpdate: (manifest: any) =>
+        ipcRenderer.send("update:download", manifest),
     installUpdate: () => ipcRenderer.send("update:install"),
     getSpotifySecrets: () => ipcRenderer.invoke("spotify:getSecrets"),
     setSpotifySecrets: (secrets: Record<string, string>) =>

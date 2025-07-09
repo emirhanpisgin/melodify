@@ -8,15 +8,18 @@ type LogLevel = "info" | "debug" | "warn" | "error";
 
 /**
  * Logs a message with the specified level to both console and main process.
- * 
+ *
  * @param level - The log level (info, debug, warn, error).
  * @param message - The message to log.
  * @param context - Optional context for the log message.
  */
 function logToMain(level: LogLevel, message: string, context?: string) {
     // Log to console for immediate feedback
-    const consoleMethod = level === "error" ? "error" : level === "warn" ? "warn" : "log";
-    console[consoleMethod](`[${level.toUpperCase()}] ${context ? `[${context}] ` : ""}${message}`);
+    const consoleMethod =
+        level === "error" ? "error" : level === "warn" ? "warn" : "log";
+    console[consoleMethod](
+        `[${level.toUpperCase()}] ${context ? `[${context}] ` : ""}${message}`
+    );
 
     // Send to main process for persistent logging
     window.electronAPI?.send?.("log:renderer", { level, message, context });
@@ -24,7 +27,7 @@ function logToMain(level: LogLevel, message: string, context?: string) {
 
 /**
  * Logs an informational message.
- * 
+ *
  * @param message - The message to log.
  * @param context - Optional context for the log message.
  */
@@ -34,7 +37,7 @@ export function logInfo(message: string, context?: string) {
 
 /**
  * Logs a debug message.
- * 
+ *
  * @param message - The message to log.
  * @param context - Optional context for the log message.
  */
@@ -44,7 +47,7 @@ export function logDebug(message: string, context?: string) {
 
 /**
  * Logs a warning message.
- * 
+ *
  * @param message - The message to log.
  * @param context - Optional context for the log message.
  */
@@ -54,7 +57,7 @@ export function logWarn(message: string, context?: string) {
 
 /**
  * Logs an error message.
- * 
+ *
  * @param message - The message to log.
  * @param context - Optional context for the log message.
  */

@@ -60,18 +60,22 @@ export default function MultipleInput({
     const validateSingleItem = (item: string): string | null => {
         // Check minimum length
         if (item.length < minLength) {
-            return `Item must be at least ${minLength} character${minLength === 1 ? '' : 's'} long`;
+            return `Item must be at least ${minLength} character${minLength === 1 ? "" : "s"} long`;
         }
 
         // Check maximum length
         if (item.length > maxLength) {
-            return `Item must be no more than ${maxLength} character${maxLength === 1 ? '' : 's'} long`;
+            return `Item must be no more than ${maxLength} character${maxLength === 1 ? "" : "s"} long`;
         }
 
         // Check for duplicates if not allowed
         if (!allowDuplicates) {
             const allValues = [...values, ...allExistingValues];
-            if (allValues.some(existing => existing.toLowerCase() === item.toLowerCase())) {
+            if (
+                allValues.some(
+                    (existing) => existing.toLowerCase() === item.toLowerCase()
+                )
+            ) {
                 return "This item already exists";
             }
         }
@@ -197,4 +201,4 @@ export default function MultipleInput({
             </div>
         </div>
     );
-} 
+}

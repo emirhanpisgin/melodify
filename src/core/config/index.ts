@@ -156,10 +156,13 @@ function get(key?: keyof AppConfig) {
 const Config = {
     get,
     getMany<K extends keyof AppConfig>(keys: K[]): Pick<AppConfig, K> {
-        const result = keys.reduce((acc, key) => {
-            acc[key] = cache[key];
-            return acc;
-        }, {} as Pick<AppConfig, K>);
+        const result = keys.reduce(
+            (acc, key) => {
+                acc[key] = cache[key];
+                return acc;
+            },
+            {} as Pick<AppConfig, K>
+        );
         logDebug("Config.getMany called", redactSecrets(result));
         return result;
     },

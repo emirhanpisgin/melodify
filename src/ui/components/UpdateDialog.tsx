@@ -21,7 +21,13 @@ export default function UpdateDialog() {
     }, [status]);
 
     // Don't show if dismissed or no relevant status
-    if (dismissed || (status !== "available" && status !== "downloading" && status !== "downloaded" && status !== "error")) {
+    if (
+        dismissed ||
+        (status !== "available" &&
+            status !== "downloading" &&
+            status !== "downloaded" &&
+            status !== "error")
+    ) {
         return null;
     }
 
@@ -43,7 +49,8 @@ export default function UpdateDialog() {
                 <div>
                     <div className="font-bold mb-1">Update Ready!</div>
                     <div className="mb-2">
-                        Version {manifest?.version} is ready to install. The app will restart to apply the update.
+                        Version {manifest?.version} is ready to install. The app
+                        will restart to apply the update.
                     </div>
                     <div className="flex gap-2">
                         <Button
@@ -64,7 +71,9 @@ export default function UpdateDialog() {
                 <div>
                     <div className="font-bold mb-1">Downloading Update...</div>
                     <div className="mb-2">
-                        {progress?.percent ? `${Math.round(progress.percent)}% complete` : "Preparing download..."}
+                        {progress?.percent
+                            ? `${Math.round(progress.percent)}% complete`
+                            : "Preparing download..."}
                     </div>
                     {progress?.percent && (
                         <div className="w-full bg-blue-800 rounded-full h-2">
@@ -79,7 +88,8 @@ export default function UpdateDialog() {
                 <div>
                     <div className="font-bold mb-1">Update Available</div>
                     <div className="mb-2">
-                        Version {manifest?.version} is available. Would you like to download it?
+                        Version {manifest?.version} is available. Would you like
+                        to download it?
                     </div>
                     <div className="flex gap-2">
                         <Button
@@ -98,14 +108,19 @@ export default function UpdateDialog() {
                 </div>
             ) : status === "error" ? (
                 <div>
-                    <div className="font-bold mb-1 text-red-400">Update Error</div>
+                    <div className="font-bold mb-1 text-red-400">
+                        Update Error
+                    </div>
                     <div className="mb-2">
-                        There was an error while checking for updates. Please try again later.
+                        There was an error while checking for updates. Please
+                        try again later.
                     </div>
                     <div className="flex gap-2">
                         <Button
                             className="bg-white text-blue-700 hover:bg-gray-100"
-                            onClick={() => window.electronAPI?.send?.("update:check")}
+                            onClick={() =>
+                                window.electronAPI?.send?.("update:check")
+                            }
                         >
                             Retry
                         </Button>

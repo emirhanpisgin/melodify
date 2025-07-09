@@ -7,7 +7,14 @@ import LogsTab from "./tabs/LogsTab";
 import CommandsTab from "./tabs/CommandsTab";
 import SaveStatus from "./tabs/SaveStatus";
 import DebugTab from "./tabs/DebugTab";
-import { validateField, validateUrl, validateClientId, validateClientSecret, validateTemplate, validateCommandAlias } from "./validation";
+import {
+    validateField,
+    validateUrl,
+    validateClientId,
+    validateClientSecret,
+    validateTemplate,
+    validateCommandAlias,
+} from "./validation";
 
 const TABS = [
     { key: "general", label: "General" },
@@ -16,7 +23,9 @@ const TABS = [
     { key: "secrets", label: "Secrets" },
     { key: "advanced", label: "Advanced" },
     { key: "logs", label: "Logs" },
-    ...(process.env.NODE_ENV === "development" ? [{ key: "debug", label: "Debug" }] : []),
+    ...(process.env.NODE_ENV === "development"
+        ? [{ key: "debug", label: "Debug" }]
+        : []),
 ];
 
 type Config = {
@@ -37,7 +46,12 @@ type Config = {
     perUserCooldownSeconds?: string;
     replyOnCooldown?: boolean;
     cooldownMessageTemplate?: string;
-    [key: string]: string | boolean | string[] | Record<string, any> | undefined;
+    [key: string]:
+        | string
+        | boolean
+        | string[]
+        | Record<string, any>
+        | undefined;
 };
 
 export default function Settings({ onClose }: { onClose: () => void }) {
@@ -45,9 +59,15 @@ export default function Settings({ onClose }: { onClose: () => void }) {
     const [config, setConfig] = useState<Config>({});
     const [logs, setLogs] = useState<any[]>([]);
     const [commands, setCommands] = useState<any[]>([]);
-    const [aliasInputs, setAliasInputs] = useState<{ [cmd: string]: string }>({});
-    const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
-    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const [aliasInputs, setAliasInputs] = useState<{ [cmd: string]: string }>(
+        {}
+    );
+    const [validationErrors, setValidationErrors] = useState<{
+        [key: string]: string;
+    }>({});
+    const [saveStatus, setSaveStatus] = useState<
+        "idle" | "saving" | "saved" | "error"
+    >("idle");
     const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +87,8 @@ export default function Settings({ onClose }: { onClose: () => void }) {
             } else if (prefix.length > 10) {
                 errors.prefix = "Prefix too long (max 10 characters)";
             } else if (!/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(prefix)) {
-                errors.prefix = "Prefix should be a special character (e.g., !, @, #, $)";
+                errors.prefix =
+                    "Prefix should be a special character (e.g., !, @, #, $)";
             }
         }
 
@@ -111,38 +132,66 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
         // Validate templates
         const songRequestReplyTemplate = config.songRequestReplyTemplate;
-        if (typeof songRequestReplyTemplate === "string" && songRequestReplyTemplate) {
-            const templateError = validateTemplate(songRequestReplyTemplate, ['title', 'artist']);
+        if (
+            typeof songRequestReplyTemplate === "string" &&
+            songRequestReplyTemplate
+        ) {
+            const templateError = validateTemplate(songRequestReplyTemplate, [
+                "title",
+                "artist",
+            ]);
             if (templateError) errors.songRequestReplyTemplate = templateError;
         }
 
         const songRequestErrorTemplate = config.songRequestErrorTemplate;
-        if (typeof songRequestErrorTemplate === "string" && songRequestErrorTemplate) {
-            const templateError = validateTemplate(songRequestErrorTemplate, ['error']);
+        if (
+            typeof songRequestErrorTemplate === "string" &&
+            songRequestErrorTemplate
+        ) {
+            const templateError = validateTemplate(songRequestErrorTemplate, [
+                "error",
+            ]);
             if (templateError) errors.songRequestErrorTemplate = templateError;
         }
 
         const cooldownMessageTemplate = config.cooldownMessageTemplate;
-        if (typeof cooldownMessageTemplate === "string" && cooldownMessageTemplate) {
-            const templateError = validateTemplate(cooldownMessageTemplate, ['time']);
+        if (
+            typeof cooldownMessageTemplate === "string" &&
+            cooldownMessageTemplate
+        ) {
+            const templateError = validateTemplate(cooldownMessageTemplate, [
+                "time",
+            ]);
             if (templateError) errors.cooldownMessageTemplate = templateError;
         }
 
         const volumeChangeReplyTemplate = config.volumeChangeReplyTemplate;
-        if (typeof volumeChangeReplyTemplate === "string" && volumeChangeReplyTemplate) {
-            const templateError = validateTemplate(volumeChangeReplyTemplate, ['volume']);
+        if (
+            typeof volumeChangeReplyTemplate === "string" &&
+            volumeChangeReplyTemplate
+        ) {
+            const templateError = validateTemplate(volumeChangeReplyTemplate, [
+                "volume",
+            ]);
             if (templateError) errors.volumeChangeReplyTemplate = templateError;
         }
 
         const volumeErrorTemplate = config.volumeErrorTemplate;
         if (typeof volumeErrorTemplate === "string" && volumeErrorTemplate) {
-            const templateError = validateTemplate(volumeErrorTemplate, ['error']);
+            const templateError = validateTemplate(volumeErrorTemplate, [
+                "error",
+            ]);
             if (templateError) errors.volumeErrorTemplate = templateError;
         }
 
         const volumeGetReplyTemplate = config.volumeGetReplyTemplate;
-        if (typeof volumeGetReplyTemplate === "string" && volumeGetReplyTemplate) {
-            const templateError = validateTemplate(volumeGetReplyTemplate, ['volume']);
+        if (
+            typeof volumeGetReplyTemplate === "string" &&
+            volumeGetReplyTemplate
+        ) {
+            const templateError = validateTemplate(volumeGetReplyTemplate, [
+                "volume",
+            ]);
             if (templateError) errors.volumeGetReplyTemplate = templateError;
         }
 
@@ -152,19 +201,23 @@ export default function Settings({ onClose }: { onClose: () => void }) {
             const seenModerators = new Set<string>();
             for (const moderator of customModerators) {
                 if (!moderator || typeof moderator !== "string") {
-                    errors.customModerators = "All moderator usernames must be valid strings";
+                    errors.customModerators =
+                        "All moderator usernames must be valid strings";
                     break;
                 }
                 if (moderator.length < 1) {
-                    errors.customModerators = "Moderator usernames cannot be empty";
+                    errors.customModerators =
+                        "Moderator usernames cannot be empty";
                     break;
                 }
                 if (moderator.length > 50) {
-                    errors.customModerators = "Moderator usernames must be no more than 50 characters";
+                    errors.customModerators =
+                        "Moderator usernames must be no more than 50 characters";
                     break;
                 }
                 if (!/^[a-zA-Z0-9_-]+$/.test(moderator)) {
-                    errors.customModerators = "Moderator usernames can only contain letters, numbers, hyphens, and underscores";
+                    errors.customModerators =
+                        "Moderator usernames can only contain letters, numbers, hyphens, and underscores";
                     break;
                 }
                 if (seenModerators.has(moderator.toLowerCase())) {
@@ -179,26 +232,36 @@ export default function Settings({ onClose }: { onClose: () => void }) {
         const currentSongFilePath = config.currentSongFilePath;
         if (typeof currentSongFilePath === "string" && currentSongFilePath) {
             if (currentSongFilePath.length > 500) {
-                errors.currentSongFilePath = "File path too long (max 500 characters)";
+                errors.currentSongFilePath =
+                    "File path too long (max 500 characters)";
             } else if (/[<>"|?*]/.test(currentSongFilePath)) {
-                errors.currentSongFilePath = "File path contains invalid characters";
+                errors.currentSongFilePath =
+                    "File path contains invalid characters";
             }
         }
 
         // Validate cooldown settings
         const globalCooldownSeconds = config.globalCooldownSeconds;
-        if (typeof globalCooldownSeconds === "string" && globalCooldownSeconds) {
+        if (
+            typeof globalCooldownSeconds === "string" &&
+            globalCooldownSeconds
+        ) {
             const seconds = parseInt(globalCooldownSeconds);
             if (isNaN(seconds) || seconds < 1 || seconds > 3600) {
-                errors.globalCooldownSeconds = "Global cooldown must be between 1 and 3600 seconds";
+                errors.globalCooldownSeconds =
+                    "Global cooldown must be between 1 and 3600 seconds";
             }
         }
 
         const perUserCooldownSeconds = config.perUserCooldownSeconds;
-        if (typeof perUserCooldownSeconds === "string" && perUserCooldownSeconds) {
+        if (
+            typeof perUserCooldownSeconds === "string" &&
+            perUserCooldownSeconds
+        ) {
             const seconds = parseInt(perUserCooldownSeconds);
             if (isNaN(seconds) || seconds < 1 || seconds > 3600) {
-                errors.perUserCooldownSeconds = "Per-user cooldown must be between 1 and 3600 seconds";
+                errors.perUserCooldownSeconds =
+                    "Per-user cooldown must be between 1 and 3600 seconds";
             }
         }
 
@@ -207,12 +270,15 @@ export default function Settings({ onClose }: { onClose: () => void }) {
             // Build a map of all aliases across all commands
             const allAliases = new Map<string, string>(); // alias -> commandName
 
-            for (const [cmdName, cmdConfig] of Object.entries(config.commandsConfig)) {
+            for (const [cmdName, cmdConfig] of Object.entries(
+                config.commandsConfig
+            )) {
                 if (cmdConfig.aliases) {
                     for (const alias of cmdConfig.aliases) {
                         if (allAliases.has(alias)) {
                             const existingCommand = allAliases.get(alias);
-                            errors[`${cmdName}_alias_${alias}`] = `Alternative name '${alias}' is already used by command '${existingCommand}'`;
+                            errors[`${cmdName}_alias_${alias}`] =
+                                `Alternative name '${alias}' is already used by command '${existingCommand}'`;
                         } else {
                             allAliases.set(alias, cmdName);
                         }
@@ -221,11 +287,17 @@ export default function Settings({ onClose }: { onClose: () => void }) {
             }
 
             // Now validate individual aliases
-            for (const [cmdName, cmdConfig] of Object.entries(config.commandsConfig)) {
+            for (const [cmdName, cmdConfig] of Object.entries(
+                config.commandsConfig
+            )) {
                 if (cmdConfig.aliases) {
                     const existingAliases: string[] = [];
                     for (const alias of cmdConfig.aliases) {
-                        const aliasError = validateCommandAlias(alias, existingAliases, cmdName);
+                        const aliasError = validateCommandAlias(
+                            alias,
+                            existingAliases,
+                            cmdName
+                        );
                         if (aliasError) {
                             errors[`${cmdName}_alias_${alias}`] = aliasError;
                         }
@@ -246,7 +318,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
         }
 
         // Set saving status
-        setSaveStatus('saving');
+        setSaveStatus("saving");
 
         // Debounce the save operation
         saveTimeoutRef.current = setTimeout(async () => {
@@ -261,8 +333,11 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                         errors.prefix = "Prefix cannot be empty";
                     } else if (prefix.length > 10) {
                         errors.prefix = "Prefix too long (max 10 characters)";
-                    } else if (!/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(prefix)) {
-                        errors.prefix = "Prefix should be a special character (e.g., !, @, #, $)";
+                    } else if (
+                        !/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(prefix)
+                    ) {
+                        errors.prefix =
+                            "Prefix should be a special character (e.g., !, @, #, $)";
                     }
                 }
 
@@ -274,7 +349,10 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 }
 
                 const spotifyRedirectUri = newConfig.spotifyRedirectUri;
-                if (typeof spotifyRedirectUri === "string" && spotifyRedirectUri) {
+                if (
+                    typeof spotifyRedirectUri === "string" &&
+                    spotifyRedirectUri
+                ) {
                     const urlError = validateUrl(spotifyRedirectUri);
                     if (urlError) errors.spotifyRedirectUri = urlError;
                 }
@@ -287,8 +365,12 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 }
 
                 const spotifyClientSecret = newConfig.spotifyClientSecret;
-                if (typeof spotifyClientSecret === "string" && spotifyClientSecret) {
-                    const secretError = validateClientSecret(spotifyClientSecret);
+                if (
+                    typeof spotifyClientSecret === "string" &&
+                    spotifyClientSecret
+                ) {
+                    const secretError =
+                        validateClientSecret(spotifyClientSecret);
                     if (secretError) errors.spotifyClientSecret = secretError;
                 }
 
@@ -305,40 +387,86 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 }
 
                 // Validate templates
-                const songRequestReplyTemplate = newConfig.songRequestReplyTemplate;
-                if (typeof songRequestReplyTemplate === "string" && songRequestReplyTemplate) {
-                    const templateError = validateTemplate(songRequestReplyTemplate, ['title', 'artist']);
-                    if (templateError) errors.songRequestReplyTemplate = templateError;
+                const songRequestReplyTemplate =
+                    newConfig.songRequestReplyTemplate;
+                if (
+                    typeof songRequestReplyTemplate === "string" &&
+                    songRequestReplyTemplate
+                ) {
+                    const templateError = validateTemplate(
+                        songRequestReplyTemplate,
+                        ["title", "artist"]
+                    );
+                    if (templateError)
+                        errors.songRequestReplyTemplate = templateError;
                 }
 
-                const songRequestErrorTemplate = newConfig.songRequestErrorTemplate;
-                if (typeof songRequestErrorTemplate === "string" && songRequestErrorTemplate) {
-                    const templateError = validateTemplate(songRequestErrorTemplate, ['error']);
-                    if (templateError) errors.songRequestErrorTemplate = templateError;
+                const songRequestErrorTemplate =
+                    newConfig.songRequestErrorTemplate;
+                if (
+                    typeof songRequestErrorTemplate === "string" &&
+                    songRequestErrorTemplate
+                ) {
+                    const templateError = validateTemplate(
+                        songRequestErrorTemplate,
+                        ["error"]
+                    );
+                    if (templateError)
+                        errors.songRequestErrorTemplate = templateError;
                 }
 
-                const cooldownMessageTemplate = newConfig.cooldownMessageTemplate;
-                if (typeof cooldownMessageTemplate === "string" && cooldownMessageTemplate) {
-                    const templateError = validateTemplate(cooldownMessageTemplate, ['time']);
-                    if (templateError) errors.cooldownMessageTemplate = templateError;
+                const cooldownMessageTemplate =
+                    newConfig.cooldownMessageTemplate;
+                if (
+                    typeof cooldownMessageTemplate === "string" &&
+                    cooldownMessageTemplate
+                ) {
+                    const templateError = validateTemplate(
+                        cooldownMessageTemplate,
+                        ["time"]
+                    );
+                    if (templateError)
+                        errors.cooldownMessageTemplate = templateError;
                 }
 
-                const volumeChangeReplyTemplate = newConfig.volumeChangeReplyTemplate;
-                if (typeof volumeChangeReplyTemplate === "string" && volumeChangeReplyTemplate) {
-                    const templateError = validateTemplate(volumeChangeReplyTemplate, ['volume']);
-                    if (templateError) errors.volumeChangeReplyTemplate = templateError;
+                const volumeChangeReplyTemplate =
+                    newConfig.volumeChangeReplyTemplate;
+                if (
+                    typeof volumeChangeReplyTemplate === "string" &&
+                    volumeChangeReplyTemplate
+                ) {
+                    const templateError = validateTemplate(
+                        volumeChangeReplyTemplate,
+                        ["volume"]
+                    );
+                    if (templateError)
+                        errors.volumeChangeReplyTemplate = templateError;
                 }
 
                 const volumeErrorTemplate = newConfig.volumeErrorTemplate;
-                if (typeof volumeErrorTemplate === "string" && volumeErrorTemplate) {
-                    const templateError = validateTemplate(volumeErrorTemplate, ['error']);
-                    if (templateError) errors.volumeErrorTemplate = templateError;
+                if (
+                    typeof volumeErrorTemplate === "string" &&
+                    volumeErrorTemplate
+                ) {
+                    const templateError = validateTemplate(
+                        volumeErrorTemplate,
+                        ["error"]
+                    );
+                    if (templateError)
+                        errors.volumeErrorTemplate = templateError;
                 }
 
                 const volumeGetReplyTemplate = newConfig.volumeGetReplyTemplate;
-                if (typeof volumeGetReplyTemplate === "string" && volumeGetReplyTemplate) {
-                    const templateError = validateTemplate(volumeGetReplyTemplate, ['volume']);
-                    if (templateError) errors.volumeGetReplyTemplate = templateError;
+                if (
+                    typeof volumeGetReplyTemplate === "string" &&
+                    volumeGetReplyTemplate
+                ) {
+                    const templateError = validateTemplate(
+                        volumeGetReplyTemplate,
+                        ["volume"]
+                    );
+                    if (templateError)
+                        errors.volumeGetReplyTemplate = templateError;
                 }
 
                 // Validate custom moderators
@@ -347,19 +475,23 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                     const seenModerators = new Set<string>();
                     for (const moderator of customModerators) {
                         if (!moderator || typeof moderator !== "string") {
-                            errors.customModerators = "All moderator usernames must be valid strings";
+                            errors.customModerators =
+                                "All moderator usernames must be valid strings";
                             break;
                         }
                         if (moderator.length < 1) {
-                            errors.customModerators = "Moderator usernames cannot be empty";
+                            errors.customModerators =
+                                "Moderator usernames cannot be empty";
                             break;
                         }
                         if (moderator.length > 50) {
-                            errors.customModerators = "Moderator usernames must be no more than 50 characters";
+                            errors.customModerators =
+                                "Moderator usernames must be no more than 50 characters";
                             break;
                         }
                         if (!/^[a-zA-Z0-9_-]+$/.test(moderator)) {
-                            errors.customModerators = "Moderator usernames can only contain letters, numbers, hyphens, and underscores";
+                            errors.customModerators =
+                                "Moderator usernames can only contain letters, numbers, hyphens, and underscores";
                             break;
                         }
                         if (seenModerators.has(moderator.toLowerCase())) {
@@ -372,28 +504,41 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
                 // Validate current song file path
                 const currentSongFilePath = newConfig.currentSongFilePath;
-                if (typeof currentSongFilePath === "string" && currentSongFilePath) {
+                if (
+                    typeof currentSongFilePath === "string" &&
+                    currentSongFilePath
+                ) {
                     if (currentSongFilePath.length > 500) {
-                        errors.currentSongFilePath = "File path too long (max 500 characters)";
+                        errors.currentSongFilePath =
+                            "File path too long (max 500 characters)";
                     } else if (/[<>"|?*]/.test(currentSongFilePath)) {
-                        errors.currentSongFilePath = "File path contains invalid characters";
+                        errors.currentSongFilePath =
+                            "File path contains invalid characters";
                     }
                 }
 
                 // Validate cooldown settings
                 const globalCooldownSeconds = newConfig.globalCooldownSeconds;
-                if (typeof globalCooldownSeconds === "string" && globalCooldownSeconds) {
+                if (
+                    typeof globalCooldownSeconds === "string" &&
+                    globalCooldownSeconds
+                ) {
                     const seconds = parseInt(globalCooldownSeconds);
                     if (isNaN(seconds) || seconds < 1 || seconds > 3600) {
-                        errors.globalCooldownSeconds = "Global cooldown must be between 1 and 3600 seconds";
+                        errors.globalCooldownSeconds =
+                            "Global cooldown must be between 1 and 3600 seconds";
                     }
                 }
 
                 const perUserCooldownSeconds = newConfig.perUserCooldownSeconds;
-                if (typeof perUserCooldownSeconds === "string" && perUserCooldownSeconds) {
+                if (
+                    typeof perUserCooldownSeconds === "string" &&
+                    perUserCooldownSeconds
+                ) {
                     const seconds = parseInt(perUserCooldownSeconds);
                     if (isNaN(seconds) || seconds < 1 || seconds > 3600) {
-                        errors.perUserCooldownSeconds = "Per-user cooldown must be between 1 and 3600 seconds";
+                        errors.perUserCooldownSeconds =
+                            "Per-user cooldown must be between 1 and 3600 seconds";
                     }
                 }
 
@@ -402,12 +547,16 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                     // Build a map of all aliases across all commands
                     const allAliases = new Map<string, string>(); // alias -> commandName
 
-                    for (const [cmdName, cmdConfig] of Object.entries(newConfig.commandsConfig)) {
+                    for (const [cmdName, cmdConfig] of Object.entries(
+                        newConfig.commandsConfig
+                    )) {
                         if (cmdConfig.aliases) {
                             for (const alias of cmdConfig.aliases) {
                                 if (allAliases.has(alias)) {
-                                    const existingCommand = allAliases.get(alias);
-                                    errors[`${cmdName}_alias_${alias}`] = `Alternative name '${alias}' is already used by command '${existingCommand}'`;
+                                    const existingCommand =
+                                        allAliases.get(alias);
+                                    errors[`${cmdName}_alias_${alias}`] =
+                                        `Alternative name '${alias}' is already used by command '${existingCommand}'`;
                                 } else {
                                     allAliases.set(alias, cmdName);
                                 }
@@ -416,13 +565,20 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                     }
 
                     // Now validate individual aliases
-                    for (const [cmdName, cmdConfig] of Object.entries(newConfig.commandsConfig)) {
+                    for (const [cmdName, cmdConfig] of Object.entries(
+                        newConfig.commandsConfig
+                    )) {
                         if (cmdConfig.aliases) {
                             const existingAliases: string[] = [];
                             for (const alias of cmdConfig.aliases) {
-                                const aliasError = validateCommandAlias(alias, existingAliases, cmdName);
+                                const aliasError = validateCommandAlias(
+                                    alias,
+                                    existingAliases,
+                                    cmdName
+                                );
                                 if (aliasError) {
-                                    errors[`${cmdName}_alias_${alias}`] = aliasError;
+                                    errors[`${cmdName}_alias_${alias}`] =
+                                        aliasError;
                                 }
                                 existingAliases.push(alias);
                             }
@@ -434,22 +590,22 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
                 if (Object.keys(errors).length === 0) {
                     window.electronAPI.send("config:set", newConfig);
-                    setSaveStatus('saved');
+                    setSaveStatus("saved");
 
                     // Reset to idle after 2 seconds with fade-out animation
                     setTimeout(() => {
-                        setSaveStatus('idle');
+                        setSaveStatus("idle");
                     }, 2000);
                 } else {
-                    setSaveStatus('error');
+                    setSaveStatus("error");
                     setTimeout(() => {
-                        setSaveStatus('idle');
+                        setSaveStatus("idle");
                     }, 3000);
                 }
             } catch (error) {
-                setSaveStatus('error');
+                setSaveStatus("error");
                 setTimeout(() => {
-                    setSaveStatus('idle');
+                    setSaveStatus("idle");
                 }, 3000);
             }
         }, 500); // 500ms debounce
@@ -467,7 +623,7 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
         // Real-time validation
         const error = validateField(key, value);
-        setValidationErrors(prev => {
+        setValidationErrors((prev) => {
             const newErrors = { ...prev };
             if (error) {
                 newErrors[key] = error;
@@ -480,14 +636,16 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
     useEffect(() => {
         if (tab === "logs") {
-            window.electronAPI.invoke("log:getAll").then((allLogs) => setLogs(allLogs || []));
+            window.electronAPI
+                .invoke("log:getAll")
+                .then((allLogs) => setLogs(allLogs || []));
         }
     }, [tab]);
 
     useEffect(() => {
         if (tab !== "logs") return;
         const handler = (entry: any) => {
-            setLogs((prev) => [...prev.slice(-999), entry])
+            setLogs((prev) => [...prev.slice(-999), entry]);
         };
         window.electronAPI.on("log:entry", handler);
         return () => window.electronAPI.removeListener("log:entry", handler);
@@ -501,19 +659,45 @@ export default function Settings({ onClose }: { onClose: () => void }) {
 
     const handleToggleCommand = (name: string, enabled: boolean) => {
         window.electronAPI.send("commands:setEnabled", { name, enabled });
-        setCommands((prev) => prev.map(cmd => cmd.name === name ? { ...cmd, enabled } : cmd));
+        setCommands((prev) =>
+            prev.map((cmd) => (cmd.name === name ? { ...cmd, enabled } : cmd))
+        );
     };
 
     const renderTabContent = () => {
         switch (tab) {
             case "general":
-                return <GeneralTab config={config} onInput={handleInput} validationErrors={validationErrors} />;
+                return (
+                    <GeneralTab
+                        config={config}
+                        onInput={handleInput}
+                        validationErrors={validationErrors}
+                    />
+                );
             case "songRequests":
-                return <SongRequestsTab config={config} onInput={handleInput} validationErrors={validationErrors} />;
+                return (
+                    <SongRequestsTab
+                        config={config}
+                        onInput={handleInput}
+                        validationErrors={validationErrors}
+                    />
+                );
             case "secrets":
-                return <SecretsTab config={config} onInput={handleInput} validationErrors={validationErrors} />;
+                return (
+                    <SecretsTab
+                        config={config}
+                        onInput={handleInput}
+                        validationErrors={validationErrors}
+                    />
+                );
             case "advanced":
-                return <AdvancedTab config={config} onInput={handleInput} validationErrors={validationErrors} />;
+                return (
+                    <AdvancedTab
+                        config={config}
+                        onInput={handleInput}
+                        validationErrors={validationErrors}
+                    />
+                );
             case "logs":
                 return <LogsTab logs={logs} />;
             case "commands":
@@ -554,7 +738,10 @@ export default function Settings({ onClose }: { onClose: () => void }) {
                 ))}
             </div>
             <div className="flex-1 flex flex-col min-h-0 min-w-0">
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 py-4 relative max-h-full min-h-0 min-w-0">
+                <div
+                    ref={scrollRef}
+                    className="flex-1 overflow-y-auto p-6 py-4 relative max-h-full min-h-0 min-w-0"
+                >
                     {renderTabContent()}
                 </div>
                 {/* Save Status Indicator */}

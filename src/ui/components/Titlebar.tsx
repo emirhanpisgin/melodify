@@ -2,7 +2,13 @@
 // Custom title bar component for the Electron app, including app name, version, update status, and window controls.
 
 import React, { useEffect, useState } from "react";
-import { SettingsIcon, InfoIcon, LoaderCircleIcon, RotateCcwIcon, XIcon } from "lucide-react";
+import {
+    SettingsIcon,
+    InfoIcon,
+    LoaderCircleIcon,
+    RotateCcwIcon,
+    XIcon,
+} from "lucide-react";
 import { useUpdateStatus } from "../hooks/useUpdateStatus";
 
 /**
@@ -21,7 +27,11 @@ interface TitlebarProps {
  * Renders the custom title bar for the Electron app.
  * Displays app name, version, update status, and window controls.
  */
-export default function Titlebar({ onMinimize, onClose, onSettings }: TitlebarProps) {
+export default function Titlebar({
+    onMinimize,
+    onClose,
+    onSettings,
+}: TitlebarProps) {
     const { status, progress } = useUpdateStatus();
     const [version, setVersion] = useState<string>("");
 
@@ -34,7 +44,9 @@ export default function Titlebar({ onMinimize, onClose, onSettings }: TitlebarPr
     let updateIcon = null;
     let tooltip = "";
     if (status === "checking" || status === "downloading") {
-        updateIcon = <LoaderCircleIcon className="text-green-500 animate-spin" />;
+        updateIcon = (
+            <LoaderCircleIcon className="text-green-500 animate-spin" />
+        );
         if (status === "checking") {
             tooltip = "Checking for updates...";
         } else {
@@ -57,11 +69,12 @@ export default function Titlebar({ onMinimize, onClose, onSettings }: TitlebarPr
     return (
         <div
             className="w-full flex items-center border-b border-zinc-700 justify-between bg-zinc-900 h-9 select-none"
-            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+            style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
         >
             {/* App name */}
             <div className="flex items-center pl-4 font-bold text-lg text-white">
-                <span className="text-spotify-green">Song</span><span className="text-kick-green">ülfy</span>
+                <span className="text-spotify-green">Song</span>
+                <span className="text-kick-green">ülfy</span>
             </div>
             {/* Version and update status */}
             <div className="flex items-center gap-2 font-bold text-lg text-gray-600">
@@ -72,7 +85,10 @@ export default function Titlebar({ onMinimize, onClose, onSettings }: TitlebarPr
             </div>
             <div className="flex-1" />
             {/* Window controls */}
-            <div className="flex items-center h-full" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+            <div
+                className="flex items-center h-full"
+                style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            >
                 <button
                     className="h-full aspect-[1.25_/_1] flex items-center justify-center transition-colors hover:bg-white/10 text-zinc-300 border-none bg-transparent focus:outline-none"
                     onClick={onSettings}
@@ -89,7 +105,15 @@ export default function Titlebar({ onMinimize, onClose, onSettings }: TitlebarPr
                     aria-label="Minimize window"
                     tabIndex={-1}
                 >
-                    <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect y="7.5" width="16" height="1" rx="0.5" fill="currentColor" /></svg>
+                    <svg width="16" height="16" fill="none" viewBox="0 0 16 16">
+                        <rect
+                            y="7.5"
+                            width="16"
+                            height="1"
+                            rx="0.5"
+                            fill="currentColor"
+                        />
+                    </svg>
                 </button>
                 <button
                     className="h-full aspect-[1.25_/_1] flex items-center justify-center transition-colors hover:bg-red-500 text-zinc-300 border-none bg-transparent focus:outline-none"

@@ -7,11 +7,15 @@ import { redactSecrets } from "../../../core/logging/utils";
 
 // Make startSpotifyAuthServer accept window or webContents to send events back to frontend
 export function startSpotifyAuthServer(window: BrowserWindow) {
-    logDebug("startSpotifyAuthServer called", redactSecrets({ window: !!window }));
+    logDebug(
+        "startSpotifyAuthServer called",
+        redactSecrets({ window: !!window })
+    );
     const app = express();
     const port = 8888;
 
-    let authServer: null | Server = null;
+    //@ts-ignore
+    let authServer: Server | null = null;
 
     app.get("/callback", async (req, res) => {
         const code = req.query.code as string | undefined;
@@ -35,7 +39,14 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
 
             const data = await spotifyApi.authorizationCodeGrant(code);
             const { access_token, refresh_token, expires_in } = data.body;
-            logDebug("Spotify token grant response", redactSecrets({ access_token: !!access_token, refresh_token: !!refresh_token, expires_in }));
+            logDebug(
+                "Spotify token grant response",
+                redactSecrets({
+                    access_token: !!access_token,
+                    refresh_token: !!refresh_token,
+                    expires_in,
+                })
+            );
 
             spotifyApi.setAccessToken(access_token);
             spotifyApi.setRefreshToken(refresh_token);
@@ -45,10 +56,19 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
                 throw new Error("Failed to get user information from Spotify");
             }
 
-            saveTokens({ accessToken: access_token, refreshToken: refresh_token, expiresIn: expires_in });
+            saveTokens({
+                accessToken: access_token,
+                refreshToken: refresh_token,
+                expiresIn: expires_in,
+            });
 
-            res.send("Spotify authentication successful! You can close this window.");
-            logInfo("Spotify authenticated", redactSecrets({ username: user.body.display_name }));
+            res.send(
+                "Spotify authentication successful! You can close this window."
+            );
+            logInfo(
+                "Spotify authenticated",
+                redactSecrets({ username: user.body.display_name })
+            );
 
             // Send IPC message back to frontend
             if (window && !window.isDestroyed()) {
@@ -56,7 +76,10 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
                     username: user.body.display_name,
                 });
             } else {
-                logWarn("Window is destroyed or invalid, cannot send authentication event", "spotifyAuthServer");
+                logWarn(
+                    "Window is destroyed or invalid, cannot send authentication event",
+                    "spotifyAuthServer"
+                );
             }
 
             // Close the server after successful authentication
@@ -66,7 +89,7 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
         } catch (err) {
             logError(err, "spotifyAuthServer:startSpotifyAuthServer");
             res.status(500).send("Spotify authentication failed.");
-            
+
             // Close the server on error as well
             if (authServer) {
                 authServer.close();
@@ -76,14 +99,17 @@ export function startSpotifyAuthServer(window: BrowserWindow) {
 
     authServer = app.listen(port, () => {
         logInfo(`Spotify Auth server running at http://localhost:${port}`);
-        
+
         // Auto-close the server after 5 minutes to prevent it from running indefinitely
-        setTimeout(() => {
-            if (authServer) {
-                logInfo("Spotify Auth server timed out, closing");
-                authServer.close();
-            }
-        }, 5 * 60 * 1000); // 5 minutes
+        setTimeout(
+            () => {
+                if (authServer) {
+                    logInfo("Spotify Auth server timed out, closing");
+                    authServer.close();
+                }
+            },
+            5 * 60 * 1000
+        ); // 5 minutes
     });
 
     authServer.on("close", () => {

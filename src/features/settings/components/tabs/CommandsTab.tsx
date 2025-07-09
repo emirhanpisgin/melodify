@@ -23,12 +23,14 @@ export default function CommandsTab({
     aliasInputs,
     setAliasInputs,
     autoSave,
-    setTab
+    setTab,
 }: CommandsTabProps) {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-lg font-semibold text-white mb-4">Command Settings</h2>
+                <h2 className="text-lg font-semibold text-white mb-4">
+                    Command Settings
+                </h2>
 
                 <div className="space-y-6">
                     <div>
@@ -39,15 +41,24 @@ export default function CommandsTab({
                             placeholder="!"
                             maxLength={10}
                             error={!!validationErrors.prefix}
-                            helperText={validationErrors.prefix || "Character used to trigger commands (e.g., !sr song)"}
+                            helperText={
+                                validationErrors.prefix ||
+                                "Character used to trigger commands (e.g., !sr song)"
+                            }
                         />
                     </div>
 
                     {/* Individual Commands Section */}
                     <div>
-                        <h3 className="text-md font-medium text-white mb-3">Individual Commands</h3>
+                        <h3 className="text-md font-medium text-white mb-3">
+                            Individual Commands
+                        </h3>
                         <div className="space-y-4">
-                            {commands.length === 0 && <div className="text-zinc-500">No commands found.</div>}
+                            {commands.length === 0 && (
+                                <div className="text-zinc-500">
+                                    No commands found.
+                                </div>
+                            )}
                             {commands.map((cmd) => (
                                 <CommandConfig
                                     key={cmd.name}
@@ -64,10 +75,8 @@ export default function CommandsTab({
                             ))}
                         </div>
                     </div>
-
-
                 </div>
             </div>
         </div>
     );
-} 
+}

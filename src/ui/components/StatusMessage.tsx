@@ -50,7 +50,12 @@ export default function StatusMessage({
     }
 
     return (
-        <div className={cn("text-white flex items-center gap-2 text-xs", className)}>
+        <div
+            className={cn(
+                "text-white flex items-center gap-2 text-xs",
+                className
+            )}
+        >
             {icon}
             <span>{message}</span>
         </div>

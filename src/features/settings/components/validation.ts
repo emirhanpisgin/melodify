@@ -13,7 +13,8 @@ export const validateClientId = (id: string): string | null => {
     if (!id.trim()) return "Please enter a Client ID";
     if (id.length < 10) return "Client ID appears to be too short";
     if (id.length > 100) return "Client ID appears to be too long";
-    if (!/^[a-zA-Z0-9_-]+$/.test(id)) return "Client ID can only contain letters, numbers, hyphens, and underscores";
+    if (!/^[a-zA-Z0-9_-]+$/.test(id))
+        return "Client ID can only contain letters, numbers, hyphens, and underscores";
     return null;
 };
 
@@ -24,19 +25,32 @@ export const validateClientSecret = (secret: string): string | null => {
     return null;
 };
 
-export const validateCommandAlias = (alias: string, existingAliases: string[], commandName: string): string | null => {
+export const validateCommandAlias = (
+    alias: string,
+    existingAliases: string[],
+    commandName: string
+): string | null => {
     if (!alias.trim()) return "Please enter an alternative command name";
-    if (alias.length < 1) return "Alternative name must be at least 1 character";
-    if (alias.length > 20) return "Alternative name must be no more than 20 characters";
-    if (!/^[a-zA-Z0-9_-]+$/.test(alias)) return "Alternative name can only contain letters, numbers, hyphens, and underscores";
-    if (alias === commandName) return "Alternative name cannot be the same as the main command";
-    if (existingAliases.includes(alias)) return "This alternative name is already in use";
+    if (alias.length < 1)
+        return "Alternative name must be at least 1 character";
+    if (alias.length > 20)
+        return "Alternative name must be no more than 20 characters";
+    if (!/^[a-zA-Z0-9_-]+$/.test(alias))
+        return "Alternative name can only contain letters, numbers, hyphens, and underscores";
+    if (alias === commandName)
+        return "Alternative name cannot be the same as the main command";
+    if (existingAliases.includes(alias))
+        return "This alternative name is already in use";
     return null;
 };
 
-export const validateTemplate = (template: string, allowedVars: string[]): string | null => {
+export const validateTemplate = (
+    template: string,
+    allowedVars: string[]
+): string | null => {
     if (!template.trim()) return "Please enter a message";
-    if (template.length > 500) return "Message must be no more than 500 characters";
+    if (template.length > 500)
+        return "Message must be no more than 500 characters";
 
     // Check for valid variables
     const variableRegex = /\{([^}]+)\}/g;
@@ -45,7 +59,7 @@ export const validateTemplate = (template: string, allowedVars: string[]): strin
         for (const match of matches) {
             const varName = match.slice(1, -1);
             if (!allowedVars.includes(varName)) {
-                return `Unknown variable: {${varName}}. Available variables: ${allowedVars.join(', ')}`;
+                return `Unknown variable: {${varName}}. Available variables: ${allowedVars.join(", ")}`;
             }
         }
     }
@@ -58,7 +72,8 @@ export const validateField = (key: string, value: any): string | null => {
         case "prefix":
             if (typeof value === "string") {
                 if (!value || value.length < 1) return "Prefix cannot be empty";
-                if (value.length > 10) return "Prefix too long (max 10 characters)";
+                if (value.length > 10)
+                    return "Prefix too long (max 10 characters)";
                 if (!/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(value)) {
                     return "Prefix should be a special character (e.g., !, @, #, $)";
                 }
@@ -84,19 +99,19 @@ export const validateField = (key: string, value: any): string | null => {
             break;
         case "songRequestReplyTemplate":
             if (typeof value === "string" && value) {
-                return validateTemplate(value, ['title', 'artist']);
+                return validateTemplate(value, ["title", "artist"]);
             }
             break;
         case "songRequestErrorTemplate":
         case "volumeErrorTemplate":
             if (typeof value === "string" && value) {
-                return validateTemplate(value, ['error']);
+                return validateTemplate(value, ["error"]);
             }
             break;
         case "volumeChangeReplyTemplate":
         case "volumeGetReplyTemplate":
             if (typeof value === "string" && value) {
-                return validateTemplate(value, ['volume']);
+                return validateTemplate(value, ["volume"]);
             }
             break;
         case "customModerators":
@@ -136,4 +151,4 @@ export const validateField = (key: string, value: any): string | null => {
             break;
     }
     return null;
-}; 
+};

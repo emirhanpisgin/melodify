@@ -8,33 +8,29 @@ Songülfy is a next-generation desktop app that lets your viewers control the mu
 
 ## 🚀 Features
 
--   **Seamless Kick & Spotify Integration**
+- **Seamless Kick & Spotify Integration**
+    - Securely authenticate with both Kick and Spotify
+    - Manage API secrets locally—your data stays private
+    - Instantly detect and display your Spotify playback status and devices
+    - Listen to Kick chat in real time and respond to song requests automatically
 
-    -   Securely authenticate with both Kick and Spotify
-    -   Manage API secrets locally—your data stays private
-    -   Instantly detect and display your Spotify playback status and devices
-    -   Listen to Kick chat in real time and respond to song requests automatically
+- **Effortless Song Requests from Chat**
+    - Viewers request songs in Kick chat using a simple command (e.g., `!sr <song name>`)
+    - Songülfy searches Spotify and queues the requested track on your device
+    - Customizable feedback and status messages sent to chat
 
--   **Effortless Song Requests from Chat**
+- **Modern, Streamer-Friendly UI**
+    - Built with React, Tailwind CSS, and TypeScript
+    - Responsive, accessible, and dark-mode ready
+    - Intuitive settings and onboarding—no tech skills required
 
-    -   Viewers request songs in Kick chat using a simple command (e.g., `!sr <song name>`)
-    -   Songülfy searches Spotify and queues the requested track on your device
-    -   Customizable feedback and status messages sent to chat
+- **Smart Notifications & Error Handling**
+    - Toast notifications for errors, info, and success
+    - Automatic error logging—get a log file for support if anything goes wrong
 
--   **Modern, Streamer-Friendly UI**
-
-    -   Built with React, Tailwind CSS, and TypeScript
-    -   Responsive, accessible, and dark-mode ready
-    -   Intuitive settings and onboarding—no tech skills required
-
--   **Smart Notifications & Error Handling**
-
-    -   Toast notifications for errors, info, and success
-    -   Automatic error logging—get a log file for support if anything goes wrong
-
--   **Fully Customizable**
-    -   Change your song request prefix, reply messages, and more in the settings
-    -   Open source and easy to extend
+- **Fully Customizable**
+    - Change your song request prefix, reply messages, and more in the settings
+    - Open source and easy to extend
 
 ---
 
@@ -42,8 +38,8 @@ Songülfy is a next-generation desktop app that lets your viewers control the mu
 
 ### Prerequisites
 
--   [Node.js](https://nodejs.org/) (v18+ recommended)
--   [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
+- [Node.js](https://nodejs.org/) (v18+ recommended)
+- [Yarn](https://yarnpkg.com/) or [npm](https://www.npmjs.com/)
 
 ### Installation
 
@@ -87,12 +83,12 @@ npm run make
 
 ## 📁 Project Structure
 
--   `src/`
-    -   `client/` — React UI components
-    -   `ipc/` — Electron IPC handlers
-    -   `lib/` — Utilities, config, and API logic
-    -   `types/` — TypeScript type definitions
-    -   `index.ts` — Electron main process
+- `src/`
+    - `client/` — React UI components
+    - `ipc/` — Electron IPC handlers
+    - `lib/` — Utilities, config, and API logic
+    - `types/` — TypeScript type definitions
+    - `index.ts` — Electron main process
 
 ---
 

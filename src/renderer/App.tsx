@@ -27,7 +27,9 @@ export default function App() {
     useEffect(() => {
         // Listen for IPC events to open settings or show update dialog
         window.electronAPI.on("open-settings", () => setShowSettings(true));
-        window.electronAPI.on("show-update-dialog", () => setShowUpdateDialog(true));
+        window.electronAPI.on("show-update-dialog", () =>
+            setShowUpdateDialog(true)
+        );
     }, []);
 
     /**
@@ -37,7 +39,11 @@ export default function App() {
 
     return (
         <ErrorBoundary>
-            <Titlebar onMinimize={handleMinimize} onClose={handleClose} onSettings={handleSettings} />
+            <Titlebar
+                onMinimize={handleMinimize}
+                onClose={handleClose}
+                onSettings={handleSettings}
+            />
             {showSettings ? (
                 <Settings onClose={handleCloseSettings} />
             ) : (

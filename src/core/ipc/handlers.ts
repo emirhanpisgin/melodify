@@ -1,9 +1,4 @@
-import {
-    app,
-    ipcMain,
-    shell,
-    dialog,
-} from "electron";
+import { app, ipcMain, shell, dialog } from "electron";
 import Config from "../config";
 import { logDebug, logError, logInfo, logWarn } from "../logging";
 import { redactSecrets } from "../logging/utils";

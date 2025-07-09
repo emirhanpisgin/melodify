@@ -22,7 +22,12 @@ interface AccordionProps {
 /**
  * Minimal, accessible Accordion with smooth expand/collapse and clear focus/hover.
  */
-export default function Accordion({ title, children, defaultOpen = false, className }: AccordionProps) {
+export default function Accordion({
+    title,
+    children,
+    defaultOpen = false,
+    className,
+}: AccordionProps) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -41,9 +46,11 @@ export default function Accordion({ title, children, defaultOpen = false, classN
                     "focus-visible:ring-2 focus-visible:ring-blue-500"
                 )}
                 aria-expanded={isOpen}
-                aria-controls={`accordion-content-${title.toLowerCase().replace(/\s+/g, '-')}`}
+                aria-controls={`accordion-content-${title.toLowerCase().replace(/\s+/g, "-")}`}
             >
-                <span className="font-medium text-white select-none">{title}</span>
+                <span className="font-medium text-white select-none">
+                    {title}
+                </span>
                 <ChevronDownIcon
                     className={cn(
                         "w-5 h-5 text-zinc-400 transition-transform duration-200",
@@ -53,9 +60,9 @@ export default function Accordion({ title, children, defaultOpen = false, classN
             </button>
             {/* Accordion content */}
             <div
-                id={`accordion-content-${title.toLowerCase().replace(/\s+/g, '-')}`}
+                id={`accordion-content-${title.toLowerCase().replace(/\s+/g, "-")}`}
                 ref={contentRef}
-                style={{ maxHeight: isOpen ? '1000px' : 0 }}
+                style={{ maxHeight: isOpen ? "1000px" : 0 }}
                 className={cn(
                     "overflow-hidden transition-all duration-300 ease-in-out bg-zinc-900 px-3",
                     isOpen ? "py-2 opacity-100" : "py-0 opacity-0"
@@ -65,4 +72,4 @@ export default function Accordion({ title, children, defaultOpen = false, classN
             </div>
         </div>
     );
-} 
+}

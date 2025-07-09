@@ -13,16 +13,26 @@ const secretFields = [
     { key: "kickClientSecret", label: "Kick Client Secret" },
 ];
 
-export default function SecretsTab({ config, onInput, validationErrors }: SecretsTabProps) {
+export default function SecretsTab({
+    config,
+    onInput,
+    validationErrors,
+}: SecretsTabProps) {
     return (
         <div className="flex flex-col gap-4">
-            <div className="font-bold text-base mb-1 text-white">API Credentials</div>
+            <div className="font-bold text-base mb-1 text-white">
+                API Credentials
+            </div>
             {secretFields.map((field) => (
                 <Input
                     key={field.key}
                     label={field.label}
                     type={field.key.includes("Secret") ? "password" : "text"}
-                    value={typeof config[field.key] === "string" ? config[field.key] as string : ""}
+                    value={
+                        typeof config[field.key] === "string"
+                            ? (config[field.key] as string)
+                            : ""
+                    }
                     onChange={(e) => onInput(field.key, e.target.value)}
                     error={!!validationErrors[field.key]}
                     helperText={validationErrors[field.key]}
@@ -31,4 +41,4 @@ export default function SecretsTab({ config, onInput, validationErrors }: Secret
             ))}
         </div>
     );
-} 
+}

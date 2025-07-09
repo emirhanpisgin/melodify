@@ -41,7 +41,10 @@ ipcMain.handle("kick:findChatroom", async (event, data) => {
 
     const { chatroomId, userId } = result;
     Config.set({ username, chatroomId, userId: userId.toString() });
-    logInfo("kick:findChatroom set config", redactSecrets({ username, chatroomId, userId }));
+    logInfo(
+        "kick:findChatroom set config",
+        redactSecrets({ username, chatroomId, userId })
+    );
 
     return chatroomId;
 });
@@ -53,7 +56,7 @@ ipcMain.on("kick:sendMessage", async (event, message) => {
 
 ipcMain.handle("kick:checkAuth", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
-    
+
     if (!kickClient.hasTokens()) {
         stopKickTokenAutoRefresh();
         return { authenticated: false };
@@ -67,7 +70,7 @@ ipcMain.handle("kick:checkAuth", async (event) => {
 
     listenToChat(window);
     startKickTokenAutoRefresh(window);
-    
+
     try {
         const channels = await kickClient.getChannels();
         const username = channels[0]?.slug || "";
@@ -87,7 +90,13 @@ ipcMain.on("kick:logout", (event) => {
 ipcMain.handle("kick:hasSecrets", async () => {
     const kickClientId = Config.get("kickClientId");
     const kickClientSecret = Config.get("kickClientSecret");
-    logDebug("kick:hasSecrets called", redactSecrets({ hasClientId: !!kickClientId, hasClientSecret: !!kickClientSecret }));
+    logDebug(
+        "kick:hasSecrets called",
+        redactSecrets({
+            hasClientId: !!kickClientId,
+            hasClientSecret: !!kickClientSecret,
+        })
+    );
     return !!kickClientId && !!kickClientSecret;
 });
 

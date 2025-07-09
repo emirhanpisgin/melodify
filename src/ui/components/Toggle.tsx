@@ -49,7 +49,9 @@ export default function Toggle({
                 className={cn(
                     "relative inline-flex items-center transition-colors rounded-full border border-transparent w-10 h-[1.375rem]",
                     color,
-                    disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                    disabled
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 active:scale-95"
                 )}
             >
@@ -74,4 +76,4 @@ export default function Toggle({
             )}
         </div>
     );
-} 
+}

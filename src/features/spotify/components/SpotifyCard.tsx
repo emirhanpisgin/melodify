@@ -12,12 +12,16 @@ export default function SpotifyCard() {
     const [spotifyUsername, setSpotifyUsername] = useState<string | null>(null);
     const [authenticated, setAuthenticated] = useState<boolean | null>(null);
     const [spotifyRunning, setSpotifyRunning] = useState<boolean | null>(null);
-    const [spotifyHasSession, setSpotifyHasSession] = useState<boolean | null>(false);
+    const [spotifyHasSession, setSpotifyHasSession] = useState<boolean | null>(
+        false
+    );
     const [openConfigure, setOpenConfigure] = useState(false);
-    const [spotifyRedirectUri, setSpotifyRedirectUri] = useState<string>(SPOTIFY_REDIRECT_URI);
+    const [spotifyRedirectUri, setSpotifyRedirectUri] =
+        useState<string>(SPOTIFY_REDIRECT_URI);
 
     useEffect(() => {
-        window.electronAPI.invoke("spotify:hasSecrets")
+        window.electronAPI
+            .invoke("spotify:hasSecrets")
             .then((secrets) => {
                 logDebug(`Spotify secrets fetched: ${!!secrets}`);
                 setHasSecrets(secrets);
@@ -29,7 +33,8 @@ export default function SpotifyCard() {
 
     useEffect(() => {
         const checkSpotifyProcess = async () => {
-            const isRunning = await window.electronAPI.invoke("spotify:isRunning");
+            const isRunning =
+                await window.electronAPI.invoke("spotify:isRunning");
             setSpotifyRunning(isRunning);
         };
         checkSpotifyProcess();
@@ -38,7 +43,8 @@ export default function SpotifyCard() {
     }, []);
 
     useEffect(() => {
-        window.electronAPI.invoke("spotify:checkAuth")
+        window.electronAPI
+            .invoke("spotify:checkAuth")
             .then((result) => {
                 setAuthenticated(result.authenticated);
                 if (result.authenticated) {
@@ -55,16 +61,19 @@ export default function SpotifyCard() {
     useEffect(() => {
         const handleAuthenticated = (data: any) => {
             try {
-                if (data && typeof data === 'object' && data.username) {
+                if (data && typeof data === "object" && data.username) {
                     setAuthenticated(true);
                     setSpotifyUsername(data.username);
                 } else {
-                    logError(new Error('Invalid authentication data received'), 'handleAuthenticated');
+                    logError(
+                        new Error("Invalid authentication data received"),
+                        "handleAuthenticated"
+                    );
                     setAuthenticated(false);
                     setSpotifyUsername(null);
                 }
             } catch (error) {
-                logError(error, 'handleAuthenticated');
+                logError(error, "handleAuthenticated");
                 setAuthenticated(false);
                 setSpotifyUsername(null);
             }
@@ -83,7 +92,8 @@ export default function SpotifyCard() {
         let interval: NodeJS.Timeout | null = null;
 
         function checkSpotifySession() {
-            window.electronAPI.invoke("spotify:hasSession")
+            window.electronAPI
+                .invoke("spotify:hasSession")
                 .then((hasSession) => {
                     logDebug(`Spotify session check result: ${hasSession}`);
                     setSpotifyHasSession(hasSession);
@@ -168,7 +178,8 @@ export default function SpotifyCard() {
                 />
                 {hasSecrets === false && (
                     <div className="text-xs text-zinc-400 text-center max-w-[80%]">
-                        Configure your Spotify API credentials to enable song requests
+                        Configure your Spotify API credentials to enable song
+                        requests
                     </div>
                 )}
                 <StatusMessage
@@ -193,7 +204,8 @@ export default function SpotifyCard() {
                 />
                 {spotifyHasSession === false && (
                     <div className="text-xs text-zinc-400 text-center max-w-[80%]">
-                        Open Spotify and start playing music to enable song requests
+                        Open Spotify and start playing music to enable song
+                        requests
                     </div>
                 )}
                 {openConfigure && (
@@ -213,7 +225,7 @@ export default function SpotifyCard() {
             </div>
             <div className="flex flex-col gap-2 w-full items-center mb-4">
                 <div className="flex gap-2">
-                    {(hasSecrets === false) && (
+                    {hasSecrets === false && (
                         <div
                             onClick={() => setOpenConfigure(true)}
                             className="bg-spotify-green hover:bg-spotify-green-dark active:bg-spotify-green-darker cursor-pointer px-4 py-2 rounded text-sm font-semibold text-black"
@@ -241,7 +253,9 @@ export default function SpotifyCard() {
                             </div>
                             {hasSecrets === false && (
                                 <span className="absolute text-center inset-0 flex items-center justify-center text-xs font-semibold pointer-events-none text-black">
-                                    Configure API credentials<br />to connect
+                                    Configure API credentials
+                                    <br />
+                                    to connect
                                 </span>
                             )}
                         </div>
