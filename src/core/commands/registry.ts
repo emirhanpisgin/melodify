@@ -4,8 +4,9 @@ import {
 } from "../../features/spotify/playback/player";
 import Config from "../config";
 import { sendKickMessage } from "../../features/kick/chat/listener";
-import { logError } from "../logging";
+import { logError, logSongRequest } from "../logging";
 import { Command, CommandContext } from "./manager";
+import { incrementSongRequestCount } from "../ipc/handlers";
 
 function formatTemplate(
     template: string,
@@ -103,6 +104,12 @@ const SongRequestCommand: Command = {
             // Set cooldowns after successful song request
             commandManager.setGlobalCooldown();
             commandManager.setUserCooldown(ctx.username);
+
+            // Log the song request to the logging system
+            logSongRequest(songInfo.title, songInfo.artist, ctx.username);
+
+            // Increment song request count with song info
+            incrementSongRequestCount(songInfo);
 
             if (Config.get("replyOnSongRequest")) {
                 await sendKickMessage(

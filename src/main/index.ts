@@ -18,15 +18,17 @@ import {
     listenToChat,
     startKickTokenAutoRefresh,
     stopKickTokenAutoRefresh,
+    stopListeningToChat,
 } from "../features/kick/chat/listener";
+import { stopKickAuthServer } from "../features/kick/auth/server";
 import {
     startSpotifyTokenRefreshInterval,
     stopSpotifyTokenAutoRefresh,
 } from "../features/spotify/playback/player";
 
 // Window dimensions and platform detection
-const WINDOW_WIDTH = 700;
-const WINDOW_HEIGHT = 450;
+const WINDOW_WIDTH = 900;
+const WINDOW_HEIGHT = 650;
 const IS_MAC = process.platform === "darwin";
 
 // Webpack entry points (declared by webpack)
@@ -40,6 +42,7 @@ if (require("electron-squirrel-startup")) {
 
 // Global variables for window and tray management
 let mainWindow: BrowserWindow | null = null;
+let testWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuiting = false;
 
@@ -51,6 +54,12 @@ try {
         autoDownload: false, // Don't auto-download, let user choose
         allowPrerelease: false, // Only stable releases
         debug: false, // Enable debug in dev
+        logger: {
+            info: (message: string) => logInfo(message, "updater"),
+            debug: (message: string) => logDebug(message, "updater"),
+            warn: (message: string) => logWarn(message, "updater"),
+            error: (message: string) => logError(message, "updater"),
+        },
     });
     logInfo("Updater initialized successfully", "updater:init");
 } catch (error: any) {
@@ -260,6 +269,89 @@ const createTray = () => {
 };
 
 /**
+ * Creates the UI test window for development purposes.
+ * Only available in development mode.
+ */
+const createTestWindow = (): void => {
+    // Only allow in development mode
+    if (process.env.NODE_ENV !== "development") {
+        logWarn(
+            "UI test window requested but not in development mode",
+            "createTestWindow"
+        );
+        return;
+    }
+
+    // Don't create multiple test windows
+    if (testWindow && !testWindow.isDestroyed()) {
+        testWindow.focus();
+        return;
+    }
+
+    logInfo("Creating UI test window");
+    try {
+        testWindow = new BrowserWindow({
+            width: 1200,
+            height: 800,
+            fullscreenable: false,
+            resizable: true,
+            autoHideMenuBar: true,
+            frame: false,
+            webPreferences: {
+                preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
+                contextIsolation: true,
+                nodeIntegration: false,
+            },
+            parent: mainWindow || undefined,
+        });
+
+        // Load the same entry point but with a query parameter to identify it as test window
+        testWindow.loadURL(`${MAIN_WINDOW_WEBPACK_ENTRY}?testmode=true`);
+        testWindow.setMenu(null);
+
+        // Open DevTools for the test window
+        testWindow.webContents.openDevTools({ mode: "detach" });
+
+        // Handle window close event
+        testWindow.on("closed", () => {
+            testWindow = null;
+            logInfo("UI test window closed");
+        });
+
+        // Handle potential crashes
+        testWindow.webContents.on("render-process-gone", (event, details) => {
+            logError(
+                `UI test window render process gone: ${details.reason}`,
+                "testWindow:crash"
+            );
+            if (testWindow && !testWindow.isDestroyed()) {
+                testWindow.close();
+            }
+            testWindow = null;
+        });
+
+        // Handle unresponsive window
+        testWindow.on("unresponsive", () => {
+            logWarn(
+                "UI test window became unresponsive",
+                "testWindow:unresponsive"
+            );
+        });
+
+        testWindow.on("responsive", () => {
+            logInfo(
+                "UI test window became responsive again",
+                "testWindow:responsive"
+            );
+        });
+
+        logInfo("UI test window created");
+    } catch (error) {
+        logError(error, "main:createTestWindow");
+    }
+};
+
+/**
  * Creates the main application window.
  * Sets up window properties, loads the app, and handles window events.
  */
@@ -320,11 +412,9 @@ app.on("ready", () => {
 
     // Initialize features after app is ready
     try {
-        // Start listening to Kick chat
-        listenToChat();
-
-        // Start token auto-refresh mechanisms
-        startKickTokenAutoRefresh();
+        // Only start Kick features if authenticated, otherwise let the UI handle auth flow
+        // The kick:checkAuth handler will start listening when authentication is confirmed
+        startKickTokenAutoRefresh(mainWindow);
 
         // Only start Spotify token refresh if mainWindow is available
         if (mainWindow) {
@@ -347,7 +437,13 @@ app.on("ready", () => {
 
 app.on("window-all-closed", () => {
     stopKickTokenAutoRefresh();
+    stopListeningToChat(mainWindow);
+    stopKickAuthServer();
     stopSpotifyTokenAutoRefresh();
+    // Clean up test window reference
+    if (testWindow && testWindow.isDestroyed()) {
+        testWindow = null;
+    }
     if (!IS_MAC) {
         app.quit();
     }
@@ -360,8 +456,17 @@ app.on("activate", () => {
 });
 
 // Window control IPC handlers
-ipcMain.on("window:minimize", () => {
+ipcMain.on("window:minimize", (event) => {
     logInfo("Window minimize requested");
+    const senderWindow = BrowserWindow.fromWebContents(event.sender);
+
+    // Check if this is the test window
+    if (senderWindow === testWindow) {
+        testWindow?.minimize();
+        return;
+    }
+
+    // Handle main window minimize
     const minimizeToTray = Config.get("minimizeToTray");
     if (minimizeToTray) {
         mainWindow?.hide();
@@ -373,10 +478,25 @@ ipcMain.on("window:minimize", () => {
     }
 });
 
-ipcMain.on("window:close", () => {
+ipcMain.on("window:close", (event) => {
     logInfo("Window close requested");
+    const senderWindow = BrowserWindow.fromWebContents(event.sender);
+
+    // Check if this is the test window
+    if (senderWindow === testWindow) {
+        testWindow?.close();
+        return;
+    }
+
+    // Handle main window close
     isQuiting = true;
     mainWindow?.close();
+});
+
+// Development IPC handlers
+ipcMain.handle("open-ui-test-window", () => {
+    logInfo("UI test window requested");
+    createTestWindow();
 });
 
 // App control IPC handlers
@@ -403,6 +523,12 @@ ipcMain.on("update:download", (_event, _manifest) => {
 ipcMain.on("update:install", () => {
     logDebug("Update install requested from renderer", "updater:ipc");
     installUpdate();
+});
+
+// IPC handler for opening the UI test window
+ipcMain.on("window:test", () => {
+    logInfo("Test window requested");
+    createTestWindow();
 });
 
 // Check for updates automatically if enabled

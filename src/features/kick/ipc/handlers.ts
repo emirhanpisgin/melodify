@@ -1,9 +1,14 @@
 import { ipcMain, BrowserWindow } from "electron";
 import Config from "../../../core/config";
-import { startKickAuthServer, openKickAuthUrl } from "../auth/server";
+import {
+    startKickAuthServer,
+    openKickAuthUrl,
+    stopKickAuthServer,
+} from "../auth/server";
 import {
     isListening,
     listenToChat,
+    stopListeningToChat,
     sendKickMessage,
     startKickTokenAutoRefresh,
     stopKickTokenAutoRefresh,
@@ -12,14 +17,46 @@ import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
 import { redactSecrets } from "../../../core/logging/utils";
 import { kickClient } from "../api/client";
 
+let authInProgress = false;
+
+function resetAuthState() {
+    authInProgress = false;
+}
+
 ipcMain.on("kick:auth", async (event) => {
     const window = BrowserWindow.fromWebContents(event.sender);
     logDebug("IPC kick:auth called", redactSecrets({ sender: !!event.sender }));
     if (!window) return;
 
-    startKickAuthServer(window);
+    if (authInProgress) {
+        logWarn("Authentication already in progress");
+        return;
+    }
 
-    openKickAuthUrl();
+    authInProgress = true;
+
+    try {
+        await startKickAuthServer(window);
+        openKickAuthUrl();
+
+        // Set a timeout to reset auth state in case the flow doesn't complete
+        setTimeout(() => {
+            if (authInProgress) {
+                logWarn("Auth flow timeout, resetting auth state");
+                resetAuthState();
+            }
+        }, 60000); // 1 minute timeout
+    } catch (error) {
+        logError(error, "kick:auth:ipcHandler");
+        window.webContents.send("kick:authenticationFailed");
+        resetAuthState();
+    }
+});
+
+// Handler for auth completion notification from auth server
+ipcMain.on("kick:authComplete", () => {
+    logDebug("Auth completion notification received");
+    resetAuthState();
 });
 
 ipcMain.handle("kick:getUserData", async (event) => {
@@ -59,12 +96,14 @@ ipcMain.handle("kick:checkAuth", async (event) => {
 
     if (!kickClient.hasTokens()) {
         stopKickTokenAutoRefresh();
+        stopListeningToChat(window);
         return { authenticated: false };
     }
 
     const refreshed = await kickClient.getValidAccessToken();
     if (!refreshed) {
         stopKickTokenAutoRefresh();
+        stopListeningToChat(window);
         return { authenticated: false };
     }
 
@@ -77,14 +116,25 @@ ipcMain.handle("kick:checkAuth", async (event) => {
         return { authenticated: true, username };
     } catch (error) {
         logError(error, "kick:checkAuth");
+        stopKickTokenAutoRefresh();
+        stopListeningToChat(window);
         return { authenticated: false };
     }
 });
 
 ipcMain.on("kick:logout", (event) => {
     logInfo("IPC kick:logout called");
+    const window = BrowserWindow.fromWebContents(event.sender);
+
+    // Stop all Kick-related services
     stopKickTokenAutoRefresh();
+    stopListeningToChat(window);
     kickClient.clearTokens();
+
+    // Notify UI that authentication is cleared
+    window?.webContents.send("kick:authenticationFailed");
+
+    logInfo("Kick logout completed - stopped chat listener and cleared tokens");
 });
 
 ipcMain.handle("kick:hasSecrets", async () => {
@@ -116,4 +166,10 @@ ipcMain.on("kick:setSecrets", async (event, secrets) => {
 ipcMain.handle("kick:isListeningToChat", async () => {
     logDebug("kick:isListeningToChat called");
     return isListening;
+});
+
+ipcMain.on("kick:stopListening", (event) => {
+    logInfo("IPC kick:stopListening called");
+    const window = BrowserWindow.fromWebContents(event.sender);
+    stopListeningToChat(window);
 });

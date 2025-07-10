@@ -168,11 +168,17 @@ ipcMain.handle("spotify:setSecrets", async (event, secrets) => {
 });
 
 ipcMain.handle("spotify:hasSession", async () => {
-    const spotifyApi = getSpotifyApi();
-    if (!spotifyApi) return false;
-    const devices = await spotifyApi.getMyDevices();
-    const hasActiveDevice = devices.body.devices.some(
-        (device: any) => device.is_active
-    );
-    return hasActiveDevice;
+    try {
+        const spotifyApi = getSpotifyApi();
+        if (!spotifyApi) return false;
+
+        const devices = await spotifyApi.getMyDevices();
+        const hasActiveDevice = devices.body.devices.some(
+            (device: any) => device.is_active
+        );
+        return hasActiveDevice;
+    } catch (error) {
+        // Silently return false for API errors to avoid log spam
+        return false;
+    }
 });

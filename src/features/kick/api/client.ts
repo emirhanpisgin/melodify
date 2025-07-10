@@ -100,6 +100,10 @@ class KickClient {
             kickAccessToken: undefined,
             kickRefreshToken: undefined,
             kickExpiresAt: undefined,
+            // Also clear user/channel data to prevent stale data issues
+            userId: undefined,
+            username: undefined,
+            chatroomId: undefined,
         });
     }
 

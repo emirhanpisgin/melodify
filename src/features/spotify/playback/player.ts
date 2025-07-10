@@ -186,6 +186,24 @@ export function stopSpotifyTokenAutoRefresh() {
         clearInterval(refreshSpotifyTokenInterval);
         refreshSpotifyTokenInterval = null;
     }
+
+    // Also stop song saving intervals
+    if (saveSongInterval) {
+        clearInterval(saveSongInterval);
+        saveSongInterval = null;
+    }
+
+    if (nextSaveTimeout) {
+        clearTimeout(nextSaveTimeout);
+        nextSaveTimeout = null;
+    }
+
+    if (songFileSavingInterval) {
+        clearTimeout(songFileSavingInterval);
+        songFileSavingInterval = null;
+    }
+
+    logDebug("All Spotify intervals and timeouts cleared", "spotify:stop");
 }
 
 // Function to save current song to file
@@ -201,7 +219,6 @@ async function saveCurrentSongToFile() {
         }
 
         const playbackState = await spotifyApi.getMyCurrentPlaybackState();
-        logDebug("Playback state retrieved", "saveCurrentSongToFile");
 
         if (!playbackState.body.is_playing || !playbackState.body.item) {
             return;
@@ -246,7 +263,14 @@ async function saveCurrentSongToFile() {
             nextCheckDelay
         );
     } catch (error) {
-        logError(error, "saveCurrentSongToFile");
+        // Only log error if it's not a common "no playback" error
+        if (
+            error instanceof Error &&
+            !error.message.includes("NO_ACTIVE_DEVICE") &&
+            !error.message.includes("PREMIUM_REQUIRED")
+        ) {
+            logError(error, "saveCurrentSongToFile");
+        }
     }
 }
 

@@ -18,6 +18,7 @@ declare global {
             setKickSecrets: (secrets: Record<string, string>) => void;
             minimize: () => void;
             close: () => void;
+            openUITestWindow: () => Promise<void>;
             restart: () => void;
             onUpdateStatus: (callback: (event: any, data: any) => void) => void;
             checkForUpdates: () => void;

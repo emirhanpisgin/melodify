@@ -8,12 +8,17 @@ import HomePage from "../ui/components/HomePage";
 import Settings from "../features/settings/components/Settings";
 import Titlebar from "../ui/components/Titlebar";
 import UpdateDialog from "../ui/components/UpdateDialog";
+import UITestPage from "../ui/components/UITestPage";
 
 /**
  * The main App component for the renderer process.
  * Handles navigation between HomePage and Settings, and displays update dialogs.
  */
 export default function App() {
+    // Check if this is the test window
+    const isTestMode =
+        new URLSearchParams(window.location.search).get("testmode") === "true";
+
     // State to control which page is shown
     const [showSettings, setShowSettings] = useState(false);
     // State to control update dialog visibility
@@ -36,6 +41,20 @@ export default function App() {
      * Handles closing the settings page.
      */
     const handleCloseSettings = () => setShowSettings(false);
+
+    // If this is the test window, render only the UITestPage
+    if (isTestMode) {
+        return (
+            <ErrorBoundary>
+                <Titlebar
+                    onMinimize={handleMinimize}
+                    onClose={handleClose}
+                    onSettings={handleSettings}
+                />
+                <UITestPage />
+            </ErrorBoundary>
+        );
+    }
 
     return (
         <ErrorBoundary>

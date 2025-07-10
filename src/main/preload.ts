@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     minimize: () => ipcRenderer.send("window:minimize"),
     close: () => ipcRenderer.send("window:close"),
 
+    // Development functions
+    openUITestWindow: () => ipcRenderer.invoke("open-ui-test-window"),
+
     // App information
     getAppVersion: () => ipcRenderer.invoke("app:getVersion"),
 

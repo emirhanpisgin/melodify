@@ -1,6 +1,13 @@
-import { app, ipcMain, shell, dialog } from "electron";
+import { app, ipcMain, shell, dialog, BrowserWindow } from "electron";
 import Config from "../config";
-import { logDebug, logError, logInfo, logWarn } from "../logging";
+import {
+    logDebug,
+    logError,
+    logInfo,
+    logWarn,
+    getSongRequestsForDate,
+    getSongRequestsForSession,
+} from "../logging";
 import { redactSecrets } from "../logging/utils";
 import { CommandManager } from "../commands/manager";
 import {
@@ -211,4 +218,70 @@ ipcMain.handle("file:selectSongFilePath", async () => {
         logError(error, "file:selectSongFilePath");
         return null;
     }
+});
+
+// Song Request Count tracking
+let dailySongRequestCount = 0;
+let lastResetDate = new Date().toDateString();
+let lastRequestTime: Date | null = null;
+let lastRequestedSong: { title: string; artist: string } | null = null;
+
+// Reset count daily
+function checkAndResetDailyCount() {
+    const today = new Date().toDateString();
+    if (lastResetDate !== today) {
+        dailySongRequestCount = 0;
+        lastRequestTime = null;
+        lastRequestedSong = null;
+        lastResetDate = today;
+        logDebug("Daily song request count reset", "songRequest:count");
+    }
+}
+
+// Get current song request count, last request time, and last song
+ipcMain.handle("songRequest:getCount", () => {
+    checkAndResetDailyCount();
+    return {
+        count: dailySongRequestCount,
+        lastRequestTime: lastRequestTime?.toISOString() || null,
+        lastSong: lastRequestedSong,
+    };
+});
+
+// Increment song request count (called internally when a song is successfully requested)
+export function incrementSongRequestCount(songInfo?: {
+    title: string;
+    artist: string;
+}) {
+    checkAndResetDailyCount();
+    dailySongRequestCount++;
+    lastRequestTime = new Date();
+    if (songInfo) {
+        lastRequestedSong = songInfo;
+    }
+    logDebug(
+        `Song request count incremented to ${dailySongRequestCount}`,
+        "songRequest:count"
+    );
+
+    // Broadcast to all renderer processes
+    BrowserWindow.getAllWindows().forEach((window: BrowserWindow) => {
+        window.webContents.send("songRequest:completed", songInfo);
+    });
+}
+
+// Get song requests for a specific date (YYYY-MM-DD format)
+ipcMain.handle("songRequest:getForDate", (_event, date: string) => {
+    return getSongRequestsForDate(date);
+});
+
+// Get song requests for current session
+ipcMain.handle("songRequest:getForSession", () => {
+    return getSongRequestsForSession();
+});
+
+// Get today's song requests
+ipcMain.handle("songRequest:getToday", () => {
+    const today = new Date().toISOString().split("T")[0];
+    return getSongRequestsForDate(today);
 });
