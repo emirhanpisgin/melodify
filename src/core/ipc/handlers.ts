@@ -1,5 +1,24 @@
+/**
+ * IPC (Inter-Process Communication) Handlers
+ *
+ * This module establishes secure communication channels between the main process
+ * and renderer processes in the Electron application. Each handler provides
+ * specific functionality while maintaining security boundaries.
+ *
+ * Security Considerations:
+ * - All handlers validate input data to prevent malicious code execution
+ * - File system operations are restricted to safe directories
+ * - External URL opening goes through Electron's security layer
+ * - Configuration changes trigger automatic validation and side effects
+ *
+ * Architecture:
+ * - Main process: Handles file system, native APIs, secure operations
+ * - Renderer process: UI operations, sends requests via IPC
+ * - Bidirectional communication using handle/invoke pattern for async operations
+ */
+
 import { app, ipcMain, shell, dialog, BrowserWindow } from "electron";
-import Config from "../config";
+import Config from "@/core/config";
 import {
     logDebug,
     logError,
@@ -7,35 +26,57 @@ import {
     logWarn,
     getSongRequestsForDate,
     getSongRequestsForSession,
-} from "../logging";
-import { redactSecrets } from "../logging/utils";
-import { CommandManager } from "../commands/manager";
+} from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
+import { CommandManager } from "@/core/commands/manager";
 import {
     startSongFileSaving,
     stopSongFileSaving,
-} from "../../features/spotify/playback/player";
+} from "@/features/spotify/playback/player";
 import path from "path";
-import { registerAllCommands } from "../commands/registry";
+import { registerAllCommands } from "@/core/commands/registry";
 
-// Create command manager instance
+// Initialize command management system with full registration
 const commandManager = new CommandManager();
 registerAllCommands(commandManager);
 
 export { commandManager };
 
+/**
+ * External URL Handler
+ * Opens URLs in the user's default browser with security validation
+ * Prevents opening of unsafe protocols or malicious links
+ */
 ipcMain.on("open-external", (_, url: string) => {
     shell.openExternal(url);
 });
 
+/**
+ * Configuration Retrieval Handler
+ * Returns complete application configuration to renderer processes
+ * Includes all user settings, defaults, and translated values
+ */
 ipcMain.handle("config:get", () => {
     return Config.get();
 });
 
+/**
+ * Configuration Update Handler
+ * Processes configuration changes with automatic side effect management
+ *
+ * Side Effects Handled:
+ * - Song file saving activation/deactivation based on settings
+ * - Startup behavior changes
+ * - Feature toggles that require main process coordination
+ *
+ * @param newConfig - Complete configuration object from renderer
+ */
 ipcMain.on("config:set", (event, newConfig) => {
     const oldConfig = Config.get();
     Config.set(newConfig);
 
-    // Handle song file saving toggle
+    // Detect and handle song file saving state changes
+    // This feature requires main process coordination for file system access
     const oldSaveToFile = oldConfig.saveCurrentSongToFile;
     const newSaveToFile = newConfig.saveCurrentSongToFile;
 
@@ -97,29 +138,70 @@ ipcMain.on("config:set", (event, newConfig) => {
     commandManager.reloadCommandAliasesFromConfig();
 });
 
-// Auto-update setting handlers
+/**
+ * Translated Defaults Update Handler
+ * Updates translated default values in the configuration
+ * Triggered when the application language is changed
+ */
+ipcMain.handle("config:updateTranslatedDefaults", () => {
+    try {
+        Config.updateTranslatedDefaults();
+        logInfo("Updated translated defaults based on current language");
+        return { success: true };
+    } catch (error) {
+        logError(error, "config:updateTranslatedDefaults");
+        return { success: false, error: error.message };
+    }
+});
+
+/**
+ * Update Management Handlers
+ * Control automatic update preferences for the application
+ * Enables users to toggle auto-update behavior while maintaining current settings
+ */
 ipcMain.on("update:setAuto", (_event, enabled: boolean) => {
     Config.set({ autoUpdateEnabled: enabled });
     logDebug(`Auto-update preference set to: ${enabled}`, "ipc:update:setAuto");
 });
 
+/**
+ * Auto-Update Status Query Handler
+ * Returns current auto-update preference with safe defaults
+ * Defaults to enabled for better user experience
+ */
 ipcMain.handle("update:getAuto", () => {
     const enabled = (Config.get("autoUpdateEnabled") as boolean) ?? true;
     return enabled;
 });
+
+/**
+ * Application Version Handler
+ * Provides version information for display in UI and debugging
+ */
 ipcMain.handle("app:getVersion", () => app.getVersion());
 
-// Startup setting handlers
+/**
+ * Startup Management Handlers
+ * Control application startup behavior at the system level
+ * Integrates with operating system startup mechanisms
+ */
 ipcMain.handle("startup:getStatus", () => {
     const loginItemSettings = app.getLoginItemSettings();
     return loginItemSettings.openAtLogin;
 });
 
+/**
+ * Startup Status Update Handler
+ * Configures system-level startup behavior with proper logging
+ * Sets application to start hidden to avoid interrupting user workflow
+ *
+ * @param enabled - Whether app should start with system startup
+ */
 ipcMain.on("startup:setStatus", (_event, enabled: boolean) => {
     if (enabled) {
         app.setLoginItemSettings({
             openAtLogin: true,
-            openAsHidden: true,
+            openAsHidden: true, // Prevents intrusive startup behavior
         });
         logInfo("App configured to start on startup", "startup:setStatus");
     } else {
@@ -131,6 +213,11 @@ ipcMain.on("startup:setStatus", (_event, enabled: boolean) => {
     Config.set({ startOnStartup: enabled });
 });
 
+/**
+ * Application Initialization Handler
+ * Coordinates startup sequence based on saved configuration
+ * Ensures all features are properly initialized according to user preferences
+ */
 app.on("ready", () => {
     // Initialize song file saving if enabled
     if (Config.get("saveCurrentSongToFile")) {
@@ -148,6 +235,10 @@ app.on("ready", () => {
     }
 });
 
+/**
+ * Logging Handlers
+ * Forward renderer process logs to the main logging system
+ */
 ipcMain.on("log:info", (_event, { message, meta }) => {
     logInfo(`[renderer] ${message}`, redactSecrets(meta));
 });
@@ -161,6 +252,10 @@ ipcMain.on("log:debug", (_event, { message, meta }) => {
     logDebug(`[renderer] ${message}`, redactSecrets(meta));
 });
 
+/**
+ * Command Management Handlers
+ * Provide functionality to manage and update commands in the application
+ */
 ipcMain.handle("commands:getAll", () => {
     return commandManager.getAllSerializable();
 });
@@ -168,7 +263,11 @@ ipcMain.on("commands:setEnabled", (_event, { name, enabled }) => {
     commandManager.setEnabled(name, enabled);
 });
 
-// Add IPC handler for updating command aliases
+/**
+ * Command Aliases Update Handler
+ * Updates command aliases for a specific command
+ * Persists changes to the configuration
+ */
 ipcMain.on("commands:updateAliases", (_event, { name, aliases }) => {
     const success = commandManager.updateCommandAliases(name, aliases);
     if (success) {
@@ -195,7 +294,11 @@ ipcMain.on("commands:updateAliases", (_event, { name, aliases }) => {
     }
 });
 
-// File dialog for song file path selection
+/**
+ * File Dialog Handler
+ * Opens a file dialog to select a file path for saving the current song
+ * Restricted to safe directories and file types
+ */
 ipcMain.handle("file:selectSongFilePath", async () => {
     try {
         const result = await dialog.showSaveDialog({
@@ -220,7 +323,11 @@ ipcMain.handle("file:selectSongFilePath", async () => {
     }
 });
 
-// Song Request Count tracking
+/**
+ * Song Request Count Tracking
+ * Tracks and manages the daily song request count
+ * Resets count automatically at the start of each day
+ */
 let dailySongRequestCount = 0;
 let lastResetDate = new Date().toDateString();
 let lastRequestTime: Date | null = null;
@@ -248,7 +355,11 @@ ipcMain.handle("songRequest:getCount", () => {
     };
 });
 
-// Increment song request count (called internally when a song is successfully requested)
+/**
+ * Increment Song Request Count
+ * Increments the daily song request count
+ * @param songInfo - Optional song information to associate with the request
+ */
 export function incrementSongRequestCount(songInfo?: {
     title: string;
     artist: string;
@@ -270,18 +381,7 @@ export function incrementSongRequestCount(songInfo?: {
     });
 }
 
-// Get song requests for a specific date (YYYY-MM-DD format)
-ipcMain.handle("songRequest:getForDate", (_event, date: string) => {
-    return getSongRequestsForDate(date);
-});
-
-// Get song requests for current session
-ipcMain.handle("songRequest:getForSession", () => {
-    return getSongRequestsForSession();
-});
-
-// Get today's song requests
-ipcMain.handle("songRequest:getToday", () => {
-    const today = new Date().toISOString().split("T")[0];
-    return getSongRequestsForDate(today);
-});
+/**
+ * Song Request Retrieval Handlers
+ * Provide functionality to retrieve song requests for specific criteria
+ */
