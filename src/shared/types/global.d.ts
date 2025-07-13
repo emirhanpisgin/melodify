@@ -1,5 +1,11 @@
 export {};
 
+// JSON module declarations for i18n
+declare module "*.json" {
+    const value: any;
+    export default value;
+}
+
 declare global {
     interface Window {
         electronAPI: {
@@ -24,6 +30,10 @@ declare global {
             checkForUpdates: () => void;
             getAppVersion: () => Promise<string>;
             selectSongFilePath: () => Promise<string | null>;
+            updateTranslatedDefaults: () => Promise<{
+                success: boolean;
+                error?: string;
+            }>;
             getStartupStatus: () => Promise<boolean>;
             setStartupStatus: (enabled: boolean) => void;
             getAutoUpdate: () => Promise<boolean>;

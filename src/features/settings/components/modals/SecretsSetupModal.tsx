@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 import { InfoIcon } from "lucide-react";
-import ExternalLink from "../../../../ui/components/ExternalLink";
-import Input from "../../../../ui/components/Input";
+import ExternalLink from "@/ui/components/ExternalLink";
+import Input from "@/ui/components/Input";
 
 interface SecretsSetupModalProps {
     service: "Kick" | "Spotify";

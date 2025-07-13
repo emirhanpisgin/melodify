@@ -3,28 +3,27 @@
 // Handles app lifecycle, window management, tray creation, and IPC setup.
 
 import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from "electron";
-import { logInfo, logDebug, logError, logWarn } from "../core/logging";
-import Config from "../core/config";
+import { logInfo, logDebug, logError, logWarn } from "@/core/logging";
+import Config from "@/core/config";
 import Updater from "basic-electron-updater";
 import path from "path";
 
 // Import IPC handlers for different features
-import "../core/ipc";
-import "../features/kick/ipc/handlers";
-import "../features/spotify/ipc/handlers";
+import "@/core/ipc";
+import "@/features/kick/ipc/handlers";
+import "@/features/spotify/ipc/handlers";
 
 // Import feature initialization functions
 import {
-    listenToChat,
     startKickTokenAutoRefresh,
     stopKickTokenAutoRefresh,
     stopListeningToChat,
-} from "../features/kick/chat/listener";
-import { stopKickAuthServer } from "../features/kick/auth/server";
+} from "@/features/kick/chat/listener";
+import { stopKickAuthServer } from "@/features/kick/auth/server";
 import {
     startSpotifyTokenRefreshInterval,
     stopSpotifyTokenAutoRefresh,
-} from "../features/spotify/playback/player";
+} from "@/features/spotify/playback/player";
 
 // Window dimensions and platform detection
 const WINDOW_WIDTH = 900;
@@ -47,7 +46,7 @@ let tray: Tray | null = null;
 let isQuiting = false;
 
 // Initialize the updater with configuration
-let updater: any = null;
+let updater: Updater = null;
 try {
     updater = new Updater({
         repo: "emirhanpisgin/melodify", // Your GitHub repository
@@ -95,7 +94,6 @@ function broadcast(channel: string, ...args: any[]) {
 // Set up event listeners for the updater
 if (updater) {
     updater.on("checking-for-update", () => {
-        logInfo("Checking for updates...", "updater");
         broadcast("update:status", "checking");
     });
 

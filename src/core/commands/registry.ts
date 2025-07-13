@@ -1,12 +1,9 @@
-import {
-    playSong,
-    getSpotifyApi,
-} from "../../features/spotify/playback/player";
-import Config from "../config";
-import { sendKickMessage } from "../../features/kick/chat/listener";
-import { logError, logSongRequest } from "../logging";
-import { Command, CommandContext } from "./manager";
-import { incrementSongRequestCount } from "../ipc/handlers";
+import { playSong, getSpotifyApi } from "@/features/spotify/playback/player";
+import Config from "@/core/config";
+import { sendKickMessage } from "@/features/kick/chat/listener";
+import { logError, logSongRequest } from "@/core/logging";
+import { Command } from "./manager";
+import { incrementSongRequestCount } from "@/core/ipc/handlers";
 
 function formatTemplate(
     template: string,

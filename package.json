@@ -11,7 +11,8 @@
         "publish": "electron-forge publish",
         "lint": "eslint --ext .ts,.tsx .",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "validate-translations": "ts-node scripts/validate-translations.ts"
     },
     "keywords": [],
     "author": {
@@ -56,12 +57,15 @@
         "basic-electron-updater": "^1.0.6",
         "clsx": "^2.1.1",
         "electron-squirrel-startup": "^1.0.1",
+        "i18next": "^25.3.2",
+        "i18next-browser-languagedetector": "^8.2.0",
         "lucide-react": "^0.523.0",
         "node-fetch": "^3.3.2",
         "ps-list": "^8.1.1",
         "pusher-js": "^8.4.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
+        "react-i18next": "^15.6.0",
         "spotify-web-api-node": "^5.0.2",
         "tailwind-merge": "^3.3.1",
         "tailwindcss": "^3.4.17",

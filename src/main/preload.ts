@@ -54,6 +54,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
     // File system operations
     selectSongFilePath: () => ipcRenderer.invoke("file:selectSongFilePath"),
 
+    // Configuration management
+    updateTranslatedDefaults: () =>
+        ipcRenderer.invoke("config:updateTranslatedDefaults"),
+
     // Startup management
     getStartupStatus: () => ipcRenderer.invoke("startup:getStatus"),
     setStartupStatus: (enabled: boolean) =>

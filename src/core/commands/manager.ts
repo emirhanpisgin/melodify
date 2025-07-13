@@ -1,8 +1,15 @@
-// Command system for Kick chat
+/**
+ * Command management system with dynamic registration, validation, and execution
+ * Handles command parsing, permission checking, alias management, and cooldown enforcement
+ * Supports real-time configuration updates and persistent command state
+ */
 
-import Config from "../config";
-import { logError, logWarn, logDebug, logInfo } from "../logging";
+import Config from "@/core/config";
+import { logInfo, logDebug, logError, logWarn } from "@/core/logging";
 
+/**
+ * Command execution context containing user info and message data
+ */
 export interface CommandContext {
     username: string;
     message: string;
@@ -10,6 +17,9 @@ export interface CommandContext {
     raw?: any;
 }
 
+/**
+ * Command definition interface with metadata and handler function
+ */
 export interface Command {
     name: string;
     description: string;
@@ -24,14 +34,31 @@ export interface Command {
     ) => Promise<void>;
 }
 
+/**
+ * Centralized command manager for chat bot functionality
+ * Features:
+ * - Dynamic command registration with validation
+ * - Alias management with conflict detection
+ * - Permission system (moderator-only commands)
+ * - Global and per-user cooldown management
+ * - Persistent configuration storage
+ * - Real-time updates from settings UI
+ */
 export class CommandManager {
     private commands: Map<string, Command> = new Map();
     private aliasMap: Map<string, string> = new Map(); // alias -> commandName
 
-    // Cooldown tracking
+    // Cooldown tracking - prevents command spam
     private globalCooldownEnd = 0;
     private userCooldowns: Map<string, number> = new Map(); // username -> cooldown end time
 
+    /**
+     * Register a new command with comprehensive validation
+     * Performs conflict detection, alias validation, and loads persistent settings
+     *
+     * @param command - Command object with handler, metadata, and configuration
+     * @returns Success status of registration
+     */
     register(command: Command) {
         // Validate command structure
         const validationError = this.validateCommand(command);
@@ -51,7 +78,7 @@ export class CommandManager {
             );
         }
 
-        // Check for duplicate aliases across all commands
+        // Check for duplicate aliases across all commands to prevent conflicts
         if (command.aliases) {
             for (const alias of command.aliases) {
                 if (this.aliasMap.has(alias)) {
@@ -65,7 +92,8 @@ export class CommandManager {
             }
         }
 
-        // Load enabled state and aliases from config
+        // Load enabled state and aliases from persistent configuration
+        // This allows commands to retain their customized state across app restarts
         const commandsConfig = Config.get("commandsConfig") || {};
         const savedConfig = commandsConfig[command.name] || {};
         const enabled =
@@ -78,7 +106,7 @@ export class CommandManager {
         command.enabled = enabled;
         command.aliases = savedAliases;
 
-        // Register command and its aliases
+        // Register command and its aliases in lookup maps
         this.commands.set(command.name, command);
         if (command.aliases) {
             for (const alias of command.aliases) {
@@ -95,7 +123,15 @@ export class CommandManager {
         return true;
     }
 
+    /**
+     * Comprehensive command validation
+     * Ensures commands meet structure, naming, and conflict requirements
+     *
+     * @param command - Command to validate
+     * @returns Validation error message or null if valid
+     */
     private validateCommand(command: Command): string | null {
+        // Basic structure validation
         if (!command.name || command.name.trim() === "") {
             return "Command name cannot be empty";
         }
@@ -104,6 +140,7 @@ export class CommandManager {
             return "Command name too long (max 50 characters)";
         }
 
+        // Alphanumeric restriction prevents parsing conflicts
         if (!/^[a-zA-Z0-9_-]+$/.test(command.name)) {
             return "Command name can only contain letters, numbers, hyphens, and underscores";
         }
@@ -132,7 +169,7 @@ export class CommandManager {
             return "Command handler must be a function";
         }
 
-        // Validate aliases
+        // Validate aliases for conflicts and format
         if (command.aliases) {
             if (!Array.isArray(command.aliases)) {
                 return "Command aliases must be an array";
@@ -183,73 +220,38 @@ export class CommandManager {
         return null;
     }
 
-    getAllSerializable() {
-        return Array.from(this.commands.values()).map((cmd) => ({
-            name: cmd.name,
-            description: cmd.description,
-            usage: cmd.usage,
-            enabled: cmd.enabled,
-            modOnly: cmd.modOnly,
-            aliases: cmd.aliases || [],
-        }));
-    }
-
-    getAll() {
-        return Array.from(this.commands.values());
-    }
-
-    get(name: string) {
-        return (
-            this.commands.get(name) ||
-            this.commands.get(this.aliasMap.get(name) || "")
-        );
-    }
-
-    setEnabled(name: string, enabled: boolean) {
-        const command = this.commands.get(name);
-        if (command) {
-            command.enabled = enabled;
-
-            // Save the command state to config
-            const commandsConfig = Config.get("commandsConfig") || {};
-            if (!commandsConfig[name]) {
-                commandsConfig[name] = {};
-            }
-            commandsConfig[name].enabled = enabled;
-            Config.set({ commandsConfig });
-
-            logDebug(
-                `Command ${name} ${enabled ? "enabled" : "disabled"}`,
-                "CommandManager"
-            );
-        } else {
-            logWarn(
-                `Attempted to set enabled state for non-existent command: ${name}`,
-                "CommandManager"
-            );
-        }
-    }
-
+    /**
+     * Main command execution handler with full permission and cooldown checking
+     * Parses incoming messages, validates permissions, enforces cooldowns, and executes commands
+     *
+     * @param ctx - Command context containing user info, message, and chat metadata
+     */
     async handle(ctx: CommandContext) {
         const message = ctx.message.trim();
         const prefix = Config.get("prefix") || "!";
+
+        // Only process messages that start with the command prefix
         if (!message.startsWith(prefix)) return;
 
+        // Parse command and arguments from message
         const parts = message.slice(prefix.length).split(/\s+/);
         const commandName = parts[0].toLowerCase();
         const args = parts.slice(1);
 
+        // Resolve command name (could be an alias)
         const command = this.get(commandName);
         if (!command) {
             logDebug(`Unknown command: ${commandName}`, "CommandManager");
             return;
         }
 
+        // Check if command is enabled
         if (!command.enabled) {
             logDebug(`Command ${commandName} is disabled`, "CommandManager");
             return;
         }
 
+        // Permission checking - moderator-only commands
         if (command.modOnly && !isModerator(ctx.badges, ctx.username)) {
             logDebug(
                 `User ${ctx.username} attempted to use mod-only command: ${commandName}`,
@@ -260,12 +262,20 @@ export class CommandManager {
 
         try {
             await command.handler(ctx, args, this);
+            logDebug(`Executed command: ${commandName}`, "CommandManager");
         } catch (error) {
             logError(error, `CommandManager:${commandName}`);
         }
     }
 
-    // Method to update command aliases
+    /**
+     * Dynamic alias update system for real-time configuration changes
+     * Validates new aliases for conflicts and updates both command and lookup maps
+     *
+     * @param commandName - Name of command to update
+     * @param newAliases - Array of new aliases to assign
+     * @returns Success status of the update operation
+     */
     updateCommandAliases(commandName: string, newAliases: string[]): boolean {
         const command = this.commands.get(commandName);
         if (!command) {
@@ -275,7 +285,7 @@ export class CommandManager {
             return false;
         }
 
-        // Validate new aliases
+        // Comprehensive validation of new aliases
         if (!Array.isArray(newAliases)) {
             logError(
                 "New aliases must be an array",
@@ -292,7 +302,7 @@ export class CommandManager {
             return false;
         }
 
-        // Check for duplicates within the new aliases
+        // Check for duplicates and conflicts within the new aliases
         const seenAliases = new Set<string>();
         for (const alias of newAliases) {
             if (!alias || alias.trim() === "") {
@@ -359,14 +369,14 @@ export class CommandManager {
             }
         }
 
-        // Remove old aliases from alias map
+        // Remove old aliases from alias map to prevent stale references
         if (command.aliases) {
             for (const oldAlias of command.aliases) {
                 this.aliasMap.delete(oldAlias);
             }
         }
 
-        // Update command aliases
+        // Update command aliases and rebuild alias map
         command.aliases = newAliases;
 
         // Add new aliases to alias map
@@ -383,7 +393,10 @@ export class CommandManager {
         return true;
     }
 
-    // Method to reload all command aliases from config
+    /**
+     * Reload command aliases from persistent configuration
+     * Updates command aliases in memory to match saved configuration
+     */
     reloadCommandAliasesFromConfig(): void {
         const commandsConfig = Config.get("commandsConfig") || {};
 
@@ -404,6 +417,53 @@ export class CommandManager {
                 );
                 this.updateCommandAliases(commandName, savedAliases);
             }
+        }
+    }
+
+    /**
+     * Get all commands for serialization (for IPC communication)
+     * Returns command data without the handler functions
+     */
+    getAllSerializable() {
+        return Array.from(this.commands.values()).map((cmd) => ({
+            name: cmd.name,
+            description: cmd.description,
+            usage: cmd.usage,
+            enabled: cmd.enabled,
+            modOnly: cmd.modOnly,
+            aliases: cmd.aliases || [],
+        }));
+    }
+
+    /**
+     * Get all command objects including handlers
+     */
+    getAll() {
+        return Array.from(this.commands.values());
+    }
+
+    /**
+     * Get a command by name or alias
+     * Resolves aliases to their primary command
+     */
+    get(name: string) {
+        return (
+            this.commands.get(name) ||
+            this.commands.get(this.aliasMap.get(name) || "")
+        );
+    }
+
+    /**
+     * Enable or disable a command
+     */
+    setEnabled(name: string, enabled: boolean) {
+        const command = this.commands.get(name);
+        if (command) {
+            command.enabled = enabled;
+            logDebug(
+                `Command ${name} ${enabled ? "enabled" : "disabled"}`,
+                "CommandManager"
+            );
         }
     }
 
@@ -477,13 +537,21 @@ export class CommandManager {
     }
 }
 
+/**
+ * Permission checking utility for moderator-only commands
+ * Checks both platform-provided badges and custom moderator lists
+ *
+ * @param badges - Array of platform badges (broadcaster, moderator, etc.)
+ * @param username - Username to check for custom moderator status
+ * @returns True if user has moderation privileges
+ */
 function isModerator(badges: string[], username: string) {
-    // Check if user has moderator badges
+    // Check if user has moderator badges from the platform
     if (badges.includes("broadcaster") || badges.includes("moderator")) {
         return true;
     }
 
-    // Check if user is in custom moderators list
+    // Check if user is in custom moderators list (case-insensitive)
     const customModerators = Config.get("customModerators") || [];
     return customModerators.includes(username.toLowerCase());
 }

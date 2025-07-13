@@ -2,19 +2,22 @@
 // Main entry point for the renderer process React application.
 // Handles routing between HomePage and Settings, and manages update dialogs and error boundaries.
 
-import { ErrorBoundary } from "../ui/components/ErrorBoundary";
+import { ErrorBoundary } from "@/ui/components/ErrorBoundary";
 import { useState, useEffect } from "react";
-import HomePage from "../ui/components/HomePage";
-import Settings from "../features/settings/components/Settings";
-import Titlebar from "../ui/components/Titlebar";
-import UpdateDialog from "../ui/components/UpdateDialog";
-import UITestPage from "../ui/components/UITestPage";
+import HomePage from "@/ui/components/HomePage";
+import Settings from "@/features/settings/components/Settings";
+import Titlebar from "@/ui/components/Titlebar";
+import UpdateDialog from "@/ui/components/UpdateDialog";
+import UITestPage from "@/ui/components/UITestPage";
+import { useTranslation } from "react-i18next";
+import "@/core/i18n"; // Initialize i18n
 
 /**
  * The main App component for the renderer process.
  * Handles navigation between HomePage and Settings, and displays update dialogs.
  */
 export default function App() {
+    const { t } = useTranslation();
     // Check if this is the test window
     const isTestMode =
         new URLSearchParams(window.location.search).get("testmode") === "true";
