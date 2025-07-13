@@ -3,6 +3,7 @@
 
 import React from "react";
 import { SettingsIcon, XIcon, Music, TestTube } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Props for the Titlebar component.
@@ -25,6 +26,7 @@ export default function Titlebar({
     onClose,
     onSettings,
 }: TitlebarProps) {
+    const { t } = useTranslation();
     const isDevelopment = process.env.NODE_ENV === "development";
 
     const openUITestWindow = () => {
@@ -36,20 +38,17 @@ export default function Titlebar({
             className="w-full flex items-center border-b border-zinc-700/50 justify-between bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 h-9 select-none pl-2 gap-3"
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
         >
-            {/* App branding */}
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                     <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-blue-500 rounded-md flex items-center justify-center">
                         <Music className="w-3 h-3 text-white" />
                     </div>
                     <div className="flex items-center font-bold text-white">
-                        <span className="text-melodify-primary">Melo</span>
-                        <span className="text-melodify-secondary">dify</span>
+                        {t("app.name")}
                     </div>
                 </div>
             </div>
 
-            {/* Window controls */}
             <div
                 className="flex items-center h-full ml-auto"
                 style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
@@ -94,7 +93,7 @@ export default function Titlebar({
                 <button
                     className="h-full aspect-[1.25_/_1] flex items-center justify-center transition-colors hover:bg-red-500 text-zinc-300 border-none bg-transparent focus:outline-none"
                     onClick={onClose}
-                    title="Close"
+                    title={t("common.close")}
                     aria-label="Close application"
                     tabIndex={-1}
                 >

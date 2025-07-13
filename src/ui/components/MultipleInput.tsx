@@ -3,6 +3,7 @@
 
 import { XIcon } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import Input from "./Input";
 
 /**
@@ -40,7 +41,7 @@ interface MultipleInputProps {
 export default function MultipleInput({
     values,
     onChange,
-    placeholder = "Type and press Enter",
+    placeholder,
     label,
     maxItems = 10,
     minLength = 1,
@@ -50,9 +51,13 @@ export default function MultipleInput({
     validateItem,
     className,
 }: MultipleInputProps) {
+    const { t } = useTranslation();
     const [inputValue, setInputValue] = useState("");
     const [error, setError] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
+
+    // Use translation for default placeholder if none provided
+    const effectivePlaceholder = placeholder || t("multipleInput.placeholder");
 
     /**
      * Validates a single item and returns an error message if invalid.
@@ -60,12 +65,18 @@ export default function MultipleInput({
     const validateSingleItem = (item: string): string | null => {
         // Check minimum length
         if (item.length < minLength) {
-            return `Item must be at least ${minLength} character${minLength === 1 ? "" : "s"} long`;
+            return t("multipleInput.minLengthError", {
+                count: minLength,
+                count_other: minLength === 1 ? "" : "s",
+            });
         }
 
         // Check maximum length
         if (item.length > maxLength) {
-            return `Item must be no more than ${maxLength} character${maxLength === 1 ? "" : "s"} long`;
+            return t("multipleInput.maxLengthError", {
+                count: maxLength,
+                count_other: maxLength === 1 ? "" : "s",
+            });
         }
 
         // Check for duplicates if not allowed
@@ -76,7 +87,7 @@ export default function MultipleInput({
                     (existing) => existing.toLowerCase() === item.toLowerCase()
                 )
             ) {
-                return "This item already exists";
+                return t("multipleInput.duplicateError");
             }
         }
 
@@ -104,7 +115,7 @@ export default function MultipleInput({
 
         // Check if we've reached the maximum number of items
         if (values.length >= maxItems) {
-            setError(`Maximum ${maxItems} items allowed`);
+            setError(t("multipleInput.maxItemsError", { count: maxItems }));
             return;
         }
 
@@ -141,30 +152,21 @@ export default function MultipleInput({
         if (error) setError(""); // Clear error when user starts typing
     };
 
-    // Focus input when component mounts
-    useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, []);
-
     return (
         <div className={className}>
-            {/* Label */}
             {label && (
                 <label className="block text-sm font-medium text-white mb-2">
                     {label}
                 </label>
             )}
 
-            {/* Input field */}
             <div className="flex gap-2 w-full">
                 <Input
                     ref={inputRef}
                     value={inputValue}
                     onChange={handleInputChange}
-                    onKeyPress={handleKeyPress}
-                    placeholder={placeholder}
+                    placeholder={effectivePlaceholder}
+                    onKeyDown={handleKeyPress}
                     error={!!error}
                     helperText={error}
                     maxLength={maxLength}
@@ -173,7 +175,6 @@ export default function MultipleInput({
                 />
             </div>
 
-            {/* Display current items as compact tags */}
             {values.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2 w-full">
                     {values.map((value, index) => (
@@ -185,7 +186,7 @@ export default function MultipleInput({
                             <button
                                 onClick={() => removeItem(index)}
                                 className="text-zinc-400 hover:text-red-400 transition-colors ml-1"
-                                title="Remove item"
+                                title={t("multipleInput.removeItem")}
                                 style={{ lineHeight: 0 }}
                             >
                                 <XIcon className="w-4 h-4" />
@@ -195,9 +196,11 @@ export default function MultipleInput({
                 </div>
             )}
 
-            {/* Item count */}
             <div className="text-xs text-zinc-500 mt-2">
-                {values.length} / {maxItems} items
+                {t("multipleInput.itemCount", {
+                    count: values.length,
+                    max: maxItems,
+                })}
             </div>
         </div>
     );

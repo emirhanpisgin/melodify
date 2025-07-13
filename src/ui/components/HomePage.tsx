@@ -2,21 +2,23 @@
 // Main home page component displaying Kick and Spotify authentication cards.
 
 import { useState, useEffect } from "react";
-import KickCard from "../../features/kick/components/KickCard";
-import SpotifyCard from "../../features/spotify/components/SpotifyCard";
+import KickCard from "@/features/kick/components/KickCard";
+import SpotifyCard from "@/features/spotify/components/SpotifyCard";
 import {
     Headphones,
     LoaderCircleIcon,
     RotateCcwIcon,
     Clock,
 } from "lucide-react";
-import { useUpdateStatus } from "../hooks/useUpdateStatus";
+import { useUpdateStatus } from "@/ui/hooks/useUpdateStatus";
+import { useTranslation } from "react-i18next";
 
 /**
  * HomePage component displays the main interface with authentication cards.
  * Shows Kick and Spotify integration cards for user authentication.
  */
 export default function HomePage() {
+    const { t } = useTranslation();
     const [songRequestCount, setSongRequestCount] = useState(0);
     const [lastRequestTime, setLastRequestTime] = useState<Date | null>(null);
     const [lastRequestedSong, setLastRequestedSong] = useState<{
@@ -116,28 +118,29 @@ export default function HomePage() {
     let updateIcon = null;
 
     if (status === "checking") {
-        updateStatus = "Checking for updates...";
+        updateStatus = t("home.checkingUpdates");
         updateIcon = (
             <LoaderCircleIcon className="w-4 h-4 text-blue-400 animate-spin" />
         );
     } else if (status === "downloading") {
-        updateStatus = `Downloading update... ${progress?.percent ? Math.round(progress.percent) : 0}%`;
+        updateStatus = t("home.downloadingUpdate", {
+            percent: progress?.percent ? Math.round(progress.percent) : 0,
+        });
         updateIcon = (
             <LoaderCircleIcon className="w-4 h-4 text-blue-400 animate-spin" />
         );
     } else if (status === "downloaded") {
-        updateStatus = "Update ready - restart to install";
+        updateStatus = t("home.updateReady");
         updateIcon = <RotateCcwIcon className="w-4 h-4 text-green-400" />;
     } else if (status === "error") {
-        updateStatus = "Update error occurred";
+        updateStatus = t("home.updateError");
         updateIcon = <RotateCcwIcon className="w-4 h-4 text-red-400" />;
     } else {
-        updateStatus = "Up to date";
+        updateStatus = t("home.upToDate");
     }
 
     return (
         <div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
-            {/* Song Requests Stats */}
             <div className="px-8 py-3 border-b border-zinc-700/50">
                 <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg p-3 border border-green-500/20">
                     <div className="flex items-center justify-between">
@@ -147,10 +150,10 @@ export default function HomePage() {
                             </div>
                             <div>
                                 <h3 className="text-sm font-bold text-white">
-                                    Song Requests
+                                    {t("home.songRequests")}
                                 </h3>
                                 <p className="text-xs text-zinc-400">
-                                    Total today
+                                    {t("home.totalToday")}
                                 </p>
                             </div>
                         </div>
@@ -161,7 +164,6 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    {/* Last Song Info */}
                     {lastRequestedSong && songRequestCount > 0 && (
                         <div className="mt-2 pt-2 border-t border-green-500/20">
                             <div className="flex items-center justify-between">
@@ -170,7 +172,9 @@ export default function HomePage() {
                                         {lastRequestedSong.title}
                                     </p>
                                     <p className="text-xs text-zinc-400 truncate">
-                                        by {lastRequestedSong.artist}
+                                        {t("home.byArtist", {
+                                            artist: lastRequestedSong.artist,
+                                        })}
                                     </p>
                                 </div>
                                 {lastRequestTime && (
@@ -187,10 +191,8 @@ export default function HomePage() {
                 </div>
             </div>
 
-            {/* Main Content Area */}
             <div className="flex-1 p-8">
                 <div className="h-full flex gap-8">
-                    {/* Service Cards Container */}
                     <div className="flex-1 grid grid-cols-2 gap-8">
                         <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden">
                             <SpotifyCard />
@@ -202,7 +204,6 @@ export default function HomePage() {
                 </div>
             </div>
 
-            {/* Footer */}
             <div className="px-8 py-4 border-t border-zinc-700/50">
                 <div className="flex items-center justify-between text-base text-zinc-400">
                     <div className="flex items-center gap-2">

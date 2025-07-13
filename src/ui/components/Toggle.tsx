@@ -2,7 +2,7 @@
 // Reusable toggle/switch component with modern, consistent styling and clear accessibility.
 
 import React from "react";
-import { cn } from "../../shared/utils";
+import { cn } from "@/shared/utils";
 
 /**
  * Props for the Toggle component.

@@ -315,8 +315,6 @@ const MockSpotifyCard = ({ state }: { state: string }) => {
                     </button>
                 )}
             </div>
-
-            {/* Setup UI covers the whole card when enabled */}
         </div>
     );
 };
@@ -607,8 +605,6 @@ const MockKickCard = ({ state }: { state: string }) => {
                     </button>
                 )}
             </div>
-
-            {/* Setup UI covers the whole card when enabled */}
         </div>
     );
 };
@@ -675,7 +671,6 @@ export default function UITestPage() {
 
     return (
         <div className="flex-1 flex flex-col bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 overflow-hidden">
-            {/* Controls Panel */}
             <div className="p-4 border-b border-zinc-700/50 bg-zinc-800/50">
                 <div className="flex items-center gap-2 mb-4">
                     <TestTube className="w-5 h-5 text-blue-400" />
@@ -756,7 +751,6 @@ export default function UITestPage() {
                 </div>
             </div>
 
-            {/* Song Requests Stats */}
             <div className="px-8 py-3 border-b border-zinc-700/50">
                 <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg p-3 border border-green-500/20">
                     <div className="flex items-center justify-between">
@@ -780,7 +774,6 @@ export default function UITestPage() {
                         </div>
                     </div>
 
-                    {/* Last Song Info */}
                     {songRequests > 0 && (
                         <div className="mt-2 pt-2 border-t border-green-500/20">
                             <div className="flex items-center justify-between">
@@ -802,7 +795,6 @@ export default function UITestPage() {
                 </div>
             </div>
 
-            {/* Main Content Area */}
             <div className="flex-1 p-8">
                 <div className="h-full flex gap-8">
                     <div className="flex-1 grid grid-cols-2 gap-8">
@@ -816,7 +808,6 @@ export default function UITestPage() {
                 </div>
             </div>
 
-            {/* Footer */}
             <div className="px-8 py-4 border-t border-zinc-700/50">
                 <div className="flex items-center justify-between text-base text-zinc-400">
                     <div className="flex items-center gap-2">

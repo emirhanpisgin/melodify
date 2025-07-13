@@ -2,7 +2,7 @@
 // Reusable input component with validation, error states, and character count functionality.
 
 import React, { forwardRef } from "react";
-import { cn } from "../../shared/utils";
+import { cn } from "@/shared/utils";
 
 /**
  * Props for the Input component.
@@ -48,33 +48,31 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
         return (
             <div className="flex flex-col gap-1 w-full">
-                {/* Input label */}
                 {label && (
                     <label className="text-sm font-medium text-white">
                         {label}
                     </label>
                 )}
 
-                {/* Input field */}
                 <input
                     ref={ref}
+                    autoFocus={false}
                     className={cn(
-                        "px-3 py-2 bg-zinc-800 border rounded text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-green-500 transition-shadow duration-200",
-                        error ? "border-red-500" : "border-zinc-700",
+                        "px-3 py-2 bg-zinc-800 border rounded text-white placeholder-zinc-400 focus:outline-none focus:ring-2 transition-shadow duration-200",
+                        error
+                            ? "border-red-500 focus:ring-red-500"
+                            : "border-zinc-700 focus:ring-green-500",
                         props.type === "number" ? "hide-number-spin" : "",
                         className
                     )}
                     {...props}
                 />
 
-                {/* Helper text and character count */}
                 <div className="flex justify-between items-center text-xs">
-                    {/* Error or helper text */}
                     <span className={error ? "text-red-400" : "text-zinc-400"}>
                         {helperText}
                     </span>
 
-                    {/* Character count */}
                     {showCharacterCount && maxLength && (
                         <span className="text-zinc-500">
                             {charCount}/{maxLength}

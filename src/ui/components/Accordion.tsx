@@ -3,7 +3,7 @@
 
 import React, { useState, useRef } from "react";
 import { ChevronDownIcon } from "lucide-react";
-import { cn } from "../../shared/utils";
+import { cn } from "@/shared/utils";
 
 /**
  * Props for the Accordion component.
@@ -38,7 +38,6 @@ export default function Accordion({
 
     return (
         <div className={cn("", className)}>
-            {/* Accordion header */}
             <button
                 onClick={toggleAccordion}
                 className={cn(
@@ -58,7 +57,7 @@ export default function Accordion({
                     )}
                 />
             </button>
-            {/* Accordion content */}
+
             <div
                 id={`accordion-content-${title.toLowerCase().replace(/\s+/g, "-")}`}
                 ref={contentRef}

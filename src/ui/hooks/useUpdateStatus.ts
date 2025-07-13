@@ -54,27 +54,18 @@ export function useUpdateStatus(): UseUpdateStatusReturn {
     const [manifest, setManifest] = useState<UpdateManifest | null>(null);
 
     useEffect(() => {
-        // Listen for update status events from the main process
-        const handleUpdateStatus = (
-            _event: any,
-            status: UpdateStatus,
-            data: any
-        ) => {
+        const handleUpdateStatus = (status: UpdateStatus, data: any) => {
             setStatus(status);
             if (status === "available") {
                 setManifest(data);
                 setProgress(null);
             } else if (status === "downloading") {
                 setProgress(data);
-            } else {
-                setProgress(null);
             }
         };
 
-        // Set up event listener
         window.electronAPI?.on?.("update:status", handleUpdateStatus);
 
-        // Cleanup event listener on unmount
         return () => {
             window.electronAPI?.removeListener?.(
                 "update:status",

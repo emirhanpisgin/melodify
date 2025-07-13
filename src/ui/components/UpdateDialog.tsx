@@ -2,7 +2,7 @@
 // Displays a dialog for update status in the Electron app, including restart prompt when an update is downloaded.
 
 import { useEffect, useState } from "react";
-import { useUpdateStatus } from "../hooks/useUpdateStatus";
+import { useUpdateStatus } from "@/ui/hooks/useUpdateStatus";
 import { Button } from "./Button";
 
 /**
