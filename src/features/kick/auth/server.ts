@@ -3,13 +3,13 @@ import { BrowserWindow, shell, ipcMain } from "electron";
 import {
     generateCodeChallenge,
     generateCodeVerifier,
-} from "../../../shared/utils/pkce";
+} from "@/shared/utils/pkce";
 import type { Server } from "http";
-import Config from "../../../core/config";
-import { listenToChat } from "../chat/listener";
-import { logInfo, logError, logDebug } from "../../../core/logging";
-import { redactSecrets } from "../../../core/logging/utils";
-import { kickClient } from "../api/client";
+import Config from "@/core/config";
+import { listenToChat } from "@/features/kick/chat/listener";
+import { logInfo, logError, logDebug } from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
+import { kickClient } from "@/features/kick/api/client";
 
 const redirectUri =
     Config.get("kickRedirectUri") || "http://localhost:8889/callback";

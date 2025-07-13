@@ -1,11 +1,11 @@
-import Config from "../../../core/config";
+import Config from "@/core/config";
 import Pusher from "pusher-js";
-import { playSong } from "../../spotify/playback/player";
-import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
-import { redactSecrets } from "../../../core/logging/utils";
-import { CommandContext } from "../../../core/commands/manager";
-import { commandManager } from "../../../core/ipc/handlers";
-import { kickClient } from "../api/client";
+import { playSong } from "@/features/spotify/playback/player";
+import { logInfo, logError, logWarn, logDebug } from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
+import { CommandContext } from "@/core/commands/manager";
+import { commandManager } from "@/core/ipc/handlers";
+import { kickClient } from "@/features/kick/api/client";
 
 export let isListening = false;
 let refreshKickTokenInterval: NodeJS.Timeout | null = null;
@@ -31,7 +31,6 @@ export async function sendKickMessage(message: string): Promise<void> {
 
 export async function listenToChat(window?: Electron.BrowserWindow) {
     if (isListening) {
-        logWarn("Already listening to Kick chat", "kick:listenToChat");
         return;
     }
 

@@ -1,4 +1,4 @@
-import { cn } from "../../../shared/utils";
+import { cn } from "@/shared/utils";
 
 interface KickIconProps extends React.HTMLAttributes<HTMLOrSVGElement> {
     className?: string;

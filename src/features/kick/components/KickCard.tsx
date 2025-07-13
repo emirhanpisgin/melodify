@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { logDebug, logError } from "../../../renderer/rendererLogger";
-import StatusMessage from "../../../ui/components/StatusMessage";
-import { KICK_REDIRECT_URI } from "../../../shared/constants";
+import { logDebug, logError } from "@/renderer/rendererLogger";
+import StatusMessage from "@/ui/components/StatusMessage";
+import { KICK_REDIRECT_URI } from "@/shared/constants";
 import KickIcon from "./KickIcon";
 import { InfoIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function KickCard() {
+    const { t } = useTranslation();
     const [hasSecrets, setHasSecrets] = useState(null);
     const [kickClientId, setKickClientId] = useState("");
     const [kickClientSecret, setKickClientSecret] = useState("");
@@ -89,7 +91,7 @@ export default function KickCard() {
 
     const handleSecretsSubmit = async () => {
         if (!kickClientId || !kickClientSecret) {
-            alert("Please fill in both fields.");
+            alert(t("common.pleaseCompleteFields"));
             return;
         }
 
@@ -104,13 +106,13 @@ export default function KickCard() {
             setShowSetup(false);
         } catch (error) {
             logError(error, "Error setting Kick secrets");
-            alert("Failed to save Kick secrets. Please try again.");
+            alert(t("common.secretsSaveError"));
         }
     };
 
     const handleLogin = () => {
         if (!hasSecrets) {
-            alert("Please set Kick secrets first.");
+            alert(t("common.secretsRequired"));
             return;
         }
 
@@ -151,7 +153,6 @@ export default function KickCard() {
 
     return (
         <div className="w-full h-full flex flex-col bg-zinc-800/20 backdrop-blur-sm relative">
-            {/* Elegant Header */}
             <div className="p-5 pb-3">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-kick-green to-green-400 rounded-xl flex items-center justify-center shadow-lg">
@@ -169,7 +170,6 @@ export default function KickCard() {
                     </div>
                 </div>
 
-                {/* Status Banner */}
                 <div
                     className={`px-3 py-1.5 rounded-full text-xs font-medium text-center ${
                         authenticated && listeningToChat
@@ -182,16 +182,15 @@ export default function KickCard() {
                     }`}
                 >
                     {authenticated && listeningToChat
-                        ? "✓ Listening to chat messages"
+                        ? `✓ ${t("common.listeningToChat")}`
                         : authenticated
-                          ? "⚠ Connect to chat stream"
+                          ? `⚠ ${t("common.connectToChat")}`
                           : hasSecrets
-                            ? "🔗 Ready to connect"
-                            : "⚙ Setup required"}
+                            ? `🔗 ${t("common.readyToConnect")}`
+                            : `⚙ ${t("common.setupRequired")}`}
                 </div>
             </div>
 
-            {/* Clean Status Grid */}
             <div className="flex-1 px-5 pb-3">
                 <div className="grid grid-cols-2 gap-2.5">
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20">
@@ -205,17 +204,17 @@ export default function KickCard() {
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
                             {hasSecrets === null
-                                ? "Checking..."
+                                ? t("common.checking")
                                 : hasSecrets
-                                  ? "Configured"
-                                  : "Not set"}
+                                  ? t("common.configured")
+                                  : t("common.notSet")}
                         </p>
                     </div>
 
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
-                                AUTH
+                                {t("statusCards.auth")}
                             </span>
                             <div
                                 className={`w-2 h-2 rounded-full ${authenticated ? "bg-green-400" : "bg-red-400"}`}
@@ -223,17 +222,17 @@ export default function KickCard() {
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
                             {authenticated === null
-                                ? "Checking..."
+                                ? t("common.checking")
                                 : authenticated
-                                  ? "Connected"
-                                  : "Disconnected"}
+                                  ? t("authentication.authenticated")
+                                  : t("authentication.notAuthenticated")}
                         </p>
                     </div>
 
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20 col-span-2">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
-                                CHAT CONNECTION
+                                {t("statusCards.chatConnection")}
                             </span>
                             <div
                                 className={`w-2 h-2 rounded-full ${listeningToChat ? "bg-green-400" : "bg-red-400"}`}
@@ -241,30 +240,29 @@ export default function KickCard() {
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
                             {listeningToChat === null
-                                ? "Checking..."
+                                ? t("common.checking")
                                 : listeningToChat
-                                  ? "Active listening"
-                                  : "Not connected"}
+                                  ? t("common.activeListening")
+                                  : t("common.notConnected")}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* Minimal Action Area */}
             <div className="p-5 pt-2">
                 {hasSecrets === false ? (
                     <button
                         onClick={() => setShowSetup(true)}
                         className="w-full bg-gradient-to-r from-kick-green to-green-400 hover:from-green-400 hover:to-kick-green text-black font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
-                        Configure API Credentials
+                        {t("common.configureCredentials")}
                     </button>
                 ) : authenticated ? (
                     <button
                         onClick={handleLogout}
                         className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
-                        Disconnect Account
+                        {t("authentication.disconnect")}
                     </button>
                 ) : (
                     <button
@@ -279,19 +277,18 @@ export default function KickCard() {
                         {authInProgress ? (
                             <>
                                 <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                                Connecting...
+                                {t("common.connecting")}
                             </>
                         ) : (
                             <>
                                 <KickIcon className="w-4 h-4" />
-                                Connect to Kick
+                                {t("authentication.connect")}
                             </>
                         )}
                     </button>
                 )}
             </div>
 
-            {/* Setup Overlay */}
             {showSetup && (
                 <div className="absolute inset-0 bg-zinc-900/95 backdrop-blur-sm flex flex-col overflow-hidden z-10">
                     <div className="p-5 pb-3 flex-shrink-0">
@@ -301,7 +298,7 @@ export default function KickCard() {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
-                                    Configure Kick API
+                                    {t("setup.configureKickAPI")}
                                 </h2>
                             </div>
                         </div>
@@ -311,11 +308,11 @@ export default function KickCard() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                    Client ID
+                                    {t("setup.clientId")}
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="Enter your Kick Client ID"
+                                    placeholder={t("setup.enterKickClientId")}
                                     value={kickClientId}
                                     onChange={(e) =>
                                         setKickClientId(e.target.value)
@@ -325,11 +322,13 @@ export default function KickCard() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                    Client Secret
+                                    {t("setup.clientSecret")}
                                 </label>
                                 <input
                                     type="password"
-                                    placeholder="Enter your Kick Client Secret"
+                                    placeholder={t(
+                                        "setup.enterKickClientSecret"
+                                    )}
                                     value={kickClientSecret}
                                     onChange={(e) =>
                                         setKickClientSecret(e.target.value)
@@ -339,7 +338,7 @@ export default function KickCard() {
                             </div>
                             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
                                 <p className="text-xs text-blue-300">
-                                    💡 Create an app at{" "}
+                                    {t("setup.kickInstructions")}{" "}
                                     <a
                                         href="https://kick.com/settings/developer"
                                         target="_blank"
@@ -354,15 +353,14 @@ export default function KickCard() {
                                     >
                                         kick.com/settings/developer
                                     </a>{" "}
-                                    and set redirect URI to: {kickRedirectUri}
+                                    {t("setup.kickInstructionsEnd")}{" "}
+                                    {kickRedirectUri}
                                 </p>
                                 <p className="text-xs text-blue-300 mt-1">
-                                    ℹ️ After saving your app, edit it again and
-                                    create a bot for that app.
+                                    {t("setup.kickAdditionalInfo1")}
                                 </p>
                                 <p className="text-xs text-blue-300 mt-1">
-                                    ✅ Required permissions: "Write to chat
-                                    feed" and "Read channel information"
+                                    {t("setup.kickAdditionalInfo2")}
                                 </p>
                             </div>
                         </div>
@@ -374,13 +372,13 @@ export default function KickCard() {
                                 onClick={() => setShowSetup(false)}
                                 className="flex-1 bg-zinc-600 hover:bg-zinc-500 text-white py-2 px-4 rounded-lg transition-colors"
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </button>
                             <button
                                 onClick={handleSecretsSubmit}
                                 className="flex-1 bg-kick-green hover:bg-green-400 text-black font-semibold py-2 px-4 rounded-lg transition-colors"
                             >
-                                Save
+                                {t("common.save")}
                             </button>
                         </div>
                     </div>

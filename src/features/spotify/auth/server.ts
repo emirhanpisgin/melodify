@@ -1,9 +1,9 @@
 import { BrowserWindow } from "electron";
-import { saveTokens, getSpotifyApi } from "../playback/player";
+import { saveTokens, getSpotifyApi } from "@/features/spotify/playback/player";
 import express from "express";
 import { Server } from "http";
-import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
-import { redactSecrets } from "../../../core/logging/utils";
+import { logInfo, logError, logWarn, logDebug } from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
 
 // Make startSpotifyAuthServer accept window or webContents to send events back to frontend
 export function startSpotifyAuthServer(window: BrowserWindow) {

@@ -1,10 +1,9 @@
 import { ipcMain, BrowserWindow } from "electron";
-import Config from "../../../core/config";
+import Config from "@/core/config";
 import {
     startKickAuthServer,
     openKickAuthUrl,
-    stopKickAuthServer,
-} from "../auth/server";
+} from "@/features/kick/auth/server";
 import {
     isListening,
     listenToChat,
@@ -12,10 +11,10 @@ import {
     sendKickMessage,
     startKickTokenAutoRefresh,
     stopKickTokenAutoRefresh,
-} from "../chat/listener";
-import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
-import { redactSecrets } from "../../../core/logging/utils";
-import { kickClient } from "../api/client";
+} from "@/features/kick/chat/listener";
+import { logInfo, logError, logWarn, logDebug } from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
+import { kickClient } from "@/features/kick/api/client";
 
 let authInProgress = false;
 

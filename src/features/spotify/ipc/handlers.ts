@@ -1,18 +1,17 @@
 import { ipcMain, BrowserWindow, shell } from "electron";
 import psList from "ps-list";
-import Config from "../../../core/config";
+import Config from "@/core/config";
 import {
     getSpotifyApi,
     checkSpotifyAccessToken,
-    refreshSpotifyAccessToken,
     startSpotifyTokenRefreshInterval,
     stopSpotifyTokenAutoRefresh,
-} from "../playback/player";
-import { startSpotifyAuthServer } from "../auth/server";
+} from "@/features/spotify/playback/player";
+import { startSpotifyAuthServer } from "@/features/spotify/auth/server";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { logInfo, logError, logDebug } from "../../../core/logging";
-import { redactSecrets } from "../../../core/logging/utils";
+import { logInfo, logError, logDebug } from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
 
 const execAsync = promisify(exec);
 

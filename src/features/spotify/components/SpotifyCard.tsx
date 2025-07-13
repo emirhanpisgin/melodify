@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { logDebug, logError } from "../../../renderer/rendererLogger";
-import StatusMessage from "../../../ui/components/StatusMessage";
-import { SPOTIFY_REDIRECT_URI } from "../../../shared/constants";
+import { logDebug, logError } from "@/renderer/rendererLogger";
+import StatusMessage from "@/ui/components/StatusMessage";
+import { SPOTIFY_REDIRECT_URI } from "@/shared/constants";
 import SpotifyIcon from "./SpotifyIcon";
+import { useTranslation } from "react-i18next";
 
 export default function SpotifyCard() {
+    const { t } = useTranslation();
     const [hasSecrets, setHasSecrets] = useState(null);
     const [spotifyClientId, setSpotifyClientId] = useState("");
     const [spotifyClientSecret, setSpotifyClientSecret] = useState("");
@@ -124,7 +126,7 @@ export default function SpotifyCard() {
 
     const handleSecretsSubmit = async () => {
         if (!spotifyClientId || !spotifyClientSecret) {
-            alert("Please fill in both fields.");
+            alert(t("common.pleaseCompleteFields"));
             return;
         }
 
@@ -145,7 +147,7 @@ export default function SpotifyCard() {
 
     const handleLogin = () => {
         if (!hasSecrets) {
-            alert("Please set your Spotify API secrets first.");
+            alert(t("common.secretsRequired"));
             return;
         }
         window.electronAPI.send("spotify:auth");
@@ -164,7 +166,6 @@ export default function SpotifyCard() {
 
     return (
         <div className="w-full h-full flex flex-col bg-zinc-800/20 backdrop-blur-sm relative">
-            {/* Elegant Header */}
             <div className="p-5 pb-3">
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-spotify-green to-green-400 rounded-xl flex items-center justify-center shadow-lg">
@@ -182,7 +183,6 @@ export default function SpotifyCard() {
                     </div>
                 </div>
 
-                {/* Status Banner */}
                 <div
                     className={`px-3 py-1.5 rounded-full text-xs font-medium text-center ${
                         authenticated && spotifyHasSession
@@ -195,22 +195,21 @@ export default function SpotifyCard() {
                     }`}
                 >
                     {authenticated && spotifyHasSession
-                        ? "✓ Ready for song requests"
+                        ? `✓ ${t("common.readyForRequests")}`
                         : authenticated
-                          ? "⚠ Start playing music in Spotify"
+                          ? `⚠ ${t("common.startPlayingMusic")}`
                           : hasSecrets
-                            ? "🔗 Ready to connect"
-                            : "⚙ Setup required"}
+                            ? `🔗 ${t("common.readyToConnect")}`
+                            : `⚙ ${t("common.setupRequired")}`}
                 </div>
             </div>
 
-            {/* Clean Status Grid */}
             <div className="flex-1 px-5 pb-3">
                 <div className="grid grid-cols-2 gap-2.5">
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
-                                API
+                                {t("statusCards.api")}
                             </span>
                             <div
                                 className={`w-2 h-2 rounded-full ${hasSecrets ? "bg-green-400" : "bg-red-400"}`}
@@ -218,17 +217,17 @@ export default function SpotifyCard() {
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
                             {hasSecrets === null
-                                ? "Checking..."
+                                ? t("common.checking")
                                 : hasSecrets
-                                  ? "Configured"
-                                  : "Not set"}
+                                  ? t("common.configured")
+                                  : t("common.notSet")}
                         </p>
                     </div>
 
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
-                                APP
+                                {t("statusCards.app")}
                             </span>
                             <div
                                 className={`w-2 h-2 rounded-full ${spotifyRunning ? "bg-green-400" : "bg-red-400"}`}
@@ -236,17 +235,17 @@ export default function SpotifyCard() {
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
                             {spotifyRunning === null
-                                ? "Checking..."
+                                ? t("common.checking")
                                 : spotifyRunning
-                                  ? "Running"
-                                  : "Closed"}
+                                  ? t("common.running")
+                                  : t("common.closed")}
                         </p>
                     </div>
 
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
-                                AUTH
+                                {t("statusCards.auth")}
                             </span>
                             <div
                                 className={`w-2 h-2 rounded-full ${authenticated ? "bg-green-400" : "bg-red-400"}`}
@@ -254,17 +253,17 @@ export default function SpotifyCard() {
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
                             {authenticated === null
-                                ? "Checking..."
+                                ? t("common.checking")
                                 : authenticated
-                                  ? "Connected"
-                                  : "Disconnected"}
+                                  ? t("authentication.authenticated")
+                                  : t("authentication.notAuthenticated")}
                         </p>
                     </div>
 
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
-                                SESSION
+                                {t("statusCards.session")}
                             </span>
                             <div
                                 className={`w-2 h-2 rounded-full ${spotifyHasSession ? "bg-green-400" : "bg-red-400"}`}
@@ -272,30 +271,29 @@ export default function SpotifyCard() {
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
                             {spotifyHasSession === null
-                                ? "Checking..."
+                                ? t("common.checking")
                                 : spotifyHasSession
-                                  ? "Active"
-                                  : "Inactive"}
+                                  ? t("common.active")
+                                  : t("common.inactive")}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* Minimal Action Area */}
             <div className="p-5 pt-2">
                 {hasSecrets === false ? (
                     <button
                         onClick={() => setShowSetup(true)}
                         className="w-full bg-gradient-to-r from-spotify-green to-green-400 hover:from-green-400 hover:to-spotify-green text-black font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
-                        Configure API Credentials
+                        {t("common.configureCredentials")}
                     </button>
                 ) : authenticated ? (
                     <button
                         onClick={handleLogout}
                         className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
-                        Disconnect Account
+                        {t("authentication.disconnect")}
                     </button>
                 ) : (
                     <button
@@ -303,12 +301,11 @@ export default function SpotifyCard() {
                         className="w-full bg-gradient-to-r from-spotify-green to-green-400 hover:from-green-400 hover:to-spotify-green text-black font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
                     >
                         <SpotifyIcon className="w-4 h-4" />
-                        Connect to Spotify
+                        {t("authentication.connect")}
                     </button>
                 )}
             </div>
 
-            {/* Setup Overlay */}
             {showSetup && (
                 <div className="absolute inset-0 bg-zinc-900/95 backdrop-blur-sm flex flex-col overflow-hidden z-10">
                     <div className="p-5 pb-3 flex-shrink-0">
@@ -318,7 +315,7 @@ export default function SpotifyCard() {
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
-                                    Configure Spotify API
+                                    {t("setup.configureSpotifyAPI")}
                                 </h2>
                             </div>
                         </div>
@@ -328,11 +325,13 @@ export default function SpotifyCard() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                    Client ID
+                                    {t("setup.clientId")}
                                 </label>
                                 <input
                                     type="text"
-                                    placeholder="Enter your Spotify Client ID"
+                                    placeholder={t(
+                                        "setup.enterSpotifyClientId"
+                                    )}
                                     value={spotifyClientId}
                                     onChange={(e) =>
                                         setSpotifyClientId(e.target.value)
@@ -342,11 +341,13 @@ export default function SpotifyCard() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-zinc-300 mb-1">
-                                    Client Secret
+                                    {t("setup.clientSecret")}
                                 </label>
                                 <input
                                     type="password"
-                                    placeholder="Enter your Spotify Client Secret"
+                                    placeholder={t(
+                                        "setup.enterSpotifyClientSecret"
+                                    )}
                                     value={spotifyClientSecret}
                                     onChange={(e) =>
                                         setSpotifyClientSecret(e.target.value)
@@ -356,22 +357,22 @@ export default function SpotifyCard() {
                             </div>
                             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
                                 <p className="text-xs text-blue-300">
-                                    💡 Create an app at{" "}
+                                    {t("setup.spotifyInstructions")}{" "}
                                     <a
-                                        href="https://developer.spotify.com"
+                                        href="https://developer.spotify.com/dashboard"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-blue-400 underline hover:text-blue-300 cursor-pointer"
                                         onClick={(e) => {
                                             e.preventDefault();
                                             window.electronAPI.openExternal(
-                                                "https://developer.spotify.com"
+                                                "https://developer.spotify.com/dashboard"
                                             );
                                         }}
                                     >
-                                        developer.spotify.com
+                                        developer.spotify.com/dashboard
                                     </a>{" "}
-                                    and set redirect URI to:{" "}
+                                    {t("setup.spotifyInstructionsEnd")}{" "}
                                     {spotifyRedirectUri}
                                 </p>
                             </div>
@@ -384,13 +385,13 @@ export default function SpotifyCard() {
                                 onClick={() => setShowSetup(false)}
                                 className="flex-1 bg-zinc-600 hover:bg-zinc-500 text-white py-2 px-4 rounded-lg transition-colors"
                             >
-                                Cancel
+                                {t("common.cancel")}
                             </button>
                             <button
                                 onClick={handleSecretsSubmit}
                                 className="flex-1 bg-spotify-green hover:bg-green-400 text-black font-semibold py-2 px-4 rounded-lg transition-colors"
                             >
-                                Save
+                                {t("common.save")}
                             </button>
                         </div>
                     </div>

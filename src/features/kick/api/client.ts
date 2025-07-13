@@ -1,8 +1,15 @@
-import fetch from "node-fetch";
-import Config from "../../../core/config";
-import { logInfo, logError, logWarn, logDebug } from "../../../core/logging";
-import { redactSecrets } from "../../../core/logging/utils";
+/**
+ * Kick.com OAuth 2.0 Authentication Client with PKCE Flow
+ * Implements secure OAuth authentication using Proof Key for Code Exchange (PKCE)
+ * Handles token lifecycle management, automatic refresh, and API communication
+ */
 
+import fetch from "node-fetch";
+import Config from "@/core/config";
+import { logInfo, logError, logWarn, logDebug } from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
+
+// TypeScript interfaces for API responses and internal data structures
 interface KickTokens {
     accessToken: string;
     refreshToken: string;
@@ -53,6 +60,15 @@ interface KickChannelResponse {
     slug: string;
 }
 
+/**
+ * Kick API client with comprehensive OAuth 2.0 + PKCE implementation
+ * Features:
+ * - PKCE (Proof Key for Code Exchange) flow for enhanced security
+ * - Automatic token refresh before expiration
+ * - Secure token storage in application configuration
+ * - Rate limiting and error handling
+ * - Public and authenticated API endpoint support
+ */
 class KickClient {
     private baseUrl = "https://api.kick.com";
     private authUrl = "https://id.kick.com/oauth/token";
@@ -123,25 +139,97 @@ class KickClient {
     }
 
     /**
-     * Get valid access token, refreshing if necessary
+     * OAuth 2.0 Authorization Code + PKCE token exchange
+     * Converts the authorization code received from OAuth callback into access/refresh tokens
+     *
+     * @param code - Authorization code from OAuth redirect
+     * @param codeVerifier - PKCE code verifier (must match the challenge sent in auth URL)
+     * @returns Success status of token exchange
+     *
+     * PKCE Flow Security:
+     * 1. Client generates random code_verifier
+     * 2. Client creates code_challenge = SHA256(code_verifier)
+     * 3. Authorization request includes code_challenge
+     * 4. Token exchange must include original code_verifier for verification
+     *
+     * This prevents authorization code interception attacks in public clients
      */
-    public async getValidAccessToken(): Promise<string | null> {
-        if (!this.hasTokens()) {
-            return null;
-        }
+    public async exchangeCodeForTokens(
+        code: string,
+        codeVerifier: string
+    ): Promise<boolean> {
+        try {
+            const clientId = Config.get("kickClientId");
+            const clientSecret = Config.get("kickClientSecret");
+            const redirectUri =
+                Config.get("kickRedirectUri") ||
+                "http://127.0.0.1:8889/callback";
 
-        if (this.isTokenExpired()) {
-            const refreshed = await this.refreshAccessToken();
-            if (!refreshed) {
-                return null;
+            if (!clientId || !clientSecret) {
+                throw new Error("Missing Kick client credentials");
             }
-        }
 
-        return this.accessToken;
+            // OAuth 2.0 token exchange parameters
+            const params = new URLSearchParams({
+                grant_type: "authorization_code",
+                code,
+                redirect_uri: redirectUri,
+                client_id: clientId,
+                client_secret: clientSecret,
+                code_verifier: codeVerifier, // PKCE verification
+            });
+
+            logDebug(
+                "Exchanging code for tokens",
+                redactSecrets(Object.fromEntries(params))
+            );
+
+            const response = await fetch(this.authUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: params.toString(),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(
+                    `Token exchange failed: ${response.status} ${errorText}`
+                );
+            }
+
+            const data = (await response.json()) as KickTokenResponse;
+            const { access_token, refresh_token, expires_in } = data;
+
+            // Store tokens with calculated expiration time
+            this.saveTokens({
+                accessToken: access_token,
+                refreshToken: refresh_token,
+                expiresAt: Date.now() + expires_in * 1000,
+            });
+
+            logInfo("Kick tokens obtained successfully");
+            return true;
+        } catch (error) {
+            logError(error, "KickClient:exchangeCodeForTokens");
+            return false;
+        }
     }
 
     /**
-     * Refresh access token using refresh token
+     * Automatic token refresh using refresh token
+     * Handles token lifecycle management to maintain authenticated sessions
+     *
+     * @returns Success status of refresh operation
+     *
+     * Refresh Token Flow:
+     * 1. Check if refresh token is available and valid
+     * 2. Exchange refresh token for new access token
+     * 3. Update stored tokens with new expiration time
+     * 4. Preserve refresh token (may be rotated by server)
+     *
+     * This maintains user sessions without requiring re-authentication
      */
     public async refreshAccessToken(): Promise<boolean> {
         if (!this.refreshToken) {
@@ -193,6 +281,7 @@ class KickClient {
             const data = (await response.json()) as KickTokenResponse;
             const { access_token, refresh_token, expires_in } = data;
 
+            // Update tokens - refresh token may be rotated
             this.saveTokens({
                 accessToken: access_token,
                 refreshToken: refresh_token || this.refreshToken,
@@ -208,67 +297,33 @@ class KickClient {
     }
 
     /**
-     * Exchange authorization code for tokens
+     * Smart token management - gets valid access token with automatic refresh
+     * This is the primary method for obtaining authenticated access tokens
+     *
+     * @returns Valid access token or null if authentication failed
+     *
+     * Token Lifecycle Management:
+     * 1. Check if tokens are available
+     * 2. Verify token expiration (with buffer time)
+     * 3. Automatically refresh if expired but refresh token available
+     * 4. Return valid access token for API calls
+     *
+     * This ensures API calls always use fresh, valid tokens
      */
-    public async exchangeCodeForTokens(
-        code: string,
-        codeVerifier: string
-    ): Promise<boolean> {
-        try {
-            const clientId = Config.get("kickClientId");
-            const clientSecret = Config.get("kickClientSecret");
-            const redirectUri =
-                Config.get("kickRedirectUri") ||
-                "http://127.0.0.1:8889/callback";
-
-            if (!clientId || !clientSecret) {
-                throw new Error("Missing Kick client credentials");
-            }
-
-            const params = new URLSearchParams({
-                grant_type: "authorization_code",
-                code,
-                redirect_uri: redirectUri,
-                client_id: clientId,
-                client_secret: clientSecret,
-                code_verifier: codeVerifier,
-            });
-
-            logDebug(
-                "Exchanging code for tokens",
-                redactSecrets(Object.fromEntries(params))
-            );
-
-            const response = await fetch(this.authUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: params.toString(),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(
-                    `Token exchange failed: ${response.status} ${errorText}`
-                );
-            }
-
-            const data = (await response.json()) as KickTokenResponse;
-            const { access_token, refresh_token, expires_in } = data;
-
-            this.saveTokens({
-                accessToken: access_token,
-                refreshToken: refresh_token,
-                expiresAt: Date.now() + expires_in * 1000,
-            });
-
-            logInfo("Kick tokens obtained successfully");
-            return true;
-        } catch (error) {
-            logError(error, "KickClient:exchangeCodeForTokens");
-            return false;
+    public async getValidAccessToken(): Promise<string | null> {
+        if (!this.hasTokens()) {
+            return null;
         }
+
+        // Check expiration with 5-minute buffer to prevent edge cases
+        if (this.isTokenExpired()) {
+            const refreshed = await this.refreshAccessToken();
+            if (!refreshed) {
+                return null;
+            }
+        }
+
+        return this.accessToken;
     }
 
     /**

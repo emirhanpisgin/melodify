@@ -1,10 +1,33 @@
+/**
+ * Spotify Playback Management System
+ *
+ * This module provides comprehensive Spotify Web API integration with advanced
+ * features for music streaming applications. It handles authentication, token
+ * management, real-time playback monitoring, and automated file saving.
+ *
+ * Key Features:
+ * - OAuth 2.0 token lifecycle management with automatic refresh
+ * - Real-time current playing track monitoring
+ * - Automatic song information file saving for OBS/streaming integration
+ * - Rate limiting and error handling for API calls
+ * - Configurable polling intervals and file update strategies
+ * - Comprehensive logging for debugging authentication and playback issues
+ *
+ * Architecture:
+ * - SpotifyWebApi: Third-party library for Spotify Web API communication
+ * - Token Management: Automatic refresh before expiration
+ * - File Saving: Configurable output for external applications (OBS, etc.)
+ * - Error Recovery: Graceful handling of network issues and API limits
+ */
+
 import SpotifyWebApi from "spotify-web-api-node";
-import Config from "../../../core/config";
-import { logError, logInfo, logWarn, logDebug } from "../../../core/logging";
-import { redactSecrets } from "../../../core/logging/utils";
+import Config from "@/core/config";
+import { logError, logInfo, logWarn, logDebug } from "@/core/logging";
+import { redactSecrets } from "@/core/logging/utils";
 import fs from "fs";
 import path from "path";
 
+// Global state management for Spotify integration
 let spotifyApi: SpotifyWebApi | null = null;
 let refreshSpotifyTokenInterval: NodeJS.Timeout | null = null;
 let saveSongInterval: NodeJS.Timeout | null = null;
@@ -13,31 +36,53 @@ const songFileSavingEnabled = true;
 let lastSavedSong: { title: string; artist: string } | null = null;
 let songFileSavingInterval: NodeJS.Timeout | null = null;
 
+/**
+ * Spotify API Client Factory
+ * Creates and configures a Spotify Web API client with credentials from configuration
+ * Implements singleton pattern to avoid multiple API instances
+ *
+ * @returns Configured SpotifyWebApi instance or null if credentials missing
+ */
 export function getSpotifyApi(): SpotifyWebApi | null {
     if (spotifyApi) return spotifyApi;
+
     const spotifyClientId = Config.get("spotifyClientId");
     const spotifyClientSecret = Config.get("spotifyClientSecret");
+
     if (!spotifyClientId || !spotifyClientSecret) {
         return null;
     }
+
+    // Initialize API client with configuration values
     spotifyApi = new SpotifyWebApi({
         clientId: spotifyClientId,
         clientSecret: spotifyClientSecret,
         redirectUri:
             Config.get("spotifyRedirectUri") ||
-            "http://127.0.0.1:8888/callback",
+            "http://127.0.0.1:8888/callback", // Default fallback for development
     });
+
+    // Apply stored authentication tokens if available
     const accessToken = Config.get("spotifyAccessToken");
     const refreshToken = Config.get("spotifyRefreshToken");
     if (accessToken) spotifyApi.setAccessToken(accessToken);
     if (refreshToken) spotifyApi.setRefreshToken(refreshToken);
+
     return spotifyApi;
 }
 
+/**
+ * Token Restoration System
+ * Loads previously stored authentication tokens from configuration
+ * Validates token expiration and prepares API client for immediate use
+ *
+ * @returns Token data object or null if no valid tokens stored
+ */
 export function loadTokens() {
     const accessToken = Config.get("spotifyAccessToken");
     const expiresAt = Config.get("spotifyExpiresAt");
     const refreshToken = Config.get("spotifyRefreshToken");
+
     if (accessToken && refreshToken && expiresAt) {
         const api = getSpotifyApi();
         if (api) {
@@ -49,6 +94,15 @@ export function loadTokens() {
     return null;
 }
 
+/**
+ * Token Persistence System
+ * Saves new authentication tokens to configuration and updates API client
+ * Logs token save events and handles potential errors
+ *
+ * @param accessToken New access token
+ * @param refreshToken New refresh token
+ * @param expiresIn Expiration time in seconds
+ */
 export function saveTokens({
     accessToken,
     refreshToken,
@@ -72,6 +126,13 @@ export function saveTokens({
     logInfo("Spotify tokens saved", { expiresAt });
 }
 
+/**
+ * Access Token Refresh System
+ * Obtains a new access token using the refresh token
+ * Updates the API client and persists the new token
+ *
+ * @returns True if the access token was successfully refreshed, false otherwise
+ */
 export async function refreshSpotifyAccessToken(): Promise<boolean> {
     const tokens = loadTokens();
     if (!tokens) return false;
@@ -94,6 +155,14 @@ export async function refreshSpotifyAccessToken(): Promise<boolean> {
     }
 }
 
+/**
+ * Access Token Validation and Refresh
+ * Checks if the access token is valid and refreshes it if necessary
+ * This function should be called before any API request that requires authentication
+ *
+ * @param window Optional Electron window object for authentication flows
+ * @returns True if the access token is valid (and refreshed if needed), false otherwise
+ */
 export async function checkSpotifyAccessToken(
     window?: Electron.BrowserWindow
 ): Promise<boolean> {
@@ -105,6 +174,15 @@ export async function checkSpotifyAccessToken(
     return true;
 }
 
+/**
+ * Song Playback and Queue Management
+ * Searches for a song by query, retrieves its details, and adds it to the playback queue
+ * Supports direct URI playback and search-based playback
+ *
+ * @param songQuery The song query or URI
+ * @param username The username for playback context (required by Spotify API)
+ * @returns The played song's title and artist, or null if not found
+ */
 export async function playSong(
     songQuery: string,
     username: string
@@ -158,6 +236,13 @@ export async function playSong(
     return null;
 }
 
+/**
+ * Periodic Access Token Refresh
+ * Starts an interval that refreshes the Spotify access token periodically
+ * Stops the interval if the token cannot be refreshed
+ *
+ * @param window Electron window object for authentication flows
+ */
 export async function startSpotifyTokenRefreshInterval(
     window: Electron.BrowserWindow
 ): Promise<void> {
@@ -181,6 +266,11 @@ export async function startSpotifyTokenRefreshInterval(
     }, 60 * 1000);
 }
 
+/**
+ * Token and Playback System Shutdown
+ * Stops all intervals and timeouts related to Spotify token refreshing and song saving
+ * This should be called when the application is closing or Spotify integration is disabled
+ */
 export function stopSpotifyTokenAutoRefresh() {
     if (refreshSpotifyTokenInterval) {
         clearInterval(refreshSpotifyTokenInterval);
@@ -215,6 +305,16 @@ async function saveCurrentSongToFile() {
     try {
         const spotifyApi = getSpotifyApi();
         if (!spotifyApi) {
+            return;
+        }
+
+        // Check and refresh access token if needed before making API call
+        const tokenValid = await checkSpotifyAccessToken();
+        if (!tokenValid) {
+            logWarn(
+                "Spotify access token invalid, skipping song file save",
+                "saveCurrentSongToFile"
+            );
             return;
         }
 
@@ -263,6 +363,36 @@ async function saveCurrentSongToFile() {
             nextCheckDelay
         );
     } catch (error) {
+        // Handle token expiration specifically
+        if (
+            error instanceof Error &&
+            error.message.includes("access token expired")
+        ) {
+            logDebug(
+                "Access token expired in saveCurrentSongToFile, attempting refresh",
+                "saveCurrentSongToFile"
+            );
+            try {
+                const refreshed = await refreshSpotifyAccessToken();
+                if (refreshed) {
+                    logDebug(
+                        "Token refreshed successfully, retrying song file save",
+                        "saveCurrentSongToFile"
+                    );
+                    // Retry the operation once after successful refresh
+                    setTimeout(saveCurrentSongToFile, 1000);
+                } else {
+                    logWarn(
+                        "Failed to refresh Spotify token for song file saving",
+                        "saveCurrentSongToFile"
+                    );
+                }
+            } catch (refreshError) {
+                logError(refreshError, "saveCurrentSongToFile:tokenRefresh");
+            }
+            return;
+        }
+
         // Only log error if it's not a common "no playback" error
         if (
             error instanceof Error &&
@@ -313,7 +443,15 @@ async function saveSongToFile(songInfo: { title: string; artist: string }) {
     }
 }
 
-// Start/stop song file saving
+/**
+ * Song File Saving Control
+ * Starts or stops the automatic saving of the currently playing song to a file
+ * The saved information can be used for streaming overlays (e.g., OBS)
+ *
+ * - On start, clears any existing intervals or timeouts to avoid duplicates
+ * - Immediately saves the current song information to file
+ * - Sets up a periodic fallback save every 30 seconds
+ */
 export function startSongFileSaving() {
     // Clear any existing intervals and timeouts
     if (saveSongInterval) {
@@ -333,6 +471,11 @@ export function startSongFileSaving() {
     }, 30000);
 }
 
+/**
+ * Song File Saving Control
+ * Stops the automatic saving of the currently playing song to a file
+ * Clears any existing intervals or timeouts related to song saving
+ */
 export function stopSongFileSaving() {
     if (saveSongInterval) {
         clearInterval(saveSongInterval);
