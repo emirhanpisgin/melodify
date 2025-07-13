@@ -1,3 +1,8 @@
+/**
+ * Command validation and real-time field validation system
+ * Provides centralized validation for all settings inputs with user-friendly error messages
+ */
+
 // Validation functions
 export const validateUrl = (url: string): string | null => {
     if (!url.trim()) return "Please enter a URL";
@@ -44,6 +49,17 @@ export const validateCommandAlias = (
     return null;
 };
 
+/**
+ * Advanced template validation with variable checking
+ * Validates message templates that support dynamic variable substitution
+ *
+ * @param template - The template string to validate (e.g., "Song: {title} by {artist}")
+ * @param allowedVars - Array of valid variable names that can be used in the template
+ * @returns Validation error message or null if valid
+ *
+ * Template syntax: Variables are enclosed in curly braces {variableName}
+ * Common variables: title, artist, volume, error
+ */
 export const validateTemplate = (
     template: string,
     allowedVars: string[]
@@ -66,14 +82,32 @@ export const validateTemplate = (
     return null;
 };
 
-// Real-time validation function
+/**
+ * Dynamic field validation dispatcher
+ * Routes field validation to appropriate validators based on field key
+ * Handles different data types and validation rules for each setting
+ *
+ * @param key - Configuration field name (determines validation rules)
+ * @param value - Value to validate (can be string, array, or other types)
+ * @returns Validation error message or null if valid
+ *
+ * Validation rules include:
+ * - URL format validation for redirect URIs
+ * - Client credential format validation (length, character restrictions)
+ * - Template syntax validation with variable checking
+ * - Command prefix validation (special characters only)
+ * - Array validation for moderator lists
+ */
 export const validateField = (key: string, value: any): string | null => {
+    // Complex regex for prefix validation - ensures only special characters are used
+    // This prevents conflicts with normal chat messages and ensures clear command distinction
     switch (key) {
         case "prefix":
             if (typeof value === "string") {
                 if (!value || value.length < 1) return "Prefix cannot be empty";
                 if (value.length > 10)
                     return "Prefix too long (max 10 characters)";
+                // Regex ensures prefix uses special characters to avoid confusion with regular text
                 if (!/^[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]+$/.test(value)) {
                     return "Prefix should be a special character (e.g., !, @, #, $)";
                 }
@@ -98,6 +132,11 @@ export const validateField = (key: string, value: any): string | null => {
             }
             break;
         case "songRequestReplyTemplate":
+            if (typeof value === "string" && value) {
+                return validateTemplate(value, ["title", "artist"]);
+            }
+            break;
+        case "currentSongFormat":
             if (typeof value === "string" && value) {
                 return validateTemplate(value, ["title", "artist"]);
             }
