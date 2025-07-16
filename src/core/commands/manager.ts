@@ -52,6 +52,19 @@ export class CommandManager {
     private globalCooldownEnd = 0;
     private userCooldowns: Map<string, number> = new Map(); // username -> cooldown end time
 
+    // Performance tracking
+    private performanceStats: Map<
+        string,
+        {
+            totalExecutions: number;
+            totalTime: number;
+            averageTime: number;
+            lastExecuted: number;
+            fastestTime: number;
+            slowestTime: number;
+        }
+    > = new Map();
+
     /**
      * Register a new command with comprehensive validation
      * Performs conflict detection, alias validation, and loads persistent settings
@@ -94,7 +107,7 @@ export class CommandManager {
 
         // Load enabled state and aliases from persistent configuration
         // This allows commands to retain their customized state across app restarts
-        const commandsConfig = Config.get("commandsConfig") || {};
+        const commandsConfig = Config.get("commands") || {};
         const savedConfig = commandsConfig[command.name] || {};
         const enabled =
             savedConfig.enabled !== undefined
@@ -261,8 +274,22 @@ export class CommandManager {
         }
 
         try {
+            // Start performance tracking
+            const startTime = performance.now();
+
             await command.handler(ctx, args, this);
-            logDebug(`Executed command: ${commandName}`, "CommandManager");
+
+            // End performance tracking
+            const endTime = performance.now();
+            const executionTime = endTime - startTime;
+
+            // Update performance statistics
+            this.updatePerformanceStats(commandName, executionTime);
+
+            logDebug(
+                `Executed command: ${commandName} (${executionTime.toFixed(2)}ms)`,
+                "CommandManager"
+            );
         } catch (error) {
             logError(error, `CommandManager:${commandName}`);
         }
@@ -398,7 +425,7 @@ export class CommandManager {
      * Updates command aliases in memory to match saved configuration
      */
     reloadCommandAliasesFromConfig(): void {
-        const commandsConfig = Config.get("commandsConfig") || {};
+        const commandsConfig = Config.get("commands") || {};
 
         for (const [commandName, command] of this.commands.entries()) {
             const savedConfig = commandsConfig[commandName] || {};
@@ -535,6 +562,97 @@ export class CommandManager {
     public getGlobalCooldownEnd(): number {
         return this.globalCooldownEnd;
     }
+
+    /**
+     * Update performance statistics for a command
+     * Tracks execution time, averages, and min/max times
+     */
+    private updatePerformanceStats(
+        commandName: string,
+        executionTime: number
+    ): void {
+        const stats = this.performanceStats.get(commandName) || {
+            totalExecutions: 0,
+            totalTime: 0,
+            averageTime: 0,
+            lastExecuted: Date.now(),
+            fastestTime: Infinity,
+            slowestTime: 0,
+        };
+
+        stats.totalExecutions++;
+        stats.totalTime += executionTime;
+        stats.averageTime = stats.totalTime / stats.totalExecutions;
+        stats.lastExecuted = Date.now();
+        stats.fastestTime = Math.min(stats.fastestTime, executionTime);
+        stats.slowestTime = Math.max(stats.slowestTime, executionTime);
+
+        this.performanceStats.set(commandName, stats);
+    }
+
+    /**
+     * Get performance statistics for all commands
+     * Returns data suitable for display in debug/performance UI
+     */
+    public getPerformanceStats() {
+        const stats: Array<{
+            commandName: string;
+            totalExecutions: number;
+            averageTime: number;
+            fastestTime: number;
+            slowestTime: number;
+            lastExecuted: number;
+        }> = [];
+
+        for (const [commandName, stat] of this.performanceStats.entries()) {
+            stats.push({
+                commandName,
+                totalExecutions: stat.totalExecutions,
+                averageTime: parseFloat(stat.averageTime.toFixed(2)),
+                fastestTime: parseFloat(stat.fastestTime.toFixed(2)),
+                slowestTime: parseFloat(stat.slowestTime.toFixed(2)),
+                lastExecuted: stat.lastExecuted,
+            });
+        }
+
+        return stats.sort((a, b) => b.totalExecutions - a.totalExecutions);
+    }
+
+    /**
+     * Get performance statistics for a specific command
+     */
+    public getCommandPerformanceStats(commandName: string) {
+        const stats = this.performanceStats.get(commandName);
+        if (!stats) return null;
+
+        return {
+            commandName,
+            totalExecutions: stats.totalExecutions,
+            averageTime: parseFloat(stats.averageTime.toFixed(2)),
+            fastestTime: parseFloat(stats.fastestTime.toFixed(2)),
+            slowestTime: parseFloat(stats.slowestTime.toFixed(2)),
+            lastExecuted: stats.lastExecuted,
+        };
+    }
+
+    /**
+     * Reset performance statistics for all commands
+     */
+    public resetPerformanceStats(): void {
+        this.performanceStats.clear();
+        logInfo("Performance statistics reset", "CommandManager");
+    }
+
+    /**
+     * Reset performance statistics for a specific command
+     */
+    public resetCommandPerformanceStats(commandName: string): void {
+        this.performanceStats.delete(commandName);
+        logInfo(
+            `Performance statistics reset for command: ${commandName}`,
+            "CommandManager"
+        );
+    }
 }
 
 /**
@@ -553,5 +671,5 @@ function isModerator(badges: string[], username: string) {
 
     // Check if user is in custom moderators list (case-insensitive)
     const customModerators = Config.get("customModerators") || [];
-    return customModerators.includes(username.toLowerCase());
+    return customModerators.includes(username);
 }

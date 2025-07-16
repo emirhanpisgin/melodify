@@ -108,8 +108,8 @@ ipcMain.on("config:set", (event, newConfig) => {
     }
 
     // Handle command alias updates
-    const oldCommandsConfig = oldConfig.commandsConfig || {};
-    const newCommandsConfig = newConfig.commandsConfig || {};
+    const oldCommandsConfig = oldConfig.commands || {};
+    const newCommandsConfig = newConfig.commands || {};
 
     // Check for changes in command aliases and update CommandManager
     for (const [commandName, newCmdConfig] of Object.entries(
@@ -272,12 +272,12 @@ ipcMain.on("commands:updateAliases", (_event, { name, aliases }) => {
     const success = commandManager.updateCommandAliases(name, aliases);
     if (success) {
         // Update the config to persist the changes
-        const commandsConfig = Config.get("commandsConfig") || {};
+        const commandsConfig = Config.get("commands") || {};
         if (!commandsConfig[name]) {
             commandsConfig[name] = {};
         }
         commandsConfig[name].aliases = aliases;
-        Config.set({ commandsConfig });
+        Config.set({ commands: commandsConfig });
         logInfo(
             `Updated aliases for command '${name}' via IPC: ${aliases.join(
                 ", "
@@ -293,6 +293,32 @@ ipcMain.on("commands:updateAliases", (_event, { name, aliases }) => {
         );
     }
 });
+
+/**
+ * Command Performance Tracking Handlers
+ * Provide access to command execution performance statistics
+ */
+ipcMain.handle("commands:getPerformanceStats", () => {
+    return commandManager.getPerformanceStats();
+});
+
+ipcMain.handle(
+    "commands:getCommandPerformanceStats",
+    (_event, commandName: string) => {
+        return commandManager.getCommandPerformanceStats(commandName);
+    }
+);
+
+ipcMain.on("commands:resetPerformanceStats", () => {
+    commandManager.resetPerformanceStats();
+});
+
+ipcMain.on(
+    "commands:resetCommandPerformanceStats",
+    (_event, commandName: string) => {
+        commandManager.resetCommandPerformanceStats(commandName);
+    }
+);
 
 /**
  * File Dialog Handler

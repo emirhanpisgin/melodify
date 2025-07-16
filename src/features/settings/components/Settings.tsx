@@ -36,12 +36,12 @@ const NAVIGATION_SECTIONS = [
     },
     ...(process.env.NODE_ENV === "development"
         ? [
-              {
-                  id: "debug",
-                  title: "debug",
-                  component: Debug,
-              },
-          ]
+            {
+                id: "debug",
+                title: "debug",
+                component: Debug,
+            },
+        ]
         : []),
 ];
 
@@ -194,11 +194,10 @@ export default function Settings({ onClose }: SettingsProps) {
                             <button
                                 key={section.id}
                                 onClick={() => setActiveSection(section.id)}
-                                className={`w-full px-3 py-2 rounded text-left text-sm transition-colors ${
-                                    isActive
-                                        ? "bg-zinc-800 text-white"
-                                        : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                                }`}
+                                className={`w-full px-3 py-2 rounded text-left text-sm transition-colors ${isActive
+                                    ? "bg-zinc-800 text-white"
+                                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                                    }`}
                             >
                                 {t(`settings.${section.title}`)}
                             </button>

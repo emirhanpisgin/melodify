@@ -1,9 +1,10 @@
 import Input from "@/ui/components/Input";
 import MultipleInput from "@/ui/components/MultipleInput";
 import Toggle from "@/ui/components/Toggle";
-import { Hash, MessageSquare, Plus, X } from "lucide-react";
+import { Hash, MessageSquare, Plus, X, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { validateCommandAlias, validateTemplate } from "../validation";
+import { useEffect, useState } from "react";
 
 interface CommandsProps {
     config: any;
@@ -19,9 +20,32 @@ export default function Commands({
     onCommandToggle,
 }: CommandsProps) {
     const { t } = useTranslation();
-    const enabledCount = commands.filter(
-        (cmd) => config.commands?.[cmd.name]?.enabled !== false
-    ).length;
+    const [performanceStats, setPerformanceStats] = useState<
+        Record<string, any>
+    >({});
+
+    useEffect(() => {
+        // Load performance stats for all commands
+        const loadPerformanceStats = async () => {
+            try {
+                const stats = await window.electronAPI.invoke(
+                    "commands:getPerformanceStats"
+                );
+                const statsMap = stats.reduce(
+                    (acc: Record<string, any>, stat: any) => {
+                        acc[stat.commandName] = stat;
+                        return acc;
+                    },
+                    {}
+                );
+                setPerformanceStats(statsMap);
+            } catch (error) {
+                console.error("Failed to load performance stats:", error);
+            }
+        };
+
+        loadPerformanceStats();
+    }, []);
 
     const handleAliasChange = (cmdName: string, aliases: string[]) => {
         const newCommands = {
@@ -29,54 +53,6 @@ export default function Commands({
             [cmdName]: {
                 ...config.commands?.[cmdName],
                 aliases,
-            },
-        };
-        onConfigChange("commands", newCommands);
-    };
-
-    const addAlias = (cmdName: string, alias: string) => {
-        const cmdCfg = config.commands?.[cmdName] || {
-            enabled: true,
-            aliases: [],
-        };
-
-        // Validate the alias
-        const existingAliases = cmdCfg.aliases || [];
-        const validationError = validateCommandAlias(
-            alias.trim(),
-            existingAliases,
-            cmdName
-        );
-
-        if (validationError) {
-            // You could show a toast notification or set an error state here
-            console.warn(`Alias validation failed: ${validationError}`);
-            return;
-        }
-
-        if (alias.trim() && !cmdCfg.aliases?.includes(alias.trim())) {
-            const newAliases = [...(cmdCfg.aliases || []), alias.trim()];
-            handleAliasChange(cmdName, newAliases);
-        }
-    };
-
-    const removeAlias = (cmdName: string, aliasToRemove: string) => {
-        const cmdCfg = config.commands?.[cmdName] || {
-            enabled: true,
-            aliases: [],
-        };
-        const newAliases = (cmdCfg.aliases || []).filter(
-            (alias: string) => alias !== aliasToRemove
-        );
-        handleAliasChange(cmdName, newAliases);
-    };
-
-    const handleCommandToggle = (cmdName: string, enabled: boolean) => {
-        const newCommands = {
-            ...config.commands,
-            [cmdName]: {
-                ...config.commands?.[cmdName],
-                enabled,
             },
         };
         onConfigChange("commands", newCommands);
@@ -180,6 +156,32 @@ export default function Commands({
                 </div>
             </div>
 
+            <div className="bg-zinc-800/30 border border-zinc-700/50 p-4 rounded-md">
+                <h3 className="text-base font-medium text-white mb-4">
+                    {t("commands.customModerators")}
+                </h3>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-zinc-200 mb-2">
+                            {t("commands.moderatorsList")}
+                        </label>
+                        <MultipleInput
+                            values={config.customModerators || []}
+                            onChange={(newModerators) => {
+                                onConfigChange(
+                                    "customModerators",
+                                    newModerators
+                                );
+                            }}
+                            placeholder={t("commands.addModeratorPlaceholder")}
+                        />
+                        <p className="text-xs text-zinc-400 mt-1">
+                            {t("commands.customModeratorsDesc")}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <h3 className="text-base font-medium text-white">
                 {t("commands.availableCommands")}
             </h3>
@@ -203,26 +205,38 @@ export default function Commands({
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
                                             <Hash className="w-4 h-4 text-purple-400" />
-                                        </div>
+                                        </div>{" "}
                                         <div>
                                             <h4 className="text-base font-medium text-white">
                                                 {config.prefix || "!"}
                                                 {cmd.name}
                                             </h4>
-                                            <p className="text-sm text-zinc-400">
-                                                {t(
-                                                    `commands.${cmd.name}.description`
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-zinc-400">
+                                                    {t(
+                                                        `commands.${cmd.name}.description`
+                                                    )}
+                                                </p>
+                                                {performanceStats[cmd.name] && (
+                                                    <div className="flex items-center gap-1 text-xs text-zinc-500">
+                                                        <Clock className="w-3 h-3" />
+                                                        <span>
+                                                            {performanceStats[
+                                                                cmd.name
+                                                            ].averageTime.toFixed(
+                                                                1
+                                                            )}
+                                                            ms avg
+                                                        </span>
+                                                    </div>
                                                 )}
-                                            </p>
+                                            </div>
                                         </div>
                                     </div>
                                     <Toggle
                                         checked={isEnabled}
                                         onChange={(enabled) =>
-                                            handleCommandToggle(
-                                                cmd.name,
-                                                enabled
-                                            )
+                                            onCommandToggle(cmd.name, enabled)
                                         }
                                     />
                                 </div>

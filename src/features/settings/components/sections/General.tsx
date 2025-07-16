@@ -1,12 +1,13 @@
 // General section - combines system settings and app preferences
 
 import { useEffect, useState } from "react";
-import { CheckIcon, Settings2, Clock as Spinner, Globe } from "lucide-react";
+import { CheckIcon, Settings2, Clock as Spinner, Globe, ChevronDown } from "lucide-react";
 import Toggle from "@/ui/components/Toggle";
 import { Button } from "@/ui/components/Button";
 import { useUpdateStatus } from "@/ui/hooks/useUpdateStatus";
 import LanguageSelector from "@/ui/components/LanguageSelector";
 import { useTranslation } from "react-i18next";
+import { supportedLanguages } from "@/core/i18n/translations";
 
 interface GeneralProps {
     config: any;
@@ -48,29 +49,25 @@ export default function General({ config, onConfigChange }: GeneralProps) {
     };
 
     const handleLanguageChange = async (language: string) => {
-        // Update the language in config first
+        // Update the language in config
+        // The i18n event listener will automatically handle updating translated defaults
         onConfigChange("language", language);
+    };
 
-        // Wait a bit for config to be saved, then update translated defaults
-        setTimeout(async () => {
-            try {
-                const result =
-                    await window.electronAPI?.updateTranslatedDefaults?.();
-                if (result?.success) {
-                    console.log(
-                        "Successfully updated translated defaults for language:",
-                        language
-                    );
-                } else {
-                    console.error(
-                        "Failed to update translated defaults:",
-                        result?.error
-                    );
-                }
-            } catch (error) {
-                console.error("Error updating translated defaults:", error);
-            }
-        }, 100);
+    const handleDefaultsLanguageChange = async (language: string) => {
+        // Manually set defaults language (this will automatically disable auto-follow)
+        onConfigChange("defaultsLanguage", language);
+    };
+
+    const handleAutoFollowToggle = async (enabled: boolean) => {
+        if (enabled) {
+            // Enable auto-follow and sync defaults language to app language
+            onConfigChange("autoFollowLanguageDefaults", true);
+            // The config system will automatically sync defaultsLanguage when autoFollow is enabled
+        } else {
+            // Just disable auto-follow, keep current defaults language
+            onConfigChange("autoFollowLanguageDefaults", false);
+        }
     };
 
     const handleCheck = () => {
@@ -160,6 +157,72 @@ export default function General({ config, onConfigChange }: GeneralProps) {
                             onLanguageChange={handleLanguageChange}
                         />
                     </div>
+
+                    <div className="h-px bg-zinc-700/30"></div>
+
+                    <div className="flex items-center justify-between py-1">
+                        <div className="flex-1">
+                            <h4 className="text-sm font-medium text-white">
+                                {t("general.autoFollowDefaults")}
+                            </h4>
+                            <p className="text-sm text-zinc-400 leading-relaxed">
+                                {t("general.autoFollowDefaultsDesc")}
+                            </p>
+                        </div>
+                        <Toggle
+                            checked={config.autoFollowLanguageDefaults === true}
+                            onChange={handleAutoFollowToggle}
+                        />
+                    </div>
+
+                    {config.autoFollowLanguageDefaults !== true && (
+                        <>
+                            <div className="h-px bg-zinc-700/30"></div>
+                            <div className="flex items-center justify-between py-1">
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-medium text-white">
+                                        {t("general.defaultsLanguage")}
+                                    </h4>
+                                    <p className="text-sm text-zinc-400 leading-relaxed">
+                                        {t("general.defaultsLanguageDesc")}
+                                    </p>
+                                </div>
+                                <div className="relative group">
+                                    <button className="flex items-center gap-2 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 border border-zinc-600 rounded text-white text-sm transition-colors">
+                                        <Globe size={16} />
+                                        <span className="hidden sm:inline">
+                                            {supportedLanguages.find(
+                                                (lang) => lang.code === config.defaultsLanguage
+                                            )?.name || "English"}
+                                        </span>
+                                        <span className="sm:hidden">
+                                            {supportedLanguages.find(
+                                                (lang) => lang.code === config.defaultsLanguage
+                                            )?.flag || "🇺🇸"}
+                                        </span>
+                                        <ChevronDown size={14} />
+                                    </button>
+
+                                    <div className="absolute right-0 top-full mt-1 bg-zinc-800 border border-zinc-600 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 min-w-[140px]">
+                                        {supportedLanguages.map((language) => (
+                                            <button
+                                                key={language.code}
+                                                onClick={() => handleDefaultsLanguageChange(language.code)}
+                                                className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-zinc-700 transition-colors first:rounded-t-md last:rounded-b-md ${
+                                                    config.defaultsLanguage === language.code
+                                                        ? "bg-zinc-700 text-white"
+                                                        : "text-zinc-300"
+                                                }`}
+                                            >
+                                                <span className="text-lg">{language.flag}</span>
+                                                <span>{language.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 

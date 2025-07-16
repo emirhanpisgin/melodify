@@ -5,6 +5,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./globals.css";
+import i18n from "@/core/i18n";
 
 // Suppress webpack development overlay warnings
 if (process.env.NODE_ENV === "development") {
@@ -37,6 +38,30 @@ if (process.env.NODE_ENV === "development") {
     };
 }
 
-const root = createRoot(document.body);
+/**
+ * Initialize the app with proper config and i18n setup
+ * This ensures the saved language preference is loaded before React renders
+ */
+async function initializeApp() {
+    try {
+        // Load config first to get saved language preference
+        const config = await window.electronAPI.invoke('config:get');
+        const savedLanguage = config.language || 'en';
+        
+        // Update i18n to use the saved language
+        await i18n.changeLanguage(savedLanguage);
+        
+        console.log(`Initialized app with language: ${savedLanguage}`);
+    } catch (error) {
+        console.warn('Failed to load saved language, using default:', error);
+        // Fall back to English if config loading fails
+        await i18n.changeLanguage('en');
+    }
+    
+    // Now render the React app with the correct language
+    const root = createRoot(document.body);
+    root.render(<App />);
+}
 
-root.render(<App />);
+// Start the app initialization
+initializeApp();

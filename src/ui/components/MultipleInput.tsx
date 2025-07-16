@@ -51,6 +51,7 @@ export default function MultipleInput({
     validateItem,
     className,
 }: MultipleInputProps) {
+    console.log(values);
     const { t } = useTranslation();
     const [inputValue, setInputValue] = useState("");
     const [error, setError] = useState("");

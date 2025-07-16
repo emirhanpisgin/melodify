@@ -7,11 +7,23 @@ import {
     MemoryStick,
     Network,
     HardDrive,
+    Clock,
+    Zap,
+    RotateCcw,
 } from "lucide-react";
 import Toggle from "@/ui/components/Toggle";
 import { Button } from "@/ui/components/Button";
 import Input from "@/ui/components/Input";
 import { useState, useEffect } from "react";
+
+interface PerformanceStats {
+    commandName: string;
+    totalExecutions: number;
+    averageTime: number;
+    fastestTime: number;
+    slowestTime: number;
+    lastExecuted: number;
+}
 
 interface DebugProps {
     searchQuery?: string;
@@ -21,6 +33,10 @@ export default function Debug({ searchQuery }: DebugProps) {
     const [checked, setChecked] = useState<Record<string, boolean>>({});
     const [systemInfo, setSystemInfo] = useState<any>({});
     const [testInput, setTestInput] = useState("");
+    const [performanceStats, setPerformanceStats] = useState<
+        PerformanceStats[]
+    >([]);
+    const [isLoadingStats, setIsLoadingStats] = useState(false);
 
     useEffect(() => {
         // Set basic system info from browser APIs
@@ -30,7 +46,54 @@ export default function Debug({ searchQuery }: DebugProps) {
             language: navigator.language,
             cookieEnabled: navigator.cookieEnabled,
         });
+
+        // Load initial performance stats
+        loadPerformanceStats();
     }, []);
+
+    const loadPerformanceStats = async () => {
+        setIsLoadingStats(true);
+        try {
+            const stats = await window.electronAPI.invoke(
+                "commands:getPerformanceStats"
+            );
+            setPerformanceStats(stats || []);
+        } catch (error) {
+            console.error("Failed to load performance stats:", error);
+        } finally {
+            setIsLoadingStats(false);
+        }
+    };
+
+    const resetAllStats = async () => {
+        try {
+            window.electronAPI.send("commands:resetPerformanceStats");
+            await loadPerformanceStats(); // Refresh the display
+        } catch (error) {
+            console.error("Failed to reset performance stats:", error);
+        }
+    };
+
+    const resetCommandStats = async (commandName: string) => {
+        try {
+            window.electronAPI.send(
+                "commands:resetCommandPerformanceStats",
+                commandName
+            );
+            await loadPerformanceStats(); // Refresh the display
+        } catch (error) {
+            console.error("Failed to reset command performance stats:", error);
+        }
+    };
+
+    const formatTime = (time: number) => {
+        if (time === Infinity) return "N/A";
+        return `${time.toFixed(2)}ms`;
+    };
+
+    const formatDate = (timestamp: number) => {
+        return new Date(timestamp).toLocaleTimeString();
+    };
 
     const sizes = ["sm"];
     const buttonVariants = ["primary", "secondary", "danger"];
@@ -207,6 +270,87 @@ export default function Debug({ searchQuery }: DebugProps) {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="bg-zinc-800/30 rounded-md border border-zinc-700/50 p-3">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-purple-500/20 rounded flex items-center justify-center">
+                            <Zap className="w-3 h-3 text-purple-300" />
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-semibold text-white">
+                                Command Performance
+                            </h3>
+                            <p className="text-xs text-zinc-400">
+                                Execution time statistics for commands
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={loadPerformanceStats}
+                            disabled={isLoadingStats}
+                            className="text-xs px-2 py-1 h-auto bg-blue-600 hover:bg-blue-700"
+                        >
+                            <Clock className="w-3 h-3 mr-1" />
+                            {isLoadingStats ? "Loading..." : "Refresh"}
+                        </Button>
+                        <Button
+                            onClick={resetAllStats}
+                            className="text-xs px-2 py-1 h-auto bg-red-600 hover:bg-red-700"
+                        >
+                            <RotateCcw className="w-3 h-3 mr-1" />
+                            Reset All
+                        </Button>
+                    </div>
+                </div>
+
+                {performanceStats.length > 0 ? (
+                    <div className="space-y-2">
+                        <div className="grid grid-cols-6 gap-2 text-xs text-zinc-400 border-b border-zinc-700/50 pb-1">
+                            <div>Command</div>
+                            <div>Executions</div>
+                            <div>Avg Time</div>
+                            <div>Fastest</div>
+                            <div>Slowest</div>
+                            <div>Last Run</div>
+                        </div>
+                        {performanceStats.map((stat) => (
+                            <div
+                                key={stat.commandName}
+                                className="grid grid-cols-6 gap-2 text-xs py-1 hover:bg-zinc-700/30 rounded px-1"
+                            >
+                                <div className="text-white font-medium">
+                                    {stat.commandName}
+                                </div>
+                                <div className="text-zinc-300">
+                                    {stat.totalExecutions}
+                                </div>
+                                <div className="text-zinc-300">
+                                    {formatTime(stat.averageTime)}
+                                </div>
+                                <div className="text-green-400">
+                                    {formatTime(stat.fastestTime)}
+                                </div>
+                                <div className="text-red-400">
+                                    {formatTime(stat.slowestTime)}
+                                </div>
+                                <div className="text-zinc-400">
+                                    {formatDate(stat.lastExecuted)}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-4">
+                        <Clock className="w-8 h-8 mx-auto mb-2 text-zinc-500" />
+                        <p className="text-xs text-zinc-400">
+                            No performance data available. Execute some commands
+                            to see statistics.
+                        </p>
+                    </div>
+                )}
             </div>
 
             <div className="bg-zinc-800/30 rounded-md border border-zinc-700/50 p-3">

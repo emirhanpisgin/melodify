@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { app } from "electron";
-import { logInfo, logError, logDebug } from "@/core/logging";
+import { logInfo, logError, logDebug, logWarn } from "@/core/logging";
 import { redactSecrets } from "@/core/logging/utils";
 
 /**
@@ -63,6 +63,9 @@ interface AppConfig {
     // Track which language defaults are currently being used (internal field)
     defaultsLanguage?: string;
 
+    // Whether defaultsLanguage should automatically follow the app language
+    autoFollowLanguageDefaults?: boolean;
+
     // Command reply toggles and templates
     replyOnSongRequest?: boolean;
     songRequestReplyTemplate?: string;
@@ -75,7 +78,7 @@ interface AppConfig {
     replyOnVolumeGet?: boolean;
     volumeGetReplyTemplate?: string;
 
-    commandsConfig?: {
+    commands?: {
         [commandName: string]: CommandConfig;
     };
 
@@ -114,7 +117,7 @@ function getTranslatedDefaults(language: string = "en") {
                 "Please wait {time} seconds before requesting another song.",
             currentSongFormat: "{title} - {artist}",
             // Command aliases for English
-            commandsConfig: {
+            commands: {
                 sr: { aliases: ["song", "request"], enabled: true },
                 volume: { aliases: ["vol"], enabled: true },
             },
@@ -130,9 +133,9 @@ function getTranslatedDefaults(language: string = "en") {
                 "Başka bir şarkı istemek için {time} saniye bekleyin.",
             currentSongFormat: "{title} - {artist}",
             // Command aliases for Turkish
-            commandsConfig: {
-                sr: { aliases: ["şarkı", "istek", "song"], enabled: true },
-                volume: { aliases: ["ses", "vol"], enabled: true },
+            commands: {
+                sr: { aliases: ["songrequest"], enabled: true },
+                volume: { aliases: ["vol"], enabled: true },
             },
         },
     };
@@ -170,6 +173,9 @@ const defaultConfig: AppConfig = {
     // Track which language defaults are currently being used
     defaultsLanguage: "en",
 
+    // Auto-follow app language for defaults (enabled by default)
+    autoFollowLanguageDefaults: true,
+
     // Default translated message templates and commands (will be set based on language)
     ...getTranslatedDefaults("en"),
 };
@@ -188,14 +194,34 @@ function load(): void {
             // Check if we need to update translated defaults for the current language
             const currentLanguage = cache.language || "en";
             const defaultsLanguage = cache.defaultsLanguage || "en";
+            const autoFollow = cache.autoFollowLanguageDefaults !== false; // Default to true
 
-            if (currentLanguage !== defaultsLanguage) {
+            if (autoFollow && currentLanguage !== defaultsLanguage) {
                 logInfo(
-                    `Language changed from ${defaultsLanguage} to ${currentLanguage}, updating translated defaults`
+                    `Language changed from ${defaultsLanguage} to ${currentLanguage}, updating translated defaults (auto-follow enabled)`
                 );
                 updateTranslatedDefaults();
-            } else {
+            } else if (!autoFollow) {
+                logInfo(
+                    `Language is ${currentLanguage} but defaults language is ${defaultsLanguage} (auto-follow disabled)`
+                );
                 save();
+            } else {
+                // Safety check: if user has non-English language but defaultsLanguage is not set correctly,
+                // or if they have mismatched defaults, fix it (only if auto-follow is enabled)
+                if (
+                    autoFollow &&
+                    currentLanguage !== "en" &&
+                    (!cache.defaultsLanguage || cache.defaultsLanguage === "en")
+                ) {
+                    logInfo(
+                        `Detected language mismatch (language: ${currentLanguage}, defaultsLanguage: ${cache.defaultsLanguage}), fixing defaults`
+                    );
+                    cache.defaultsLanguage = currentLanguage;
+                    updateTranslatedDefaults();
+                } else {
+                    save();
+                }
             }
 
             logInfo("Loaded config from disk", redactSecrets(cache));
@@ -207,21 +233,16 @@ function load(): void {
 
             // Try to detect system language (simplified detection)
             const systemLanguage = detectSystemLanguage();
-            cache.language = systemLanguage;
-            cache.defaultsLanguage = systemLanguage;
 
-            // Apply the correct language defaults from the start
-            if (systemLanguage !== "en") {
-                const translatedDefaults =
-                    getTranslatedDefaults(systemLanguage);
-                Object.keys(translatedDefaults).forEach((key) => {
-                    const configKey = key as keyof typeof translatedDefaults;
-                    (cache as any)[configKey] = translatedDefaults[configKey];
-                });
-                logInfo(
-                    `Applied ${systemLanguage} defaults for first-time setup`
-                );
-            }
+            // Create a fresh config with the detected language's defaults
+            cache = {
+                ...defaultConfig,
+                language: systemLanguage,
+                defaultsLanguage: systemLanguage,
+                ...getTranslatedDefaults(systemLanguage),
+            };
+
+            logInfo(`Applied ${systemLanguage} defaults for first-time setup`);
 
             save();
         }
@@ -251,12 +272,19 @@ function save(): void {
  * - Uses a tracking field to know which language defaults are currently active
  */
 function updateTranslatedDefaults(): void {
-    const currentLanguage = cache.language || "en";
-    const translatedDefaults = getTranslatedDefaults(currentLanguage);
+    // Determine which language to use for defaults
+    // If auto-follow is disabled, use the manually set defaultsLanguage
+    // If auto-follow is enabled, use the app language
+    const autoFollow = cache.autoFollowLanguageDefaults !== false;
+    const targetLanguage = autoFollow ? (cache.language || "en") : (cache.defaultsLanguage || cache.language || "en");
+    
+    const translatedDefaults = getTranslatedDefaults(targetLanguage);
 
     // Get the language that the current defaults are from (or assume English if not set)
     const previousDefaultsLanguage = cache.defaultsLanguage || "en";
     const previousDefaults = getTranslatedDefaults(previousDefaultsLanguage);
+
+    logInfo(`Updating translated defaults from ${previousDefaultsLanguage} to ${targetLanguage} (auto-follow: ${autoFollow})`);
 
     // Get all supported languages to check against all possible defaults
     const supportedLanguages = ["en", "tr"]; // Add more as supported
@@ -278,19 +306,20 @@ function updateTranslatedDefaults(): void {
 
         // Update if the current value is a default value from any language
         if (isDefaultValue) {
-            (cache as any)[configKey] = translatedDefaults[configKey];
+            const newValue = translatedDefaults[configKey];
+            (cache as any)[configKey] = newValue;
             logDebug(
-                `Updated ${configKey} from ${previousDefaultsLanguage} to ${currentLanguage} default`
+                `Updated ${configKey}: "${currentValue}" -> "${newValue}" (${previousDefaultsLanguage} -> ${targetLanguage})`
             );
         } else {
             logDebug(
-                `Preserved custom value for ${configKey}: ${currentValue}`
+                `Preserved custom value for ${configKey}: "${currentValue}"`
             );
         }
     });
 
     // Track which language defaults we're now using
-    cache.defaultsLanguage = currentLanguage;
+    cache.defaultsLanguage = targetLanguage;
     save();
 }
 
@@ -317,8 +346,60 @@ const Config = {
     },
     set(data: Partial<AppConfig>): void {
         logInfo("Config.set called", redactSecrets(data));
-        cache = { ...cache, ...data };
-        save();
+        
+        // Check if language is being changed
+        if (data.language && data.language !== cache.language && !isUpdatingLanguage) {
+            isUpdatingLanguage = true;
+            const newLanguage = data.language;
+            
+            // Update cache
+            cache = { ...cache, ...data };
+            
+            // Update translated defaults for the new language
+            updateTranslatedDefaults();
+            save();
+            
+            // Update i18n to match
+            if (typeof window !== 'undefined') {
+                import('@/core/i18n').then(({ default: i18n }) => {
+                    i18n.changeLanguage(newLanguage);
+                    isUpdatingLanguage = false;
+                }).catch(() => {
+                    isUpdatingLanguage = false;
+                });
+            } else {
+                isUpdatingLanguage = false;
+            }
+        } 
+        // Check if autoFollowLanguageDefaults is being enabled
+        else if (data.autoFollowLanguageDefaults === true && cache.autoFollowLanguageDefaults !== true) {
+            logInfo("Auto-follow defaults enabled, syncing defaults language to app language");
+            
+            // Update cache with the new setting and sync defaults language
+            cache = { ...cache, ...data, defaultsLanguage: cache.language };
+            
+            // Update translated defaults for the current language
+            updateTranslatedDefaults();
+            save();
+        }
+        // Check if defaultsLanguage is being manually changed
+        else if (data.defaultsLanguage && data.defaultsLanguage !== cache.defaultsLanguage) {
+            logInfo("Defaults language manually changed", { 
+                from: cache.defaultsLanguage, 
+                to: data.defaultsLanguage 
+            });
+            
+            // Update cache and disable auto-follow since user is manually setting defaults language
+            cache = { ...cache, ...data, autoFollowLanguageDefaults: false };
+            
+            // Update translated defaults for the new defaults language
+            updateTranslatedDefaults();
+            save();
+        } else {
+            // Normal config update
+            cache = { ...cache, ...data };
+            save();
+        }
     },
     setMany<K extends keyof AppConfig>(entries: [K, AppConfig[K]][]): void {
         logInfo(
@@ -337,6 +418,32 @@ const Config = {
     },
     updateTranslatedDefaults(): void {
         updateTranslatedDefaults();
+    },
+    /**
+     * Manually sets the defaults language, disabling auto-follow
+     */
+    setDefaultsLanguage(language: string): void {
+        logInfo("Config.setDefaultsLanguage called", { language, autoFollow: false });
+        this.set({ 
+            defaultsLanguage: language,
+            autoFollowLanguageDefaults: false 
+        });
+    },
+    /**
+     * Enables auto-follow and sets defaults language to match app language
+     */
+    enableAutoFollowDefaults(): void {
+        logInfo("Config.enableAutoFollowDefaults called");
+        this.set({ 
+            autoFollowLanguageDefaults: true,
+            defaultsLanguage: cache.language 
+        });
+    },
+    /**
+     * Gets the current auto-follow setting for defaults language
+     */
+    isAutoFollowDefaultsEnabled(): boolean {
+        return cache.autoFollowLanguageDefaults;
     },
     getPath(): string {
         return storePath;
@@ -359,18 +466,22 @@ function detectSystemLanguage(): string {
             app.getSystemLocale() || // Electron
             "en-US"; // Fallback
 
+        logDebug(`Raw system locale detected: ${systemLang}`);
+
         // Extract language code (e.g., 'tr' from 'tr-TR' or 'tr_TR')
         const langCode = systemLang.split(/[-_]/)[0].toLowerCase();
 
         // Check if we support this language
         const supportedLanguages = ["en", "tr"];
         if (supportedLanguages.includes(langCode)) {
-            logInfo(`Detected system language: ${langCode}`);
+            logInfo(
+                `Detected and using system language: ${langCode} (from ${systemLang})`
+            );
             return langCode;
         }
 
         logInfo(
-            `Unsupported system language ${langCode}, falling back to English`
+            `Unsupported system language ${langCode} (from ${systemLang}), falling back to English`
         );
         return "en";
     } catch (error) {
@@ -378,5 +489,57 @@ function detectSystemLanguage(): string {
         return "en";
     }
 }
+
+let isUpdatingLanguage = false; // Prevent infinite loops
+
+/**
+ * Set up bidirectional synchronization between i18n and config
+ * This ensures that language changes in the UI are automatically saved to config
+ * and that config updates trigger appropriate i18n updates
+ */
+function setupLanguageSync() {
+    // Only set up in renderer process where i18n is available
+    if (typeof window !== 'undefined') {
+        try {
+            // Import i18n dynamically to avoid circular dependencies
+            import('@/core/i18n').then(({ default: i18n }) => {
+                // Listen for i18n language changes and sync to config
+                i18n.on('languageChanged', (language: string) => {
+                    if (isUpdatingLanguage) return; // Prevent loops
+                    
+                    const currentConfig = get();
+                    if (currentConfig.language !== language) {
+                        isUpdatingLanguage = true;
+                        logInfo(`i18n language changed to ${language}, updating config`);
+                        
+                        // Update language
+                        cache.language = language;
+                        
+                        // Only update translated defaults if auto-follow is enabled
+                        const autoFollow = cache.autoFollowLanguageDefaults !== false;
+                        if (autoFollow) {
+                            logDebug('Auto-follow enabled, updating translated defaults');
+                            updateTranslatedDefaults(); // This will update defaultsLanguage internally
+                        } else {
+                            logDebug('Auto-follow disabled, keeping current defaults language');
+                        }
+                        
+                        save();
+                        isUpdatingLanguage = false;
+                    }
+                });
+
+                logDebug('Language synchronization set up between i18n and config');
+            }).catch((error) => {
+                logWarn('Failed to set up language sync:', error);
+            });
+        } catch (error) {
+            logWarn('Language sync not available in this environment:', error);
+        }
+    }
+}
+
+// Set up language synchronization
+setupLanguageSync();
 
 export default Config;
