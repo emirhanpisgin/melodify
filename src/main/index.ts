@@ -7,6 +7,7 @@ import { logInfo, logDebug, logError, logWarn } from "@/core/logging";
 import Config from "@/core/config";
 import Updater from "basic-electron-updater";
 import path from "path";
+import fs from "fs";
 
 // Import IPC handlers for different features
 import "@/core/ipc";
@@ -210,26 +211,45 @@ const createTray = () => {
 
     // Determine icon file extension based on platform
     const iconExtension = process.platform === "win32" ? "ico" : "png";
-    const iconPath = path.join(
-        app.getAppPath(),
-        `assets/icon.${iconExtension}`
-    );
+    
+    // Try multiple paths for finding the icon
+    const possiblePaths = [
+        // For development
+        path.join(__dirname, `../../assets/icon.${iconExtension}`),
+        // For packaged app (asar)
+        path.join(process.resourcesPath, "app.asar", `assets/icon.${iconExtension}`),
+        // For packaged app (unpacked)
+        path.join(process.resourcesPath, "app", `assets/icon.${iconExtension}`),
+        // Fallback to app path
+        path.join(app.getAppPath(), `assets/icon.${iconExtension}`),
+    ];
 
     let icon: Electron.NativeImage;
-    try {
-        // Load tray icon from file
-        icon = nativeImage.createFromPath(iconPath);
-        if (icon.isEmpty()) {
-            throw new Error(`Icon file is empty or invalid: ${iconPath}`);
+    let iconPath: string | null = null;
+    
+    // Try each path until we find a working icon
+    for (const testPath of possiblePaths) {
+        try {
+            if (fs.existsSync(testPath)) {
+                icon = nativeImage.createFromPath(testPath);
+                if (!icon.isEmpty()) {
+                    iconPath = testPath;
+                    logInfo(`Tray icon loaded from: ${path.basename(testPath)} (${testPath})`, "createTray");
+                    break;
+                }
+            }
+        } catch (error) {
+            // Continue to next path
         }
-        logInfo(`Tray icon loaded: ${path.basename(iconPath)}`, "createTray");
-    } catch (error) {
-        logError(error, "createTray:failedToLoadIcon");
+    }
+
+    // If no icon was found, create a fallback
+    if (!iconPath) {
+        logWarn("Could not find tray icon file, using fallback", "createTray");
         // Create a simple colored square as fallback icon
         icon = nativeImage.createFromDataURL(
             "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
         );
-        logWarn("Using fallback tray icon", "createTray");
     }
 
     try {
