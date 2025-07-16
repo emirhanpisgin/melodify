@@ -14,7 +14,7 @@ import { rendererConfig } from "./webpack.renderer.config";
 const config: ForgeConfig = {
     packagerConfig: {
         asar: true,
-        icon: "./assets/icon",
+        icon: "./src/assets/icon",
         name: "Melodify",
         executableName: "Melodify",
         appBundleId: "com.emirhanpisgin.melodify",
