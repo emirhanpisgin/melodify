@@ -388,7 +388,7 @@ export class CommandManager {
                 existingCommandForAlias &&
                 existingCommandForAlias !== commandName
             ) {
-                logError(
+                logWarn(
                     `Alias '${alias}' is already used by command '${existingCommandForAlias}'`,
                     "commandManager:updateAliases"
                 );
