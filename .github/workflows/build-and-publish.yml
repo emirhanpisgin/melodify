@@ -1,4 +1,4 @@
-name: Build, Release, and Update Manifest
+name: Build and Publish Electron App
 
 on:
     push:
@@ -9,15 +9,12 @@ permissions:
     contents: write
 
 jobs:
-    release:
+    build:
         runs-on: windows-latest
 
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
-              with:
-                  # We need to fetch all history and tags for version detection
-                  fetch-depth: 0
 
             - name: Setup Node
               uses: actions/setup-node@v4
@@ -27,54 +24,7 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Build Windows Installer
-              run: npm run make
-
-            - name: Get Version from Tag
-              id: get_version
-              run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $env:GITHUB_ENV
-
-            - name: Update and Commit Manifest
-              shell: pwsh
-              run: |
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
-                  git checkout main
-
-                  $manifestPath = "update.json"
-                  $manifest = Get-Content -Path $manifestPath -Raw | ConvertFrom-Json
-                  $manifest.version = "${{ env.VERSION }}"
-                  $manifest.platforms."win32-x64".url = "https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/Songulfy.Setup.${{ env.VERSION }}.exe"
-                  $manifest | ConvertTo-Json -Depth 4 | Set-Content -Path $manifestPath
-
-                  git add $manifestPath
-                  git diff --staged --quiet
-                  if ($LASTEXITCODE -ne 0) {
-                    git commit -m "ci: Update manifest for v${{ env.VERSION }}"
-                    git push
-                  } else {
-                    Write-Host "No changes to manifest, skipping commit."
-                  }
-
-            - name: Create GitHub Release
-              id: create_release
-              uses: actions/create-release@v1
+            - name: Make Distributables and Publish to GitHub Releases
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: Release v${{ env.VERSION }}
-                  body: |
-                      New release v${{ env.VERSION }}
-                  draft: true
-                  prerelease: false
-
-            - name: Upload Installer to Release
-              uses: actions/upload-release-asset@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ steps.create_release.outputs.upload_url }}
-                  asset_path: ./out/make/squirrel.windows/x64/Songulfy.Setup.${{ env.VERSION }}.exe
-                  asset_name: Songulfy.Setup.${{ env.VERSION }}.exe
-                  asset_content_type: application/octet-stream
+              run: npm run publish
