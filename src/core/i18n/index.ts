@@ -17,14 +17,14 @@ function getSavedLanguage(): string {
     try {
         // This will be called during initialization, so we need to handle cases
         // where the config might not be immediately available
-        if (typeof window !== 'undefined' && window.electronAPI) {
+        if (typeof window !== "undefined" && window.electronAPI) {
             // In renderer process, we'll set this up properly in the async initialization
-            return 'en'; // Temporary fallback, will be updated in initializeApp
+            return "en"; // Temporary fallback, will be updated in initializeApp
         }
-        return 'en';
+        return "en";
     } catch (error) {
-        console.warn('Failed to get saved language from config:', error);
-        return 'en';
+        console.warn("Failed to get saved language from config:", error);
+        return "en";
     }
 }
 
@@ -33,20 +33,19 @@ const resources = {
     tr: { translation: translations.tr },
 };
 
-i18n.use(initReactI18next)
-    .init({
-        resources,
-        lng: getSavedLanguage(), // Use saved language instead of detection
-        fallbackLng: "en",
-        debug: process.env.NODE_ENV === "development",
+i18n.use(initReactI18next).init({
+    resources,
+    lng: getSavedLanguage(), // Use saved language instead of detection
+    fallbackLng: "en",
+    debug: process.env.NODE_ENV === "development",
 
-        interpolation: {
-            escapeValue: false, // React already escapes values
-        },
+    interpolation: {
+        escapeValue: false, // React already escapes values
+    },
 
-        react: {
-            useSuspense: false,
-        },
-    });
+    react: {
+        useSuspense: false,
+    },
+});
 
 export default i18n;

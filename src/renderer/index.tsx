@@ -45,19 +45,19 @@ if (process.env.NODE_ENV === "development") {
 async function initializeApp() {
     try {
         // Load config first to get saved language preference
-        const config = await window.electronAPI.invoke('config:get');
-        const savedLanguage = config.language || 'en';
-        
+        const config = await window.electronAPI.invoke("config:get");
+        const savedLanguage = config.language || "en";
+
         // Update i18n to use the saved language
         await i18n.changeLanguage(savedLanguage);
-        
+
         console.log(`Initialized app with language: ${savedLanguage}`);
     } catch (error) {
-        console.warn('Failed to load saved language, using default:', error);
+        console.warn("Failed to load saved language, using default:", error);
         // Fall back to English if config loading fails
-        await i18n.changeLanguage('en');
+        await i18n.changeLanguage("en");
     }
-    
+
     // Now render the React app with the correct language
     const root = createRoot(document.body);
     root.render(<App />);

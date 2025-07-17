@@ -276,15 +276,19 @@ function updateTranslatedDefaults(): void {
     // If auto-follow is disabled, use the manually set defaultsLanguage
     // If auto-follow is enabled, use the app language
     const autoFollow = cache.autoFollowLanguageDefaults !== false;
-    const targetLanguage = autoFollow ? (cache.language || "en") : (cache.defaultsLanguage || cache.language || "en");
-    
+    const targetLanguage = autoFollow
+        ? cache.language || "en"
+        : cache.defaultsLanguage || cache.language || "en";
+
     const translatedDefaults = getTranslatedDefaults(targetLanguage);
 
     // Get the language that the current defaults are from (or assume English if not set)
     const previousDefaultsLanguage = cache.defaultsLanguage || "en";
     const previousDefaults = getTranslatedDefaults(previousDefaultsLanguage);
 
-    logInfo(`Updating translated defaults from ${previousDefaultsLanguage} to ${targetLanguage} (auto-follow: ${autoFollow})`);
+    logInfo(
+        `Updating translated defaults from ${previousDefaultsLanguage} to ${targetLanguage} (auto-follow: ${autoFollow})`
+    );
 
     // Get all supported languages to check against all possible defaults
     const supportedLanguages = ["en", "tr"]; // Add more as supported
@@ -346,52 +350,66 @@ const Config = {
     },
     set(data: Partial<AppConfig>): void {
         logInfo("Config.set called", redactSecrets(data));
-        
+
         // Check if language is being changed
-        if (data.language && data.language !== cache.language && !isUpdatingLanguage) {
+        if (
+            data.language &&
+            data.language !== cache.language &&
+            !isUpdatingLanguage
+        ) {
             isUpdatingLanguage = true;
             const newLanguage = data.language;
-            
+
             // Update cache
             cache = { ...cache, ...data };
-            
+
             // Update translated defaults for the new language
             updateTranslatedDefaults();
             save();
-            
+
             // Update i18n to match
-            if (typeof window !== 'undefined') {
-                import('@/core/i18n').then(({ default: i18n }) => {
-                    i18n.changeLanguage(newLanguage);
-                    isUpdatingLanguage = false;
-                }).catch(() => {
-                    isUpdatingLanguage = false;
-                });
+            if (typeof window !== "undefined") {
+                import("@/core/i18n")
+                    .then(({ default: i18n }) => {
+                        i18n.changeLanguage(newLanguage);
+                        isUpdatingLanguage = false;
+                    })
+                    .catch(() => {
+                        isUpdatingLanguage = false;
+                    });
             } else {
                 isUpdatingLanguage = false;
             }
-        } 
+        }
         // Check if autoFollowLanguageDefaults is being enabled
-        else if (data.autoFollowLanguageDefaults === true && cache.autoFollowLanguageDefaults !== true) {
-            logInfo("Auto-follow defaults enabled, syncing defaults language to app language");
-            
+        else if (
+            data.autoFollowLanguageDefaults === true &&
+            cache.autoFollowLanguageDefaults !== true
+        ) {
+            logInfo(
+                "Auto-follow defaults enabled, syncing defaults language to app language"
+            );
+
             // Update cache with the new setting and sync defaults language
             cache = { ...cache, ...data, defaultsLanguage: cache.language };
-            
+
             // Update translated defaults for the current language
             updateTranslatedDefaults();
             save();
         }
         // Check if defaultsLanguage is being manually changed
-        else if (data.defaultsLanguage && data.defaultsLanguage !== cache.defaultsLanguage) {
-            logInfo("Defaults language manually changed", { 
-                from: cache.defaultsLanguage, 
-                to: data.defaultsLanguage 
+        else if (
+            data.defaultsLanguage &&
+            data.defaultsLanguage !== cache.defaultsLanguage
+        ) {
+            logInfo("Defaults language manually changed", {
+                from: cache.defaultsLanguage,
+                to: data.defaultsLanguage,
             });
-            
+
             // Update cache and disable auto-follow since user is manually setting defaults language
             cache = { ...cache, ...data, autoFollowLanguageDefaults: false };
-            
+
             // Update translated defaults for the new defaults language
             updateTranslatedDefaults();
             save();
@@ -423,10 +441,13 @@ const Config = {
      * Manually sets the defaults language, disabling auto-follow
      */
     setDefaultsLanguage(language: string): void {
-        logInfo("Config.setDefaultsLanguage called", { language, autoFollow: false });
-        this.set({ 
+        logInfo("Config.setDefaultsLanguage called", {
+            language,
+            autoFollow: false,
+        });
+        this.set({
             defaultsLanguage: language,
-            autoFollowLanguageDefaults: false 
+            autoFollowLanguageDefaults: false,
         });
     },
     /**
@@ -434,9 +455,9 @@ const Config = {
      */
     enableAutoFollowDefaults(): void {
         logInfo("Config.enableAutoFollowDefaults called");
-        this.set({ 
+        this.set({
             autoFollowLanguageDefaults: true,
-            defaultsLanguage: cache.language 
+            defaultsLanguage: cache.language,
         });
     },
     /**
@@ -499,42 +520,53 @@ let isUpdatingLanguage = false; // Prevent infinite loops
  */
 function setupLanguageSync() {
     // Only set up in renderer process where i18n is available
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
         try {
             // Import i18n dynamically to avoid circular dependencies
-            import('@/core/i18n').then(({ default: i18n }) => {
-                // Listen for i18n language changes and sync to config
-                i18n.on('languageChanged', (language: string) => {
-                    if (isUpdatingLanguage) return; // Prevent loops
-                    
-                    const currentConfig = get();
-                    if (currentConfig.language !== language) {
-                        isUpdatingLanguage = true;
-                        logInfo(`i18n language changed to ${language}, updating config`);
-                        
-                        // Update language
-                        cache.language = language;
-                        
-                        // Only update translated defaults if auto-follow is enabled
-                        const autoFollow = cache.autoFollowLanguageDefaults !== false;
-                        if (autoFollow) {
-                            logDebug('Auto-follow enabled, updating translated defaults');
-                            updateTranslatedDefaults(); // This will update defaultsLanguage internally
-                        } else {
-                            logDebug('Auto-follow disabled, keeping current defaults language');
-                        }
-                        
-                        save();
-                        isUpdatingLanguage = false;
-                    }
-                });
+            import("@/core/i18n")
+                .then(({ default: i18n }) => {
+                    // Listen for i18n language changes and sync to config
+                    i18n.on("languageChanged", (language: string) => {
+                        if (isUpdatingLanguage) return; // Prevent loops
 
-                logDebug('Language synchronization set up between i18n and config');
-            }).catch((error) => {
-                logWarn('Failed to set up language sync:', error);
-            });
+                        const currentConfig = get();
+                        if (currentConfig.language !== language) {
+                            isUpdatingLanguage = true;
+                            logInfo(
+                                `i18n language changed to ${language}, updating config`
+                            );
+
+                            // Update language
+                            cache.language = language;
+
+                            // Only update translated defaults if auto-follow is enabled
+                            const autoFollow =
+                                cache.autoFollowLanguageDefaults !== false;
+                            if (autoFollow) {
+                                logDebug(
+                                    "Auto-follow enabled, updating translated defaults"
+                                );
+                                updateTranslatedDefaults(); // This will update defaultsLanguage internally
+                            } else {
+                                logDebug(
+                                    "Auto-follow disabled, keeping current defaults language"
+                                );
+                            }
+
+                            save();
+                            isUpdatingLanguage = false;
+                        }
+                    });
+
+                    logDebug(
+                        "Language synchronization set up between i18n and config"
+                    );
+                })
+                .catch((error) => {
+                    logWarn("Failed to set up language sync:", error);
+                });
         } catch (error) {
-            logWarn('Language sync not available in this environment:', error);
+            logWarn("Language sync not available in this environment:", error);
         }
     }
 }

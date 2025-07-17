@@ -128,24 +128,28 @@ function cleanupOldLogs() {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
         // Clean application logs
-        const files = fs.readdirSync(LOG_DIR);
-        files.forEach((file) => {
-            const filePath = path.join(LOG_DIR, file);
-            const stats = fs.statSync(filePath);
-            if (stats.mtime < thirtyDaysAgo) {
-                fs.unlinkSync(filePath);
-            }
-        });
+        if (fs.existsSync(LOG_DIR)) {
+            const files = fs.readdirSync(LOG_DIR);
+            files.forEach((file) => {
+                const filePath = path.join(LOG_DIR, file);
+                const stats = fs.statSync(filePath);
+                if (stats.mtime < thirtyDaysAgo) {
+                    fs.unlinkSync(filePath);
+                }
+            });
+        }
 
         // Clean song request logs
-        const songFiles = fs.readdirSync(SONG_REQUESTS_DIR);
-        songFiles.forEach((file) => {
-            const filePath = path.join(SONG_REQUESTS_DIR, file);
-            const stats = fs.statSync(filePath);
-            if (stats.mtime < thirtyDaysAgo) {
-                fs.unlinkSync(filePath);
-            }
-        });
+        if (fs.existsSync(SONG_REQUESTS_DIR)) {
+            const songFiles = fs.readdirSync(SONG_REQUESTS_DIR);
+            songFiles.forEach((file) => {
+                const filePath = path.join(SONG_REQUESTS_DIR, file);
+                const stats = fs.statSync(filePath);
+                if (stats.mtime < thirtyDaysAgo) {
+                    fs.unlinkSync(filePath);
+                }
+            });
+        }
     } catch (error) {
         console.error("Failed to cleanup old logs:", error);
     }
@@ -256,6 +260,11 @@ export function logSongRequest(
     );
 
     try {
+        // Ensure song requests directory exists
+        if (!fs.existsSync(SONG_REQUESTS_DIR)) {
+            fs.mkdirSync(SONG_REQUESTS_DIR, { recursive: true });
+        }
+
         // Session-specific song request file
         const sessionFilePath = getSongRequestsFilePath();
         let sessionRequests: SongRequestEntry[] = [];

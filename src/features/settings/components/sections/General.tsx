@@ -1,7 +1,13 @@
 // General section - combines system settings and app preferences
 
 import { useEffect, useState } from "react";
-import { CheckIcon, Settings2, Clock as Spinner, Globe, ChevronDown } from "lucide-react";
+import {
+    CheckIcon,
+    Settings2,
+    Clock as Spinner,
+    Globe,
+    ChevronDown,
+} from "lucide-react";
 import Toggle from "@/ui/components/Toggle";
 import { Button } from "@/ui/components/Button";
 import { useUpdateStatus } from "@/ui/hooks/useUpdateStatus";
@@ -192,12 +198,16 @@ export default function General({ config, onConfigChange }: GeneralProps) {
                                         <Globe size={16} />
                                         <span className="hidden sm:inline">
                                             {supportedLanguages.find(
-                                                (lang) => lang.code === config.defaultsLanguage
+                                                (lang) =>
+                                                    lang.code ===
+                                                    config.defaultsLanguage
                                             )?.name || "English"}
                                         </span>
                                         <span className="sm:hidden">
                                             {supportedLanguages.find(
-                                                (lang) => lang.code === config.defaultsLanguage
+                                                (lang) =>
+                                                    lang.code ===
+                                                    config.defaultsLanguage
                                             )?.flag || "🇺🇸"}
                                         </span>
                                         <ChevronDown size={14} />
@@ -207,14 +217,21 @@ export default function General({ config, onConfigChange }: GeneralProps) {
                                         {supportedLanguages.map((language) => (
                                             <button
                                                 key={language.code}
-                                                onClick={() => handleDefaultsLanguageChange(language.code)}
+                                                onClick={() =>
+                                                    handleDefaultsLanguageChange(
+                                                        language.code
+                                                    )
+                                                }
                                                 className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left hover:bg-zinc-700 transition-colors first:rounded-t-md last:rounded-b-md ${
-                                                    config.defaultsLanguage === language.code
+                                                    config.defaultsLanguage ===
+                                                    language.code
                                                         ? "bg-zinc-700 text-white"
                                                         : "text-zinc-300"
                                                 }`}
                                             >
-                                                <span className="text-lg">{language.flag}</span>
+                                                <span className="text-lg">
+                                                    {language.flag}
+                                                </span>
                                                 <span>{language.name}</span>
                                             </button>
                                         ))}

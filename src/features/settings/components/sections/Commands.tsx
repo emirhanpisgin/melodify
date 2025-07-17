@@ -193,7 +193,11 @@ export default function Commands({
                             enabled: true,
                             aliases: [],
                         };
-                        const isEnabled = cmdCfg.enabled !== false;
+                        // Use cmd.enabled from the commands array, fallback to cmdCfg.enabled from config
+                        const isEnabled =
+                            cmd.enabled !== undefined
+                                ? cmd.enabled
+                                : cmdCfg.enabled !== false;
                         const replyConfig = getReplyConfig(cmd.name);
 
                         return (
