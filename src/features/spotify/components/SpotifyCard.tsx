@@ -205,7 +205,7 @@ export default function SpotifyCard() {
             </div>
 
             <div className="flex-1 px-5 pb-3">
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid gap-2.5">
                     <div className="bg-zinc-700/20 rounded-lg p-2 border border-zinc-600/20">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">

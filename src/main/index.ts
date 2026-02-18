@@ -27,8 +27,8 @@ import {
 } from "@/features/spotify/playback/player";
 
 // Window dimensions and platform detection
-const WINDOW_WIDTH = 900;
-const WINDOW_HEIGHT = 650;
+const WINDOW_WIDTH = 1200;
+const WINDOW_HEIGHT = 800;
 const IS_MAC = process.platform === "darwin";
 
 // Webpack entry points (declared by webpack)

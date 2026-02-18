@@ -193,7 +193,7 @@ export default function HomePage() {
 
             <div className="flex-1 p-8">
                 <div className="h-full flex gap-8">
-                    <div className="flex-1 grid grid-cols-2 gap-8">
+                    <div className="flex-1 grid grid-cols-3 gap-8">
                         <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden">
                             <SpotifyCard />
                         </div>
