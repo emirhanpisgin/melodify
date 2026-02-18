@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { AlertCircle, CheckCircle2, Clock, MoveLeftIcon } from "lucide-react";
+import { AlertCircle, CheckCircle2, ChevronLeftIcon, Clock, MoveLeftIcon } from "lucide-react";
 import General from "./sections/General";
 import Secrets from "./sections/Secrets";
 import Requests from "./sections/Requests";
@@ -136,44 +136,44 @@ export default function Settings({ onClose }: SettingsProps) {
 
     const getStatusIndicator = () => {
         switch (saveStatus) {
-            case "saving":
-                return (
-                    <div className="flex items-center gap-1.5 text-yellow-400">
-                        <Clock className="w-3.5 h-3.5 animate-spin" />
-                        <span className="text-xs whitespace-nowrap">
-                            {t("common.saving")}
-                        </span>
-                    </div>
-                );
+            // case "saving":
+            //     return (
+            //         <div className="flex items-center gap-1.5 text-yellow-400">
+            //             <Clock className="w-3.5 h-3.5 animate-spin" />
+            //             <span className="text-xs whitespace-nowrap">
+            //                 {t("common.saving")}
+            //             </span>
+            //         </div>
+            //     );
             case "saved":
                 return (
                     <div className="flex items-center gap-1.5 text-green-400">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span className="text-xs whitespace-nowrap">
+                        {/* <span className="text-xs whitespace-nowrap">
                             {t("common.saved")}
-                        </span>
+                        </span> */}
                     </div>
                 );
-            case "error":
-                return (
-                    <div className="flex items-center gap-1.5 text-red-400">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        <span className="text-xs whitespace-nowrap">
-                            {t("common.error")}
-                        </span>
-                    </div>
-                );
+            // case "error":
+            //     return (
+            //         <div className="flex items-center gap-1.5 text-red-400">
+            //             <AlertCircle className="w-3.5 h-3.5" />
+            //             <span className="text-xs whitespace-nowrap">
+            //                 {t("common.error")}
+            //             </span>
+            //         </div>
+            //     );
             default:
-                return unsavedChanges ? (
-                    <div className="flex items-center gap-1.5 text-zinc-400">
-                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
-                        <span className="text-xs whitespace-nowrap">
-                            Unsaved
-                        </span>
-                    </div>
-                ) : (
-                    <div className="w-3.5 h-3.5" /> // Invisible spacer to maintain consistent height
-                );
+                // return unsavedChanges ? (
+                //     <div className="flex items-center gap-1.5 text-zinc-400">
+                //         <div className="w-1.5 h-1.5 bg-blue-400 rounded-full" />
+                //         <span className="text-xs whitespace-nowrap">
+                //             Unsaved
+                //         </span>
+                //     </div>
+                // ) : (
+                return <div className="w-3.5 h-3.5" /> // Invisible spacer to maintain consistent height
+                // );
         }
     };
     return (
@@ -206,14 +206,14 @@ export default function Settings({ onClose }: SettingsProps) {
                     })}
                 </div>
 
-                <div className="p-3 border-t border-zinc-800">
+                <div className="p-3">
                     <div className="flex items-center justify-between min-h-[20px]">
                         <button
                             className="flex items-center gap-1 text-zinc-400 hover:text-white cursor-pointer text-xs transition-colors"
                             onClick={onClose}
                         >
-                            <MoveLeftIcon className="w-4 h-4" />
-                            <span>{t("navigation.goBack")}</span>
+                            <ChevronLeftIcon className="w-5 h-5" />
+                            <span>{t("navigation.homePage")}</span>
                         </button>
                         <div className="min-w-[80px] flex justify-end">
                             {getStatusIndicator()}

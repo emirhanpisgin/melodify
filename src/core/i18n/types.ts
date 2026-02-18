@@ -38,7 +38,7 @@ export interface TranslationKeys {
         };
     };
     navigation: {
-        goBack: string;
+        homePage: string;
     };
     home: {
         songRequests: string;

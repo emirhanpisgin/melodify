@@ -40,7 +40,7 @@
         }
     },
     "navigation": {
-        "goBack": "Go Back"
+        "homePage": "Ana Sayfa"
     },
     "home": {
         "songRequests": "Song Requests",
