@@ -47,7 +47,7 @@ let tray: Tray | null = null;
 let isQuiting = false;
 
 // Initialize the updater with configuration
-let updater: Updater = null;
+let updater: Updater | null = null;
 try {
     updater = new Updater({
         repo: "emirhanpisgin/melodify", // Your GitHub repository
@@ -422,7 +422,14 @@ app.on("ready", () => {
     try {
         // Only start Kick features if authenticated, otherwise let the UI handle auth flow
         // The kick:checkAuth handler will start listening when authentication is confirmed
-        startKickTokenAutoRefresh(mainWindow);
+        if (mainWindow) {
+            startKickTokenAutoRefresh(mainWindow);
+        } else {
+            logWarn(
+                "Main window not available for Kick token refresh",
+                "main:features"
+            );
+        }
 
         // Only start Spotify token refresh if mainWindow is available
         if (mainWindow) {
@@ -445,7 +452,9 @@ app.on("ready", () => {
 
 app.on("window-all-closed", () => {
     stopKickTokenAutoRefresh();
-    stopListeningToChat(mainWindow);
+    if (mainWindow) {
+        stopListeningToChat(mainWindow);
+    }
     stopKickAuthServer();
     stopSpotifyTokenAutoRefresh();
     // Clean up test window reference

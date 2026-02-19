@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 
 export default function SpotifyCard() {
     const { t } = useTranslation();
-    const [hasSecrets, setHasSecrets] = useState(null);
+    const [hasSecrets, setHasSecrets] = useState<boolean | null>(null);
     const [spotifyClientId, setSpotifyClientId] = useState("");
     const [spotifyClientSecret, setSpotifyClientSecret] = useState("");
     const [spotifyUsername, setSpotifyUsername] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export default function SpotifyCard() {
                     setSpotifyUsername(null);
                 }
             } catch (error) {
-                logError(error, "handleAuthenticated");
+                logError(error as Error, "handleAuthenticated");
                 setAuthenticated(false);
                 setSpotifyUsername(null);
             }
@@ -160,7 +160,7 @@ export default function SpotifyCard() {
             setSpotifyUsername(null);
             setSpotifyHasSession(false);
         } catch (error) {
-            logError(error, "Failed to logout from Spotify");
+            logError(error as Error, "Failed to logout from Spotify");
         }
     };
 
@@ -184,23 +184,22 @@ export default function SpotifyCard() {
                 </div>
 
                 <div
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium text-center ${
-                        authenticated && spotifyHasSession
-                            ? "bg-green-500/20 text-green-300 border border-green-500/30"
-                            : authenticated
-                              ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                              : hasSecrets
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium text-center ${authenticated && spotifyHasSession
+                        ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                        : authenticated
+                            ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                            : hasSecrets
                                 ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                                 : "bg-red-500/20 text-red-300 border border-red-500/30"
-                    }`}
+                        }`}
                 >
                     {authenticated && spotifyHasSession
                         ? `✓ ${t("common.readyForRequests")}`
                         : authenticated
-                          ? `⚠ ${t("common.startPlayingMusic")}`
-                          : hasSecrets
-                            ? `🔗 ${t("common.readyToConnect")}`
-                            : `⚙ ${t("common.setupRequired")}`}
+                            ? `⚠ ${t("common.startPlayingMusic")}`
+                            : hasSecrets
+                                ? `🔗 ${t("common.readyToConnect")}`
+                                : `⚙ ${t("common.setupRequired")}`}
                 </div>
             </div>
 
@@ -219,8 +218,8 @@ export default function SpotifyCard() {
                             {hasSecrets === null
                                 ? t("common.checking")
                                 : hasSecrets
-                                  ? t("common.configured")
-                                  : t("common.notSet")}
+                                    ? t("common.configured")
+                                    : t("common.notSet")}
                         </p>
                     </div>
 
@@ -237,8 +236,8 @@ export default function SpotifyCard() {
                             {spotifyRunning === null
                                 ? t("common.checking")
                                 : spotifyRunning
-                                  ? t("common.running")
-                                  : t("common.closed")}
+                                    ? t("common.running")
+                                    : t("common.closed")}
                         </p>
                     </div>
 
@@ -255,8 +254,8 @@ export default function SpotifyCard() {
                             {authenticated === null
                                 ? t("common.checking")
                                 : authenticated
-                                  ? t("authentication.authenticated")
-                                  : t("authentication.notAuthenticated")}
+                                    ? t("authentication.authenticated")
+                                    : t("authentication.notAuthenticated")}
                         </p>
                     </div>
 
@@ -273,8 +272,8 @@ export default function SpotifyCard() {
                             {spotifyHasSession === null
                                 ? t("common.checking")
                                 : spotifyHasSession
-                                  ? t("common.active")
-                                  : t("common.inactive")}
+                                    ? t("common.active")
+                                    : t("common.inactive")}
                         </p>
                     </div>
                 </div>

@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 
 export default function KickCard() {
     const { t } = useTranslation();
-    const [hasSecrets, setHasSecrets] = useState(null);
+    const [hasSecrets, setHasSecrets] = useState<boolean | null>(null);
     const [kickClientId, setKickClientId] = useState("");
     const [kickClientSecret, setKickClientSecret] = useState("");
     const [kickUsername, setKickUsername] = useState<string | null>(null);
@@ -105,7 +105,7 @@ export default function KickCard() {
             setKickClientSecret("");
             setShowSetup(false);
         } catch (error) {
-            logError(error, "Error setting Kick secrets");
+            logError(`${error}`, "Error setting Kick secrets");
             alert(t("common.secretsSaveError"));
         }
     };
@@ -171,23 +171,22 @@ export default function KickCard() {
                 </div>
 
                 <div
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium text-center ${
-                        authenticated && listeningToChat
-                            ? "bg-green-500/20 text-green-300 border border-green-500/30"
-                            : authenticated
-                              ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                              : hasSecrets
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium text-center ${authenticated && listeningToChat
+                        ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                        : authenticated
+                            ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                            : hasSecrets
                                 ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                                 : "bg-red-500/20 text-red-300 border border-red-500/30"
-                    }`}
+                        }`}
                 >
                     {authenticated && listeningToChat
                         ? `✓ ${t("common.listeningToChat")}`
                         : authenticated
-                          ? `⚠ ${t("common.connectToChat")}`
-                          : hasSecrets
-                            ? `🔗 ${t("common.readyToConnect")}`
-                            : `⚙ ${t("common.setupRequired")}`}
+                            ? `⚠ ${t("common.connectToChat")}`
+                            : hasSecrets
+                                ? `🔗 ${t("common.readyToConnect")}`
+                                : `⚙ ${t("common.setupRequired")}`}
                 </div>
             </div>
 
@@ -206,8 +205,8 @@ export default function KickCard() {
                             {hasSecrets === null
                                 ? t("common.checking")
                                 : hasSecrets
-                                  ? t("common.configured")
-                                  : t("common.notSet")}
+                                    ? t("common.configured")
+                                    : t("common.notSet")}
                         </p>
                     </div>
 
@@ -224,8 +223,8 @@ export default function KickCard() {
                             {authenticated === null
                                 ? t("common.checking")
                                 : authenticated
-                                  ? t("authentication.authenticated")
-                                  : t("authentication.notAuthenticated")}
+                                    ? t("authentication.authenticated")
+                                    : t("authentication.notAuthenticated")}
                         </p>
                     </div>
 
@@ -242,8 +241,8 @@ export default function KickCard() {
                             {listeningToChat === null
                                 ? t("common.checking")
                                 : listeningToChat
-                                  ? t("common.activeListening")
-                                  : t("common.notConnected")}
+                                    ? t("common.activeListening")
+                                    : t("common.notConnected")}
                         </p>
                     </div>
                 </div>
@@ -268,11 +267,10 @@ export default function KickCard() {
                     <button
                         onClick={() => handleLogin()}
                         disabled={authInProgress}
-                        className={`w-full font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${
-                            authInProgress
-                                ? "bg-gray-500 cursor-not-allowed"
-                                : "bg-gradient-to-r from-kick-green to-green-400 hover:from-green-400 hover:to-kick-green hover:shadow-xl transform hover:scale-105"
-                        } text-black`}
+                        className={`w-full font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${authInProgress
+                            ? "bg-gray-500 cursor-not-allowed"
+                            : "bg-gradient-to-r from-kick-green to-green-400 hover:from-green-400 hover:to-kick-green hover:shadow-xl transform hover:scale-105"
+                            } text-black`}
                     >
                         {authInProgress ? (
                             <>
