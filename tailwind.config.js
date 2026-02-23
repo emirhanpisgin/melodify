@@ -21,6 +21,9 @@ module.exports = {
                 "kick-green": "#53fc18",
                 "kick-green-dark": "#3b9e0f",
                 "kick-green-darker": "#2a6b0a",
+                "twitch-purple": "#824fee",
+                "twitch-purple-dark": "#7A39CC",
+                "twitch-purple-darker": "#5F2E99",
             },
             height: {
                 // Override h-screen to be 2.25rem shorter than 100vh

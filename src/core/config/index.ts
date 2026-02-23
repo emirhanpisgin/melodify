@@ -30,6 +30,11 @@ interface AppConfig {
     spotifyRefreshToken?: string;
     spotifyExpiresAt?: number;
 
+    // Twitch tokens
+    twitchAccessToken?: string;
+    twitchRefreshToken?: string;
+    twitchExpiresAt?: number;
+
     // Common
     codeVerifier?: string;
     username?: string;
@@ -39,11 +44,18 @@ interface AppConfig {
     prefix?: string;
     rewardTitle?: string;
 
+    // Twitch Common
+    twitchUsername?: string;
+    twitchUserId?: string;
+    twitchBroadcasterId?: string;
+
     // API secrets
     spotifyClientId?: string;
     spotifyClientSecret?: string;
     kickClientId?: string;
     kickClientSecret?: string;
+    twitchClientId?: string;
+    twitchClientSecret?: string;
 
     // Song reply message template
     currentSongFormat?: string;
@@ -464,7 +476,7 @@ const Config = {
      * Gets the current auto-follow setting for defaults language
      */
     isAutoFollowDefaultsEnabled(): boolean {
-        return cache.autoFollowLanguageDefaults;
+        return cache.autoFollowLanguageDefaults !== false;
     },
     getPath(): string {
         return storePath;

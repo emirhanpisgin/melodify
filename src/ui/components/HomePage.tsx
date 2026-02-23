@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useUpdateStatus } from "@/ui/hooks/useUpdateStatus";
 import { useTranslation } from "react-i18next";
+import TwitchCard from "@/features/twitch/components/TwitchCard";
 
 /**
  * HomePage component displays the main interface with authentication cards.
@@ -199,6 +200,9 @@ export default function HomePage() {
                         </div>
                         <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden">
                             <KickCard />
+                        </div>
+                        <div className="bg-zinc-800/30 rounded-xl border border-zinc-700/50 overflow-hidden">
+                            <TwitchCard />
                         </div>
                     </div>
                 </div>
