@@ -138,9 +138,6 @@ export async function startKickAuthServer(
                 res.send(
                     "✅ Kick authentication successful! You can close this window."
                 );
-                console.log("Kick authentication successful", {
-                    username,
-                });
                 window.webContents.send("kick:authenticated", {
                     username,
                 });

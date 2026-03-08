@@ -39,8 +39,37 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
     });
     pusherInstance = pusher;
 
-    const chatroomId = Config.get("chatroomId");
-    if (!chatroomId) return;
+    let chatroomId = Config.get("chatroomId");
+    if (!chatroomId) {
+        logDebug("Missing Kick chatroomId", "kick:listenToChat");
+        const username = Config.get("username");
+        if (!username) {
+            logError(
+                "Missing Kick username, can't retrieve chatroom ID",
+                "kick:listenToChat"
+            );
+            return;
+        }
+        const chatroomResult = await kickClient.findChatroom(username);
+        if (!chatroomResult) {
+            logError(
+                "Failed to find chatroom for username: " + username,
+                "kick:listenToChat"
+            );
+            return;
+        }
+        chatroomId = chatroomResult.chatroomId;
+        Config.set({ chatroomId });
+        logInfo(
+            "Retrieved and set chatroomId from username",
+            redactSecrets({ username, chatroomId })
+        );
+    }
+
+    if (!chatroomId) {
+        logError("Missing Kick chatroomId after lookup", "kick:listenToChat");
+        return;
+    }
 
     const messageChannel = pusher.subscribe(`chatrooms.${chatroomId}.v2`);
     const rewardsChannel = pusher.subscribe(`chatroom_${chatroomId}`);
@@ -67,9 +96,7 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
 
     pusher.connection.bind("disconnected", () => {
         logWarn("Pusher connection disconnected", "kick:pusherDisconnected");
-        if (isListening) {
-            window?.webContents.send("kick:chatDisconnected");
-        }
+        stopListeningToChat(window);
     });
 
     messageChannel.bind("App\\Events\\ChatMessageEvent", async (raw: any) => {

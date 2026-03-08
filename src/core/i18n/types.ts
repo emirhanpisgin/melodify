@@ -165,6 +165,9 @@ export interface TranslationKeys {
         activeListening: string;
         notConnected: string;
         connecting: string;
+        refresh: string;
+        retry: string;
+        couldNotConnectToChat: string;
         configureCredentials: string;
     };
     statusCards: {
@@ -177,18 +180,24 @@ export interface TranslationKeys {
     setup: {
         configureKickAPI: string;
         configureSpotifyAPI: string;
+        configureTwitchAPI: string;
         clientId: string;
         clientSecret: string;
         enterKickClientId: string;
         enterKickClientSecret: string;
         enterSpotifyClientId: string;
         enterSpotifyClientSecret: string;
+        enterTwitchClientId: string;
+        enterTwitchClientSecret: string;
         spotifyInstructions: string;
         spotifyInstructionsEnd: string;
         kickInstructions: string;
         kickInstructionsEnd: string;
+        twitchInstructions: string;
+        twitchInstructionsEnd: string;
         kickAdditionalInfo1: string;
         kickAdditionalInfo2: string;
+        twitchAdditionalInfo1: string;
     };
     multipleInput: {
         placeholder: string;

@@ -13,6 +13,7 @@ import fs from "fs";
 import "@/core/ipc";
 import "@/features/kick/ipc/handlers";
 import "@/features/spotify/ipc/handlers";
+import "@/features/twitch/ipc/handlers";
 
 // Import feature initialization functions
 import {

@@ -45,10 +45,7 @@ interface KickChannelsResponse {
 }
 
 interface KickChatroomResponse {
-    chatroom: {
-        id: string;
-    };
-    id: number;
+    id: string;
 }
 
 interface KickChannelResponse {
@@ -381,20 +378,27 @@ class KickClient {
      */
     public async findChatroom(
         username: string
-    ): Promise<{ chatroomId: string; userId: number } | null> {
+    ): Promise<{ chatroomId: string } | null> {
         try {
             const response = await fetch(
-                `https://kick.com/api/v1/${username}/chatroom`
+                `https://kick.com/api/v2/channels/${username}/chatroom`,
+                {
+                    headers: {
+                        "User-Agent":
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                        Referer: "https://kick.com/",
+                    },
+                }
             );
-            const data = (await response.json()) as KickChatroomResponse;
+            const chatRoomData =
+                (await response.json()) as KickChatroomResponse;
 
-            if (!response.ok || !data.chatroom?.id) {
+            if (!response.ok || !chatRoomData.id) {
                 return null;
             }
 
             return {
-                chatroomId: data.chatroom.id,
-                userId: data.id,
+                chatroomId: chatRoomData.id,
             };
         } catch (error) {
             logError(error, "KickClient:findChatroom");

@@ -47,7 +47,7 @@ interface AppConfig {
     // Twitch Common
     twitchUsername?: string;
     twitchUserId?: string;
-    twitchBroadcasterId?: string;
+    twitchBotUserId?: string;
 
     // API secrets
     spotifyClientId?: string;

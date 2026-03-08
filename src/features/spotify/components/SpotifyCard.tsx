@@ -4,6 +4,7 @@ import StatusMessage from "@/ui/components/StatusMessage";
 import { SPOTIFY_REDIRECT_URI } from "@/shared/constants";
 import SpotifyIcon from "./SpotifyIcon";
 import { useTranslation } from "react-i18next";
+import { RefreshCw } from "lucide-react";
 
 export default function SpotifyCard() {
     const { t } = useTranslation();
@@ -19,6 +20,7 @@ export default function SpotifyCard() {
     const [showSetup, setShowSetup] = useState(false);
     const [spotifyRedirectUri, setSpotifyRedirectUri] =
         useState<string>(SPOTIFY_REDIRECT_URI);
+    const [refreshInProgress, setRefreshInProgress] = useState(false);
 
     useEffect(() => {
         window.electronAPI
@@ -164,6 +166,20 @@ export default function SpotifyCard() {
         }
     };
 
+    const handleRefreshStatus = async () => {
+        if (refreshInProgress) return;
+        setRefreshInProgress(true);
+        try {
+            const authResult = await window.electronAPI.invoke("spotify:checkAuth");
+            setAuthenticated(authResult.authenticated);
+            setSpotifyUsername(authResult.authenticated ? authResult.username : null);
+        } catch (error) {
+            logError(error as Error, "Error refreshing Spotify status");
+        } finally {
+            setRefreshInProgress(false);
+        }
+    };
+
     return (
         <div className="w-full h-full flex flex-col bg-zinc-800/20 backdrop-blur-sm relative">
             <div className="p-5 pb-3">
@@ -229,7 +245,7 @@ export default function SpotifyCard() {
                                 {t("statusCards.app")}
                             </span>
                             <div
-                                className={`w-2 h-2 rounded-full ${spotifyRunning ? "bg-green-400" : "bg-red-400"}`}
+                                className={`w-2 h-2 rounded-full ${spotifyHasSession ? "bg-green-400" : "bg-red-400"}`}
                             ></div>
                         </div>
                         <p className="text-xs text-zinc-300 mt-0.5">
@@ -237,7 +253,9 @@ export default function SpotifyCard() {
                                 ? t("common.checking")
                                 : spotifyRunning
                                     ? t("common.running")
-                                    : t("common.closed")}
+                                    : spotifyHasSession
+                                        ? t("common.runningOnAnotherDevice")
+                                        : t("common.closed")}
                         </p>
                     </div>
 
@@ -288,12 +306,27 @@ export default function SpotifyCard() {
                         {t("common.configureCredentials")}
                     </button>
                 ) : authenticated ? (
-                    <button
-                        onClick={handleLogout}
-                        className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                    >
-                        {t("authentication.disconnect")}
-                    </button>
+                    <div className="flex gap-3 items-center">
+                        <button
+                            onClick={handleLogout}
+                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                        >
+                            {t("authentication.disconnect")}
+                        </button>
+                        <button
+                            onClick={handleRefreshStatus}
+                            disabled={refreshInProgress}
+                            aria-label={t("common.refresh")}
+                            className={`w-11 h-11 flex items-center justify-center text-white rounded-lg transition-all duration-200 ${refreshInProgress
+                                ? "bg-white/10 cursor-not-allowed"
+                                : "bg-transparent hover:bg-white/10"
+                                }`}
+                        >
+                            <RefreshCw
+                                className={`w-5 h-5 ${refreshInProgress ? "animate-spin" : ""}`}
+                            />
+                        </button>
+                    </div>
                 ) : (
                     <button
                         onClick={() => handleLogin()}

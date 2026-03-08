@@ -68,4 +68,4 @@ class TwitchClient {
     }
 }
 
-export default new TwitchClient();
+export const twitchClient = new TwitchClient();

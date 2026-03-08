@@ -3,7 +3,7 @@ import { logDebug, logError } from "@/renderer/rendererLogger";
 import StatusMessage from "@/ui/components/StatusMessage";
 import { KICK_REDIRECT_URI } from "@/shared/constants";
 import KickIcon from "./KickIcon";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function KickCard() {
@@ -18,6 +18,7 @@ export default function KickCard() {
     const [kickRedirectUri, setKickRedirectUri] =
         useState<string>(KICK_REDIRECT_URI);
     const [authInProgress, setAuthInProgress] = useState(false);
+    const [refreshInProgress, setRefreshInProgress] = useState(false);
 
     useEffect(() => {
         window.electronAPI
@@ -27,6 +28,7 @@ export default function KickCard() {
             })
             .catch((error) => {
                 logError(error, "Error checking Kick secrets");
+                setHasSecrets(false);
             });
 
         window.electronAPI.on("kick:authenticated", (data) => {
@@ -72,6 +74,8 @@ export default function KickCard() {
             })
             .catch((error) => {
                 logError(error, "Error checking Kick authentication");
+                setAuthenticated(false);
+                setKickUsername(null);
             });
 
         window.electronAPI.invoke("config:get").then((cfg) => {
@@ -105,7 +109,7 @@ export default function KickCard() {
             setKickClientSecret("");
             setShowSetup(false);
         } catch (error) {
-            logError(`${error}`, "Error setting Kick secrets");
+            logError(error as Error, "Error setting Kick secrets");
             alert(t("common.secretsSaveError"));
         }
     };
@@ -127,7 +131,7 @@ export default function KickCard() {
         // Reset auth in progress after timeout to handle edge cases
         setTimeout(() => {
             setAuthInProgress(false);
-        }, 30000); // 30 second timeout
+        }, 30000); // 30 seconds timeout
     };
 
     const handleLogout = () => {
@@ -149,6 +153,48 @@ export default function KickCard() {
                     );
                 });
         }, 100); // Small delay to allow backend to process logout
+    };
+
+    const refreshKickStatus = async () => {
+        const [authResult, isListening] = await Promise.all([
+            window.electronAPI.invoke("kick:checkAuth"),
+            window.electronAPI.invoke("kick:isListeningToChat"),
+        ]);
+
+        setAuthenticated(authResult.authenticated);
+        setKickUsername(authResult.authenticated ? authResult.username : null);
+        setListeningToChat(isListening);
+    };
+
+    const handleRefreshStatus = async () => {
+        if (refreshInProgress) {
+            return;
+        }
+
+        setRefreshInProgress(true);
+        try {
+            await refreshKickStatus();
+        } catch (error) {
+            logError(error as Error, "Error refreshing Kick status");
+        } finally {
+            setRefreshInProgress(false);
+        }
+    };
+
+    const handleRetryChat = async () => {
+        if (refreshInProgress) {
+            return;
+        }
+
+        setRefreshInProgress(true);
+        try {
+            await window.electronAPI.invoke("kick:retryChat");
+            await refreshKickStatus();
+        } catch (error) {
+            logError(error as Error, "Error retrying Kick chat connection");
+        } finally {
+            setRefreshInProgress(false);
+        }
     };
 
     return (
@@ -237,13 +283,33 @@ export default function KickCard() {
                                 className={`w-2 h-2 rounded-full ${listeningToChat ? "bg-green-400" : "bg-red-400"}`}
                             ></div>
                         </div>
-                        <p className="text-xs text-zinc-300 mt-0.5">
+                        <div className="text-xs text-zinc-300 mt-0.5 leading-none">
                             {listeningToChat === null
                                 ? t("common.checking")
                                 : listeningToChat
                                     ? t("common.activeListening")
-                                    : t("common.notConnected")}
-                        </p>
+                                    : authenticated
+                                        ? (
+                                            <span className="inline-flex items-center gap-2">
+                                                <span>{t("common.couldNotConnectToChat")}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRetryChat}
+                                                    disabled={refreshInProgress}
+                                                    aria-label={t("common.retry")}
+                                                    className={`inline-flex items-center justify-center w-4 h-4 rounded ${refreshInProgress
+                                                        ? "bg-white/10 cursor-not-allowed"
+                                                        : "bg-transparent hover:bg-white/10"
+                                                        }`}
+                                                >
+                                                    <RefreshCw
+                                                        className={`w-3 h-3 ${refreshInProgress ? "animate-spin" : ""}`}
+                                                    />
+                                                </button>
+                                            </span>
+                                        )
+                                        : t("common.notConnected")}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -257,12 +323,27 @@ export default function KickCard() {
                         {t("common.configureCredentials")}
                     </button>
                 ) : authenticated ? (
-                    <button
-                        onClick={handleLogout}
-                        className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
-                    >
-                        {t("authentication.disconnect")}
-                    </button>
+                    <div className="flex gap-3 items-center">
+                        <button
+                            onClick={handleLogout}
+                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-500 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                        >
+                            {t("authentication.disconnect")}
+                        </button>
+                        <button
+                                                    onClick={handleRetryChat}
+                            disabled={refreshInProgress}
+                            aria-label={t("common.refresh")}
+                            className={`w-11 h-11 flex items-center justify-center text-white rounded-lg transition-all duration-200 ${refreshInProgress
+                                ? "bg-white/10 cursor-not-allowed"
+                                : "bg-transparent hover:bg-white/10"
+                                }`}
+                        >
+                            <RefreshCw
+                                className={`w-5 h-5 ${refreshInProgress ? "animate-spin" : ""}`}
+                            />
+                        </button>
+                    </div>
                 ) : (
                     <button
                         onClick={() => handleLogin()}
