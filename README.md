@@ -8,11 +8,11 @@ Melodify is a next-generation desktop app that lets your viewers control the mus
 
 ## 🚀 Features
 
-- **Seamless Kick & Spotify Integration**
-    - Securely authenticate with both Kick and Spotify
+- **Seamless Kick, Spotify & Twitch Integration**
+    - Securely authenticate with Kick, Spotify, and Twitch
     - Manage API secrets locally—your data stays private
     - Instantly detect and display your Spotify playback status and devices
-    - Listen to Kick chat in real time and respond to song requests automatically
+    - Listen to Kick and Twitch chat in real time and respond to song requests automatically
 
 - **Effortless Song Requests from Chat**
     - Viewers request songs in Kick chat using a simple command (e.g., `!sr <song name>`)
@@ -73,9 +73,9 @@ npm run make
 
 ## 🎤 How It Works
 
-1. **Connect your Spotify and Kick accounts** in the app settings.
-2. **Start your Kick stream and open chat.**
-3. **Viewers request songs** by typing `!sr <song name/url>` in Kick chat (prefix is customizable).
+1. **Connect your Spotify, Kick, and Twitch accounts** in the app settings.
+2. **Start your Kick or Twitch stream and open chat.**
+3. **Viewers request songs** by typing `!sr <song name/url>` in Kick or Twitch chat (prefix is customizable).
 4. Melodify searches Spotify and plays the requested song on your connected device.
 5. The app sends a customizable reply message to chat, confirming the song request.
 
