@@ -264,12 +264,45 @@ async function handleChatMessage(event: any): Promise<void> {
             return;
         }
 
+        // Build platform badges (best-effort mapping from EventSub payload)
+        const badges: string[] = [];
+        try {
+            if (
+                event.is_broadcaster ||
+                event.chatter_is_broadcaster ||
+                event.user_type === "broadcaster"
+            ) {
+                badges.push("broadcaster");
+            }
+
+            if (
+                event.is_mod ||
+                event.is_moderator ||
+                event.chatter_is_mod ||
+                event.user_type === "mod" ||
+                event.user_type === "moderator"
+            ) {
+                badges.push("moderator");
+            }
+
+            if (event.is_subscriber || event.is_sub || event.tags?.subscriber) {
+                badges.push("subscriber");
+            }
+
+            if (event.is_vip || event.tags?.vip) {
+                badges.push("vip");
+            }
+        } catch (e) {
+            // ignore badge parsing errors
+        }
+
         // Command context
         const ctx: CommandContext = {
             username,
             message,
-            badges: [],
+            badges,
             raw: event,
+            platform: "twitch",
         };
 
         await commandManager.handle(ctx);

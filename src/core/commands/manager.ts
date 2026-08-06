@@ -15,6 +15,7 @@ export interface CommandContext {
     message: string;
     badges: string[];
     raw?: any;
+    platform?: "twitch" | "kick" | "unknown";
 }
 
 /**

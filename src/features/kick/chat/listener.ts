@@ -116,6 +116,7 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
                 message,
                 badges,
                 raw: data,
+                platform: "kick",
             };
             await commandManager.handle(ctx);
         } catch (error) {

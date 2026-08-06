@@ -1,8 +1,9 @@
 import { playSong, getSpotifyApi } from "@/features/spotify/playback/player";
 import Config from "@/core/config";
 import { sendKickMessage } from "@/features/kick/chat/listener";
-import { logError, logSongRequest } from "@/core/logging";
-import { Command } from "./manager";
+import { sendTwitchMessage } from "@/features/twitch/chat/listener";
+import { logError, logSongRequest, logDebug } from "@/core/logging";
+import { Command, CommandContext } from "./manager";
 import { incrementSongRequestCount } from "@/core/ipc/handlers";
 
 function formatTemplate(
@@ -14,6 +15,38 @@ function formatTemplate(
     });
 }
 
+async function sendChatReply(ctx: CommandContext, message: string) {
+    try {
+        if (ctx.platform === "twitch") {
+            await sendTwitchMessage(message);
+            return;
+        }
+
+        if (ctx.platform === "kick") {
+            await sendKickMessage(message);
+            return;
+        }
+
+        // Fallback to inspecting raw event shape
+        if (ctx.raw && typeof ctx.raw === "object") {
+            if (Object.prototype.hasOwnProperty.call(ctx.raw, "chatter_user_login")) {
+                await sendTwitchMessage(message);
+                return;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(ctx.raw, "sender")) {
+                await sendKickMessage(message);
+                return;
+            }
+        }
+
+        // Default fallback
+        await sendKickMessage(message);
+    } catch (error) {
+        logError(error, "sendChatReply");
+    }
+}
+
 // Song Request Command
 const SongRequestCommand: Command = {
     name: "sr",
@@ -21,6 +54,11 @@ const SongRequestCommand: Command = {
     usage: "{prefix}sr <song name or URL>",
     enabled: true,
     handler: async (ctx, args, commandManager) => {
+        logDebug("SongRequestCommand invoked", {
+            username: ctx.username,
+            args,
+            badges: ctx.badges,
+        });
         // Check permissions first
         const canAnyonePlaySong = Config.get("canAnyonePlaySong");
         const userRoles = Config.get("allowedBadges") || [
@@ -33,8 +71,14 @@ const SongRequestCommand: Command = {
             !canAnyonePlaySong &&
             !ctx.badges.some((b) => allowedRoles.includes(b))
         ) {
+            logDebug("Permission denied for song request", {
+                username: ctx.username,
+                badges: ctx.badges,
+                allowedRoles,
+            });
             if (Config.get("replyOnSongRequestError")) {
-                await sendKickMessage(
+                await sendChatReply(
+                    ctx,
                     `@${ctx.username} You don't have permission to request songs.`
                 );
             }
@@ -80,14 +124,15 @@ const SongRequestCommand: Command = {
                     "Please wait {time} seconds before requesting another song.",
                 { time: longestRemainingTime }
             );
-            await sendKickMessage(`@${ctx.username} ${cooldownMessage}`);
+            await sendChatReply(ctx, `@${ctx.username} ${cooldownMessage}`);
             return;
         }
 
         const songQuery = args.join(" ").trim();
         if (!songQuery) {
             if (Config.get("replyOnSongRequestError")) {
-                await sendKickMessage(
+                await sendChatReply(
+                    ctx,
                     `@${ctx.username} Please provide a song name or Spotify URL.`
                 );
             }
@@ -95,9 +140,21 @@ const SongRequestCommand: Command = {
         }
 
         // Process the song request
-        const songInfo = await playSong(songQuery, ctx.username);
+        logDebug("Processing song request", { query: songQuery, username: ctx.username });
+        let songInfo;
+        try {
+            songInfo = await playSong(songQuery, ctx.username);
+        } catch (error) {
+            logError(error, "songRequest:playSong");
+            return;
+        }
 
         if (songInfo && commandManager) {
+            logDebug("Song request succeeded", {
+                title: songInfo.title,
+                artist: songInfo.artist,
+                username: ctx.username,
+            });
             // Set cooldowns after successful song request
             commandManager.setGlobalCooldown();
             commandManager.setUserCooldown(ctx.username);
@@ -109,7 +166,8 @@ const SongRequestCommand: Command = {
             incrementSongRequestCount(songInfo);
 
             if (Config.get("replyOnSongRequest")) {
-                await sendKickMessage(
+                await sendChatReply(
+                    ctx,
                     `@${ctx.username} ` +
                         formatTemplate(
                             Config.get("songRequestReplyTemplate") ||
@@ -130,10 +188,15 @@ const VolumeCommand: Command = {
     enabled: true,
     modOnly: true,
     handler: async (ctx, args, commandManager) => {
+        logDebug("VolumeCommand invoked", { username: ctx.username, args });
         const spotifyApi = getSpotifyApi();
         if (!spotifyApi) {
+            logDebug("Spotify API not connected for volume command", {
+                username: ctx.username,
+            });
             if (Config.get("replyOnVolumeError")) {
-                await sendKickMessage(
+                await sendChatReply(
+                    ctx,
                     `@${ctx.username} Spotify is not connected. Please connect to Spotify first.`
                 );
             }
@@ -147,8 +210,13 @@ const VolumeCommand: Command = {
                     await spotifyApi.getMyCurrentPlaybackState();
                 const currentVolume =
                     playbackState.body.device?.volume_percent || 0;
+                logDebug("Fetched current Spotify volume", {
+                    username: ctx.username,
+                    currentVolume,
+                });
                 if (Config.get("replyOnVolumeGet")) {
-                    await sendKickMessage(
+                    await sendChatReply(
+                        ctx,
                         `@${ctx.username} ` +
                             formatTemplate(
                                 Config.get("volumeGetReplyTemplate") ||
@@ -160,7 +228,8 @@ const VolumeCommand: Command = {
             } catch (error) {
                 logError(error, "volume:getCurrentVolume");
                 if (Config.get("replyOnVolumeError")) {
-                    await sendKickMessage(
+                    await sendChatReply(
+                        ctx,
                         `@${ctx.username} Something went wrong, please try again.`
                     );
                 }
@@ -171,7 +240,8 @@ const VolumeCommand: Command = {
         // Validate volume argument
         if (isNaN(Number(args[0]))) {
             if (Config.get("replyOnVolumeError")) {
-                await sendKickMessage(
+                await sendChatReply(
+                    ctx,
                     `@${ctx.username} Please enter a volume between 0 and 100.`
                 );
             }
@@ -181,9 +251,12 @@ const VolumeCommand: Command = {
         const vol = Math.max(0, Math.min(100, Number(args[0])));
 
         try {
+            logDebug("Setting Spotify volume", { username: ctx.username, vol });
             await spotifyApi.setVolume(vol);
+            logDebug("Spotify volume set successfully", { username: ctx.username, vol });
             if (Config.get("replyOnVolumeChange")) {
-                await sendKickMessage(
+                await sendChatReply(
+                    ctx,
                     `@${ctx.username} ` +
                         formatTemplate(
                             Config.get("volumeChangeReplyTemplate") ||
@@ -195,7 +268,8 @@ const VolumeCommand: Command = {
         } catch (error) {
             logError(error, "volume:setVolume");
             if (Config.get("replyOnVolumeError")) {
-                await sendKickMessage(
+                await sendChatReply(
+                    ctx,
                     `@${ctx.username} Something went wrong, please try again.`
                 );
             }

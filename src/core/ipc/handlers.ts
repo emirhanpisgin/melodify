@@ -148,7 +148,7 @@ ipcMain.handle("config:updateTranslatedDefaults", () => {
         Config.updateTranslatedDefaults();
         logInfo("Updated translated defaults based on current language");
         return { success: true };
-    } catch (error) {
+    } catch (error: any) {
         logError(error, "config:updateTranslatedDefaults");
         return { success: false, error: error.message };
     }
