@@ -1,11 +1,11 @@
 import Config from "@/core/config";
 import Pusher from "pusher-js";
-import { playSong } from "@/features/spotify/playback/player";
 import { logInfo, logError, logWarn, logDebug } from "@/core/logging";
 import { redactSecrets } from "@/core/logging/utils";
 import { CommandContext } from "@/core/commands/manager";
 import { commandManager } from "@/core/ipc/handlers";
 import { kickClient } from "@/features/kick/api/client";
+import { executeSongRequest } from "@/core/commands/songRequest";
 
 export let isListening = false;
 let refreshKickTokenInterval: NodeJS.Timeout | null = null;
@@ -151,10 +151,18 @@ export async function listenToChat(window?: Electron.BrowserWindow) {
                 return;
 
             const songQuery = data.user_input.trim();
-            if (!songQuery) return;
+            const ctx: CommandContext = {
+                username,
+                message: songQuery,
+                badges: [],
+                raw: data,
+                platform: "kick",
+            };
 
-            playSong(songQuery, username);
-            console.log("🎵 Playing song from reward:", songQuery);
+            void executeSongRequest(ctx, songQuery, commandManager, {
+                sendReply: sendKickMessage,
+                skipPermissionCheck: true,
+            });
         } catch (error) {
             logError(error, "kick:rewardProcessing");
         }

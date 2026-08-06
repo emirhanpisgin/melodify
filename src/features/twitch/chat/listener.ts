@@ -5,7 +5,7 @@ import { redactSecrets } from "@/core/logging/utils";
 import { CommandContext } from "@/core/commands/manager";
 import { commandManager } from "@/core/ipc/handlers";
 import { twitchClient } from "@/features/twitch/api/client";
-import { playSong } from "@/features/spotify/playback/player";
+import { executeSongRequest } from "@/core/commands/songRequest";
 
 export let isListening = false;
 let websocketClient: WebSocket | null = null;
@@ -219,6 +219,43 @@ async function registerEventSubListeners(): Promise<void> {
                 "twitch:registerEventSub"
             );
         }
+
+        const rewardsResponse = await fetch(
+            "https://api.twitch.tv/helix/eventsub/subscriptions",
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Client-Id": clientId,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    type: "channel.channel_points_custom_reward_redemption.add",
+                    version: "1",
+                    condition: {
+                        broadcaster_user_id: broadcasterUserId,
+                    },
+                    transport: {
+                        method: "websocket",
+                        session_id: websocketSessionID,
+                    },
+                }),
+            }
+        );
+
+        if (rewardsResponse.status !== 202) {
+            const data = await rewardsResponse.json();
+            logError(
+                `Failed to subscribe to channel.channel_points_custom_reward_redemption.add. Status: ${rewardsResponse.status}, Data: ${JSON.stringify(data)}`,
+                "twitch:registerEventSub"
+            );
+        } else {
+            const data = await rewardsResponse.json();
+            logInfo(
+                `Subscribed to channel.channel_points_custom_reward_redemption.add [${data.data[0].id}]`,
+                "twitch:registerEventSub"
+            );
+        }
     } catch (error) {
         logError(error, "twitch:registerEventSub");
     }
@@ -248,9 +285,56 @@ function handleWebSocketMessage(data: any): void {
             data.metadata.subscription_type === "channel.chat.message"
         ) {
             handleChatMessage(data.payload.event);
+        } else if (
+            messageType === "notification" &&
+            data.metadata.subscription_type ===
+                "channel.channel_points_custom_reward_redemption.add"
+        ) {
+            handleChannelPointRedemption(data.payload.event);
         }
     } catch (error) {
         logError(error, "twitch:handleWebSocketMessage");
+    }
+}
+
+type TwitchRewardRedemptionEvent = {
+    user_login?: string;
+    user_name?: string;
+    user_input?: string;
+    reward?: {
+        id?: string;
+        title?: string;
+    };
+};
+
+async function handleChannelPointRedemption(
+    event: TwitchRewardRedemptionEvent
+): Promise<void> {
+    try {
+        const username = event.user_login || event.user_name;
+        const songQuery = (event.user_input || "").trim();
+        const rewardTitle = event.reward?.title;
+        const configuredRewardTitle =
+            Config.get("twitchRewardTitle") || "Song Request";
+
+        if (!username || !rewardTitle || rewardTitle !== configuredRewardTitle) {
+            return;
+        }
+
+        const ctx: CommandContext = {
+            username,
+            message: songQuery,
+            badges: [],
+            raw: event,
+            platform: "twitch",
+        };
+
+        await executeSongRequest(ctx, songQuery, commandManager, {
+            sendReply: sendTwitchMessage,
+            skipPermissionCheck: true,
+        });
+    } catch (error) {
+        logError(error, "twitch:rewardProcessing");
     }
 }
 

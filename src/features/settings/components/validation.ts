@@ -136,6 +136,12 @@ export const validateField = (key: string, value: any): string | null => {
                 return validateTemplate(value, ["title", "artist"]);
             }
             break;
+        case "rewardTitle":
+        case "twitchRewardTitle":
+            if (typeof value === "string" && value) {
+                return null;
+            }
+            break;
         case "currentSongFormat":
             if (typeof value === "string" && value) {
                 return validateTemplate(value, ["title", "artist"]);

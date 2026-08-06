@@ -1,10 +1,10 @@
-import { playSong, getSpotifyApi } from "@/features/spotify/playback/player";
+import { getSpotifyApi } from "@/features/spotify/playback/player";
 import Config from "@/core/config";
 import { sendKickMessage } from "@/features/kick/chat/listener";
 import { sendTwitchMessage } from "@/features/twitch/chat/listener";
-import { logError, logSongRequest, logDebug } from "@/core/logging";
+import { logDebug, logError } from "@/core/logging";
 import { Command, CommandContext } from "./manager";
-import { incrementSongRequestCount } from "@/core/ipc/handlers";
+import { executeSongRequest } from "./songRequest";
 
 function formatTemplate(
     template: string,
@@ -59,124 +59,11 @@ const SongRequestCommand: Command = {
             args,
             badges: ctx.badges,
         });
-        // Check permissions first
-        const canAnyonePlaySong = Config.get("canAnyonePlaySong");
-        const userRoles = Config.get("allowedBadges") || [
-            "og",
-            "vip",
-            "subscriber",
-        ];
-        const allowedRoles = [...userRoles, "broadcaster", "moderator"]; // Broadcaster and moderator can always request songs
-        if (
-            !canAnyonePlaySong &&
-            !ctx.badges.some((b) => allowedRoles.includes(b))
-        ) {
-            logDebug("Permission denied for song request", {
-                username: ctx.username,
-                badges: ctx.badges,
-                allowedRoles,
-            });
-            if (Config.get("replyOnSongRequestError")) {
-                await sendChatReply(
-                    ctx,
-                    `@${ctx.username} You don't have permission to request songs.`
-                );
-            }
-            return;
-        }
-
-        // Check cooldowns and find the longest remaining time
-        let longestRemainingTime = 0;
-        let isOnCooldown = false;
-
-        // Check global cooldown
-        if (commandManager && commandManager.checkGlobalCooldown()) {
-            const globalRemainingTime = commandManager.getRemainingCooldownTime(
-                commandManager.getGlobalCooldownEnd()
-            );
-            longestRemainingTime = Math.max(
-                longestRemainingTime,
-                globalRemainingTime
-            );
-            isOnCooldown = true;
-        }
-
-        // Check user cooldown
-        if (commandManager && commandManager.checkUserCooldown(ctx.username)) {
-            const userCooldownEnd = commandManager.getUserCooldownEnd(
-                ctx.username
-            );
-            if (userCooldownEnd) {
-                const userRemainingTime =
-                    commandManager.getRemainingCooldownTime(userCooldownEnd);
-                longestRemainingTime = Math.max(
-                    longestRemainingTime,
-                    userRemainingTime
-                );
-                isOnCooldown = true;
-            }
-        }
-
-        // If on any cooldown, send simple message and return
-        if (isOnCooldown && Config.get("replyOnCooldown")) {
-            const cooldownMessage = formatTemplate(
-                Config.get("cooldownMessageTemplate") ||
-                    "Please wait {time} seconds before requesting another song.",
-                { time: longestRemainingTime }
-            );
-            await sendChatReply(ctx, `@${ctx.username} ${cooldownMessage}`);
-            return;
-        }
-
         const songQuery = args.join(" ").trim();
-        if (!songQuery) {
-            if (Config.get("replyOnSongRequestError")) {
-                await sendChatReply(
-                    ctx,
-                    `@${ctx.username} Please provide a song name or Spotify URL.`
-                );
-            }
-            return;
-        }
-
-        // Process the song request
-        logDebug("Processing song request", { query: songQuery, username: ctx.username });
-        let songInfo;
-        try {
-            songInfo = await playSong(songQuery, ctx.username);
-        } catch (error) {
-            logError(error, "songRequest:playSong");
-            return;
-        }
-
-        if (songInfo && commandManager) {
-            logDebug("Song request succeeded", {
-                title: songInfo.title,
-                artist: songInfo.artist,
-                username: ctx.username,
-            });
-            // Set cooldowns after successful song request
-            commandManager.setGlobalCooldown();
-            commandManager.setUserCooldown(ctx.username);
-
-            // Log the song request to the logging system
-            logSongRequest(songInfo.title, songInfo.artist, ctx.username);
-
-            // Increment song request count with song info
-            incrementSongRequestCount(songInfo);
-
-            if (Config.get("replyOnSongRequest")) {
-                await sendChatReply(
-                    ctx,
-                    `@${ctx.username} ` +
-                        formatTemplate(
-                            Config.get("songRequestReplyTemplate") ||
-                                "Added to queue: {title} by {artist}",
-                            { title: songInfo.title, artist: songInfo.artist }
-                        )
-                );
-            }
-        }
+        await executeSongRequest(ctx, songQuery, commandManager, {
+            sendReply: (message) => sendChatReply(ctx, message),
+            skipPermissionCheck: false,
+        });
     },
 };
 

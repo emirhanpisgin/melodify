@@ -238,7 +238,7 @@ export function openTwitchAuthUrl() {
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
     const scopes =
-        "user:bot user:read:chat user:write:chat channel:read:subscriptions";
+        "user:bot user:read:chat user:write:chat channel:read:subscriptions channel:read:redemptions";
 
     Config.set({ codeVerifier });
 

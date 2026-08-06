@@ -167,6 +167,49 @@ export default function Requests({ config, onConfigChange }: RequestsProps) {
 
             <div className="bg-zinc-800/30 border border-zinc-700/50 p-4 rounded-md">
                 <h3 className="text-base font-medium text-white mb-4">
+                    Song Request Rewards
+                </h3>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-zinc-200 mb-2">
+                            Kick reward title
+                        </label>
+                        <Input
+                            value={config.rewardTitle || "Song Request"}
+                            onChange={(e) =>
+                                handleInputChange("rewardTitle", e.target.value)
+                            }
+                            placeholder="Song Request"
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">
+                            Matches Kick reward redemptions.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-zinc-200 mb-2">
+                            Twitch channel points reward title
+                        </label>
+                        <Input
+                            value={config.twitchRewardTitle || "Song Request"}
+                            onChange={(e) =>
+                                handleInputChange(
+                                    "twitchRewardTitle",
+                                    e.target.value
+                                )
+                            }
+                            placeholder="Song Request"
+                        />
+                        <p className="mt-1 text-xs text-zinc-400">
+                            Matches Twitch channel point redemptions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-zinc-800/30 border border-zinc-700/50 p-4 rounded-md">
+                <h3 className="text-base font-medium text-white mb-4">
                     {t("requests.chatResponses")}
                 </h3>
 
